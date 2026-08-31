@@ -4,7 +4,9 @@
         Title="Edit Mode" Height="560" Width="640"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource BgBrush}">
-    <Grid Margin="16">
+    <Grid>
+        <Rectangle Fill="{StaticResource DotGridBrush}" IsHitTestVisible="False"/>
+        <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -14,7 +16,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="MODE NAME" Foreground="#9A9A9A" Margin="0,0,0,4"/>
+        <TextBlock Text="// MODE NAME" Foreground="#9A9A9A" Margin="0,0,0,4"/>
         <TextBox x:Name="NameBox" Grid.Row="1" Margin="0,0,0,16" FontSize="16"/>
 
         <Grid Grid.Row="2">
@@ -23,7 +25,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <DockPanel LastChildFill="False" Margin="0,0,0,6">
-                <TextBlock Text="LAUNCH ITEMS" Foreground="#9A9A9A" VerticalAlignment="Center"/>
+                <TextBlock Text="// LAUNCH ITEMS" Foreground="#9A9A9A" VerticalAlignment="Center"/>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
                     <Button Content="+ App" Margin="4,0,0,0" Click="AddApp_Click"/>
                     <Button Content="+ Folder" Margin="4,0,0,0" Click="AddFolder_Click"/>
@@ -77,7 +79,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <DockPanel LastChildFill="False" Margin="0,0,0,6">
-                <TextBlock Text="BLOCKED WHILE THIS MODE IS ACTIVE" Foreground="#9A9A9A" VerticalAlignment="Center"/>
+                <TextBlock Text="// BLOCKED WHILE THIS MODE IS ACTIVE" Foreground="#9A9A9A" VerticalAlignment="Center"/>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
                     <Button Content="Browse..." Margin="0,0,4,0" Click="BrowseBlock_Click"/>
                     <TextBox x:Name="BlockNameBox" Width="110" Margin="0,0,4,0" KeyDown="BlockNameBox_KeyDown"/>
@@ -107,5 +109,6 @@
             <Button Content="Cancel" Width="90" Margin="0,0,8,0" Click="Cancel_Click"/>
             <Button Content="Save" Width="90" Click="Save_Click"/>
         </StackPanel>
+    </Grid>
     </Grid>
 </Window>

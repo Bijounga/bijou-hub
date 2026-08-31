@@ -1,4 +1,5 @@
-using System.IO;
+﻿using System.IO;
+using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -75,7 +76,40 @@ public partial class MainWindow : Window
         };
 
         InitNotesToolbar();
+        SetupAnimatedProgressFill();
         ShowHome();
+    }
+
+    private void SetupAnimatedProgressFill()
+    {
+        var stripes = new System.Windows.Media.GeometryDrawing
+        {
+            Brush = (System.Windows.Media.Brush)FindResource("HazardBrush"),
+            Geometry = new System.Windows.Media.RectangleGeometry(new Rect(0, 0, 10, 10))
+        };
+        var hatch = new System.Windows.Media.GeometryDrawing
+        {
+            Brush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(0x40, 0, 0, 0)),
+            Geometry = System.Windows.Media.Geometry.Parse("M0,10 L10,0 L10,3 L3,10 Z M0,3 L3,0 L0,0 Z")
+        };
+        var group = new System.Windows.Media.DrawingGroup();
+        group.Children.Add(stripes);
+        group.Children.Add(hatch);
+
+        var scroll = new System.Windows.Media.TranslateTransform();
+        var brush = new System.Windows.Media.DrawingBrush(group)
+        {
+            TileMode = System.Windows.Media.TileMode.Tile,
+            Viewport = new Rect(0, 0, 10, 10),
+            ViewportUnits = System.Windows.Media.BrushMappingMode.Absolute,
+            Stretch = System.Windows.Media.Stretch.None,
+            Transform = scroll
+        };
+
+        ProjectProgressFill.Background = brush;
+
+        var anim = new DoubleAnimation(0, 10, TimeSpan.FromSeconds(0.8)) { RepeatBehavior = RepeatBehavior.Forever };
+        scroll.BeginAnimation(System.Windows.Media.TranslateTransform.XProperty, anim);
     }
 
     private static readonly int[] NoteFontSizes = { 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48 };
@@ -257,6 +291,30 @@ public partial class MainWindow : Window
         element.BeginAnimation(UIElement.OpacityProperty, anim);
     }
 
+    private static void TypewriterReveal(TextBlock target, string fullText, int msPerChar = 16, Action? onComplete = null)
+    {
+        target.Text = "";
+        if (string.IsNullOrEmpty(fullText))
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        var i = 0;
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(msPerChar) };
+        timer.Tick += (_, _) =>
+        {
+            i++;
+            target.Text = fullText[..Math.Min(i, fullText.Length)];
+            if (i >= fullText.Length)
+            {
+                timer.Stop();
+                onComplete?.Invoke();
+            }
+        };
+        timer.Start();
+    }
+
     private void ShowEmptyState()
     {
         HideAllPanels();
@@ -270,9 +328,51 @@ public partial class MainWindow : Window
         ModeDetailPanel.Visibility = Visibility.Visible;
         FadeIn(ModeDetailPanel);
 
-        ModeDetailName.Text = mode.Name;
+        TypewriterReveal(ModeDetailName, mode.Name);
         ModeDetailLaunchItems.ItemsSource = mode.LaunchItems;
         ModeDetailBlockItems.ItemsSource = mode.BlockItems;
+    }
+
+    private void GoalCheckBox_Changed(object sender, RoutedEventArgs e)
+    {
+        if (sender is not CheckBox { Tag: Goal goal } checkBox) return;
+
+        goal.IsComplete = checkBox.IsChecked ?? false;
+        _projectStore.Save(_projects);
+        RefreshProjectProgress();
+        PopAnimate(checkBox);
+    }
+
+    private static void PopAnimate(FrameworkElement element)
+    {
+        if (element.RenderTransform is not System.Windows.Media.ScaleTransform scale)
+        {
+            scale = new System.Windows.Media.ScaleTransform(1, 1);
+            element.RenderTransform = scale;
+            element.RenderTransformOrigin = new Point(0.5, 0.5);
+        }
+
+        var pop = new DoubleAnimation(1.3, TimeSpan.FromMilliseconds(160))
+        {
+            AutoReverse = true,
+            EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.6 }
+        };
+        scale.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, pop);
+        scale.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, pop);
+    }
+
+    private void RefreshProjectProgress()
+    {
+        if (_detailProject == null) return;
+
+        var targetWidth = 320 * Math.Clamp(_detailProject.Completion, 0, 1);
+        var anim = new DoubleAnimation(targetWidth, TimeSpan.FromMilliseconds(350))
+        {
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+        };
+        ProjectProgressFill.BeginAnimation(FrameworkElement.WidthProperty, anim);
+
+        ProjectProgressLabel.Text = $"{_detailProject.CompletionPercentText} complete — {_detailProject.NextGoalSummary}";
     }
 
     private void ShowProjectDetail(Project project)
@@ -282,9 +382,8 @@ public partial class MainWindow : Window
         FadeIn(ProjectDetailPanel);
         _detailProject = project;
 
-        ProjectDetailName.Text = project.Name;
-        ProjectProgressFill.Width = 320 * Math.Clamp(project.Completion, 0, 1);
-        ProjectProgressLabel.Text = $"{project.CompletionPercentText} complete — {project.NextGoalSummary}";
+        TypewriterReveal(ProjectDetailName, project.Name);
+        RefreshProjectProgress();
 
         var totalSeconds = _logService.GetForProject(project.Id).Sum(s => s.ActiveSeconds);
         ProjectTimeSpentText.Text = $"Time spent: {FormatSpan(totalSeconds)}";
@@ -300,16 +399,36 @@ public partial class MainWindow : Window
         ApplyNoteKeybinds();
     }
 
+    // WPF's RichTextBox XAML serializers (both "Xaml" and "XamlPackage") silently drop
+    // InlineUIContainer content, so checklist markers are round-tripped as private-use-area
+    // sentinel characters in the text stream instead, and rebuilt into live markers after load.
+    private const char UncheckedSentinel = '\uE000';
+    private const char CheckedSentinel = '\uE001';
+
     private void LoadFreeformNotes(Project project)
     {
         NotesRichBox.Document = new FlowDocument();
         if (string.IsNullOrEmpty(project.FreeformNotesXaml)) return;
 
+        var range = new TextRange(NotesRichBox.Document.ContentStart, NotesRichBox.Document.ContentEnd);
         try
         {
-            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(project.FreeformNotesXaml));
-            var range = new TextRange(NotesRichBox.Document.ContentStart, NotesRichBox.Document.ContentEnd);
-            range.Load(ms, DataFormats.Xaml);
+            using var ms = new MemoryStream(Convert.FromBase64String(project.FreeformNotesXaml));
+            range.Load(ms, DataFormats.XamlPackage);
+            ReplaceSentinelsWithMarkers();
+        }
+        catch (FormatException)
+        {
+            try
+            {
+                // Legacy format: plain UTF8 XAML text (pre-checklist-marker saves).
+                using var ms = new MemoryStream(Encoding.UTF8.GetBytes(project.FreeformNotesXaml));
+                range.Load(ms, DataFormats.Xaml);
+            }
+            catch
+            {
+                // Corrupt or incompatible saved content; start fresh rather than crash.
+            }
         }
         catch
         {
@@ -321,11 +440,65 @@ public partial class MainWindow : Window
     {
         if (_detailProject == null) return;
 
-        var range = new TextRange(NotesRichBox.Document.ContentStart, NotesRichBox.Document.ContentEnd);
-        using var ms = new MemoryStream();
-        range.Save(ms, DataFormats.Xaml);
-        _detailProject.FreeformNotesXaml = Encoding.UTF8.GetString(ms.ToArray());
-        _projectStore.Save(_projects);
+        var swaps = new List<(Paragraph Para, InlineUIContainer Container, Run Sentinel)>();
+        foreach (var block in NotesRichBox.Document.Blocks.ToList())
+        {
+            if (block is not Paragraph para) continue;
+            foreach (var inline in para.Inlines.Cast<Inline>().ToList())
+            {
+                if (inline is not InlineUIContainer { Child: Border { Uid: "checklist-marker" } border } container)
+                    continue;
+
+                var isChecked = border.Child is System.Windows.Shapes.Path;
+                var sentinel = new Run((isChecked ? CheckedSentinel : UncheckedSentinel).ToString());
+                para.Inlines.InsertBefore(container, sentinel);
+                para.Inlines.Remove(container);
+                swaps.Add((para, container, sentinel));
+            }
+        }
+
+        try
+        {
+            var range = new TextRange(NotesRichBox.Document.ContentStart, NotesRichBox.Document.ContentEnd);
+            using var ms = new MemoryStream();
+            range.Save(ms, DataFormats.XamlPackage);
+            _detailProject.FreeformNotesXaml = Convert.ToBase64String(ms.ToArray());
+            _projectStore.Save(_projects);
+        }
+        finally
+        {
+            foreach (var (para, container, sentinel) in swaps)
+            {
+                para.Inlines.InsertBefore(sentinel, container);
+                para.Inlines.Remove(sentinel);
+            }
+        }
+    }
+
+    private void ReplaceSentinelsWithMarkers()
+    {
+        foreach (var block in NotesRichBox.Document.Blocks.ToList())
+        {
+            if (block is not Paragraph para) continue;
+            foreach (var inline in para.Inlines.Cast<Inline>().ToList())
+            {
+                if (inline is not Run run) continue;
+                var idx = run.Text.IndexOfAny(new[] { UncheckedSentinel, CheckedSentinel });
+                if (idx < 0) continue;
+
+                var isChecked = run.Text[idx] == CheckedSentinel;
+                var before = run.Text[..idx];
+                var after = run.Text[(idx + 1)..];
+
+                var marker = new InlineUIContainer(CreateChecklistMarker(isChecked));
+                para.Inlines.InsertBefore(run, marker);
+                if (!string.IsNullOrEmpty(before))
+                    para.Inlines.InsertBefore(marker, new Run(before));
+                if (!string.IsNullOrEmpty(after))
+                    para.Inlines.InsertAfter(marker, new Run(after));
+                para.Inlines.Remove(run);
+            }
+        }
     }
 
     private void ShowHome()
@@ -334,7 +507,9 @@ public partial class MainWindow : Window
         HomePanel.Visibility = Visibility.Visible;
         FadeIn(HomePanel);
 
-        HomeGreetingText.Text = Greetings.Random();
+        var greeting = Greetings.Random();
+        TypewriterReveal(HomeWelcomeText, "Welcome back",
+            onComplete: () => TypewriterReveal(HomeGreetingText, greeting));
 
         var todaySeconds = _logService.GetTodayTotalSeconds();
         HomeTodayText.Text = FormatSpan(todaySeconds);
@@ -414,7 +589,7 @@ public partial class MainWindow : Window
         CloseAllAlertWindows();
         _blockReminderTimer.Stop();
 
-        ActiveModeName.Text = project?.Name ?? mode?.Name ?? "Session";
+        TypewriterReveal(ActiveModeName, project?.Name ?? mode?.Name ?? "Session");
         var contextParts = new List<string>();
         if (project != null && mode != null) contextParts.Add($"via {mode.Name}");
         if (goal != null) contextParts.Add($"working on: {goal.Name}");
@@ -709,25 +884,106 @@ public partial class MainWindow : Window
         var para = NotesRichBox.CaretPosition.Paragraph ?? NotesRichBox.Document.Blocks.LastBlock as Paragraph;
         if (para == null) return;
 
-        var lineStart = para.ContentStart;
-        var peekEnd = lineStart.GetPositionAtOffset(2) ?? para.ContentEnd;
-        var prefix = new System.Windows.Documents.TextRange(lineStart, peekEnd).Text;
+        if (para.Inlines.FirstInline is InlineUIContainer { Child: Border })
+        {
+            NotesRichBox.Focus();
+            return; // line already has a checklist marker
+        }
 
-        if (prefix.StartsWith("☐"))
-        {
-            var oneChar = lineStart.GetPositionAtOffset(1) ?? peekEnd;
-            new System.Windows.Documents.TextRange(lineStart, oneChar).Text = "☑";
-        }
-        else if (prefix.StartsWith("☑"))
-        {
-            var twoChars = lineStart.GetPositionAtOffset(2) ?? para.ContentEnd;
-            new System.Windows.Documents.TextRange(lineStart, twoChars).Text = "";
-        }
+        var container = new InlineUIContainer(CreateChecklistMarker(false));
+        if (para.Inlines.FirstInline != null)
+            para.Inlines.InsertBefore(para.Inlines.FirstInline, container);
         else
-        {
-            new System.Windows.Documents.TextRange(lineStart, lineStart).Text = "☐ ";
-        }
+            para.Inlines.Add(container);
+
         NotesRichBox.Focus();
+    }
+
+    private Border CreateChecklistMarker(bool isChecked)
+    {
+        var border = new Border
+        {
+            Uid = "checklist-marker",
+            Width = 18,
+            Height = 18,
+            BorderThickness = new Thickness(1.5),
+            BorderBrush = (System.Windows.Media.Brush)FindResource("AccentBrush"),
+            Margin = new Thickness(0, 0, 6, -3),
+            VerticalAlignment = VerticalAlignment.Center,
+            Cursor = Cursors.Hand,
+            RenderTransformOrigin = new Point(0.5, 0.5),
+            RenderTransform = new System.Windows.Media.ScaleTransform(1, 1)
+        };
+        ApplyChecklistMarkerVisual(border, isChecked);
+        return border;
+    }
+
+    private void ApplyChecklistMarkerVisual(Border border, bool isChecked)
+    {
+        border.Background = isChecked
+            ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(0x55, 0x33, 0xE1, 0xFF))
+            : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(0x1A, 0x33, 0xE1, 0xFF));
+        border.Effect = new System.Windows.Media.Effects.DropShadowEffect
+        {
+            Color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#33E1FF"),
+            BlurRadius = isChecked ? 10 : 5,
+            ShadowDepth = 0,
+            Opacity = isChecked ? 0.85 : 0.4
+        };
+        border.Child = isChecked
+            ? new System.Windows.Shapes.Path
+            {
+                Data = System.Windows.Media.Geometry.Parse("M2,7 L7,12 L15,2"),
+                Stroke = (System.Windows.Media.Brush)FindResource("AccentBrush"),
+                StrokeThickness = 2.2,
+                StrokeStartLineCap = System.Windows.Media.PenLineCap.Round,
+                StrokeEndLineCap = System.Windows.Media.PenLineCap.Round,
+                StrokeLineJoin = System.Windows.Media.PenLineJoin.Round,
+                Width = 15,
+                Height = 12,
+                Stretch = System.Windows.Media.Stretch.Uniform
+            }
+            : null;
+    }
+
+    private void NotesRichBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        var point = e.GetPosition(NotesRichBox);
+
+        foreach (var block in NotesRichBox.Document.Blocks)
+        {
+            if (block is not Paragraph para) continue;
+            foreach (var inline in para.Inlines)
+            {
+                if (inline is not InlineUIContainer { Child: Border { Uid: "checklist-marker" } border } container)
+                    continue;
+
+                var topLeft = border.TranslatePoint(new Point(0, 0), NotesRichBox);
+                var rect = new Rect(topLeft, new Size(border.ActualWidth, border.ActualHeight));
+                if (!rect.Contains(point)) continue;
+
+                var newChecked = border.Child is not System.Windows.Shapes.Path;
+                ApplyChecklistMarkerVisual(border, newChecked);
+                PopAnimate(border);
+                StyleChecklistLineFrom(container.ElementEnd, newChecked);
+                e.Handled = true;
+                return;
+            }
+        }
+    }
+
+    private static void StyleChecklistLineFrom(TextPointer afterMarker, bool complete)
+    {
+        var para = afterMarker.Paragraph;
+        if (para == null) return;
+
+        var muted = (System.Windows.Media.Brush)Application.Current.Resources["MutedTextBrush"];
+        var normal = (System.Windows.Media.Brush)Application.Current.Resources["TextBrush"];
+
+        var lineRange = new TextRange(afterMarker, para.ContentEnd);
+        lineRange.ApplyPropertyValue(TextElement.ForegroundProperty, complete ? muted : normal);
+        lineRange.ApplyPropertyValue(Inline.TextDecorationsProperty,
+            complete ? TextDecorations.Strikethrough : new TextDecorationCollection());
     }
 
     private void NotesFontSizeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)

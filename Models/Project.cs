@@ -23,7 +23,7 @@ public class Project
         }
     }
 
-    public string CompletionPercentText => $"{Math.Round(Completion * 100)}%";
+    public string CompletionPercentText => $"{Math.Round(Math.Clamp(Completion, 0, 1) * 100)}%";
 
     public string NextGoalSummary => NextIncompleteGoal() is Goal g
         ? $"Next: {g.Name}"

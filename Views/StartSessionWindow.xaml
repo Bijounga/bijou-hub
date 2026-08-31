@@ -5,7 +5,9 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="{StaticResource BgBrush}">
-    <Grid Margin="16">
+    <Grid>
+        <Rectangle Fill="{StaticResource DotGridBrush}" IsHitTestVisible="False"/>
+        <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -18,15 +20,15 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock x:Name="ProjectNameText" FontSize="18" FontWeight="Bold" Margin="0,0,0,16"/>
+        <TextBlock x:Name="ProjectNameText" Style="{StaticResource HeadingText}" FontSize="18" Margin="0,0,0,16"/>
 
-        <TextBlock Grid.Row="1" Text="MODE FOR THIS SESSION" Foreground="#9A9A9A" Margin="0,0,0,4"/>
+        <TextBlock Grid.Row="1" Text="// MODE FOR THIS SESSION" Foreground="#9A9A9A" Margin="0,0,0,4"/>
         <ComboBox Grid.Row="2" x:Name="ModeCombo" Margin="0,0,0,16"/>
 
-        <TextBlock Grid.Row="3" Text="WORKING ON" Foreground="#9A9A9A" Margin="0,0,0,4"/>
+        <TextBlock Grid.Row="3" Text="// WORKING ON" Foreground="#9A9A9A" Margin="0,0,0,4"/>
         <ComboBox Grid.Row="4" x:Name="GoalCombo" Margin="0,0,0,16" DisplayMemberPath="Label"/>
 
-        <TextBlock Grid.Row="5" Text="TIME BUDGET" Foreground="#9A9A9A" Margin="0,0,0,4"/>
+        <TextBlock Grid.Row="5" Text="// TIME BUDGET" Foreground="#9A9A9A" Margin="0,0,0,4"/>
         <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,0,0,16">
             <ComboBox x:Name="BudgetCombo" Width="140" SelectionChanged="BudgetCombo_SelectionChanged"/>
             <TextBox x:Name="CustomBudgetBox" Width="80" Margin="8,0,0,0" Visibility="Collapsed"/>
@@ -36,5 +38,6 @@
             <Button Content="Cancel" Width="90" Margin="0,0,8,0" Click="Cancel_Click"/>
             <Button Content="▶  Start" Width="100" Style="{StaticResource AccentButton}" Click="Start_Click"/>
         </StackPanel>
+    </Grid>
     </Grid>
 </Window>

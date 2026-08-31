@@ -5,7 +5,9 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="{StaticResource BgBrush}">
-    <Grid Margin="16">
+    <Grid>
+        <Rectangle Fill="{StaticResource DotGridBrush}" IsHitTestVisible="False"/>
+        <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -20,5 +22,6 @@
             <Button Content="Reset defaults" Margin="0,0,8,0" Click="ResetDefaults_Click"/>
             <Button Content="Close" Width="90" Style="{StaticResource AccentButton}" Click="Close_Click"/>
         </StackPanel>
+    </Grid>
     </Grid>
 </Window>

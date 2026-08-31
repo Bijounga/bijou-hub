@@ -5,7 +5,9 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="{StaticResource BgBrush}">
-    <Grid Margin="16">
+    <Grid>
+        <Rectangle Fill="{StaticResource DotGridBrush}" IsHitTestVisible="False"/>
+        <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -30,5 +32,6 @@
             <Button Content="Cancel" Width="80" Margin="0,0,8,0" Click="Cancel_Click"/>
             <Button Content="Add" Width="80" Click="Add_Click"/>
         </StackPanel>
+    </Grid>
     </Grid>
 </Window>

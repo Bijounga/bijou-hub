@@ -4,7 +4,9 @@
         Title="Edit Project" Height="640" Width="680"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource BgBrush}">
-    <Grid Margin="16">
+    <Grid>
+        <Rectangle Fill="{StaticResource DotGridBrush}" IsHitTestVisible="False"/>
+        <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -19,22 +21,22 @@
                 <ColumnDefinition Width="200"/>
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                <TextBlock Text="PROJECT NAME" Foreground="#9A9A9A" Margin="0,0,0,4"/>
+                <TextBlock Text="// PROJECT NAME" Foreground="#9A9A9A" Margin="0,0,0,4"/>
                 <TextBox x:Name="NameBox" FontSize="16"/>
             </StackPanel>
             <StackPanel Grid.Column="1">
-                <TextBlock Text="LINKED MODE" Foreground="#9A9A9A" Margin="0,0,0,4"/>
+                <TextBlock Text="// LINKED MODE" Foreground="#9A9A9A" Margin="0,0,0,4"/>
                 <ComboBox x:Name="ModeCombo" DisplayMemberPath="Name"/>
             </StackPanel>
         </Grid>
 
         <StackPanel Grid.Row="1" Margin="0,0,0,16">
-            <TextBlock Text="DEFAULT SESSION BUDGET (MINUTES, OPTIONAL)" Foreground="#9A9A9A" Margin="0,0,0,4"/>
+            <TextBlock Text="// DEFAULT SESSION BUDGET (MINUTES, OPTIONAL)" Foreground="#9A9A9A" Margin="0,0,0,4"/>
             <TextBox x:Name="BudgetBox" Width="120" HorizontalAlignment="Left"/>
         </StackPanel>
 
         <DockPanel Grid.Row="2" LastChildFill="False" Margin="0,0,0,6">
-            <TextBlock Text="GOALS" Foreground="#9A9A9A" VerticalAlignment="Center"/>
+            <TextBlock Text="// GOALS" Foreground="#9A9A9A" VerticalAlignment="Center"/>
             <Button Content="+ Goal" DockPanel.Dock="Right" Click="AddGoal_Click"/>
         </DockPanel>
 
@@ -43,7 +45,7 @@
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush}"
-                                BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,8">
+                                BorderThickness="1" CornerRadius="2" Padding="10,8" Margin="0,0,0,8">
                             <StackPanel>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -108,5 +110,6 @@
             <Button Content="Cancel" Width="90" Margin="0,0,8,0" Click="Cancel_Click"/>
             <Button Content="Save" Width="90" Style="{StaticResource AccentButton}" Click="Save_Click"/>
         </StackPanel>
+    </Grid>
     </Grid>
 </Window>

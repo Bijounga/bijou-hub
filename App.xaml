@@ -8,20 +8,58 @@
         <ResourceDictionary>
             <conv:IndexToBrushConverter x:Key="IndexToBrushConverter"/>
 
-            <SolidColorBrush x:Key="BgBrush" Color="#070B12"/>
-            <SolidColorBrush x:Key="PanelBrush" Color="#0F1620"/>
-            <SolidColorBrush x:Key="CardBrush" Color="#16202C"/>
-            <SolidColorBrush x:Key="CardHoverBrush" Color="#1D2C3C"/>
-            <SolidColorBrush x:Key="BorderBrush" Color="#2A3D4E"/>
-            <SolidColorBrush x:Key="TextBrush" Color="#EAF4FB"/>
-            <SolidColorBrush x:Key="MutedTextBrush" Color="#82A0B4"/>
-            <SolidColorBrush x:Key="AccentBrush" Color="#35C1F0"/>
-            <SolidColorBrush x:Key="DangerBrush" Color="#E0384D"/>
+            <SolidColorBrush x:Key="BgBrush" Color="#030405"/>
+            <SolidColorBrush x:Key="PanelBrush" Color="#08090B"/>
+            <SolidColorBrush x:Key="CardBrush" Color="#0C0F10"/>
+            <SolidColorBrush x:Key="CardHoverBrush" Color="#121819"/>
+            <SolidColorBrush x:Key="BorderBrush" Color="#2E3B3D"/>
+            <SolidColorBrush x:Key="TextBrush" Color="#E8F6FA"/>
+            <SolidColorBrush x:Key="MutedTextBrush" Color="#5C7A80"/>
+            <SolidColorBrush x:Key="AccentBrush" Color="#33E1FF"/>
+            <SolidColorBrush x:Key="HazardBrush" Color="#FF9A2E"/>
+            <SolidColorBrush x:Key="DangerBrush" Color="#FF3B30"/>
 
             <LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0,0" EndPoint="1,0">
                 <GradientStop Color="#1CA9E8" Offset="0"/>
-                <GradientStop Color="#6C63E0" Offset="1"/>
+                <GradientStop Color="#33E1FF" Offset="1"/>
             </LinearGradientBrush>
+
+            <DrawingBrush x:Key="HazardHatchBrush" TileMode="Tile" Viewport="0,0,10,10" ViewportUnits="Absolute" Stretch="None">
+                <DrawingBrush.Drawing>
+                    <DrawingGroup>
+                        <GeometryDrawing Brush="#FF9A2E">
+                            <GeometryDrawing.Geometry>
+                                <RectangleGeometry Rect="0,0,10,10"/>
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                        <GeometryDrawing Brush="#40000000">
+                            <GeometryDrawing.Geometry>
+                                <PathGeometry Figures="M0,10 L10,0 L10,3 L3,10 Z M0,3 L3,0 L0,0 Z"/>
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingBrush.Drawing>
+            </DrawingBrush>
+
+            <DrawingBrush x:Key="DotGridBrush" TileMode="Tile" Viewport="0,0,26,26" ViewportUnits="Absolute" Stretch="None" Opacity="0.5">
+                <DrawingBrush.Drawing>
+                    <GeometryDrawing Brush="#2A4A4E">
+                        <GeometryDrawing.Geometry>
+                            <EllipseGeometry Center="2,2" RadiusX="1.1" RadiusY="1.1"/>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingBrush.Drawing>
+            </DrawingBrush>
+
+            <DrawingBrush x:Key="HoloSegmentBrush" TileMode="Tile" Viewport="0,0,7,7" ViewportUnits="Absolute" Stretch="None">
+                <DrawingBrush.Drawing>
+                    <GeometryDrawing Brush="{StaticResource AccentBrush}">
+                        <GeometryDrawing.Geometry>
+                            <RectangleGeometry Rect="0,0,5,5"/>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingBrush.Drawing>
+            </DrawingBrush>
 
             <LinearGradientBrush x:Key="GemGradientBrush" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#FFFFFF" Offset="0"/>
@@ -29,48 +67,65 @@
                 <GradientStop Color="#A8D8F0" Offset="1"/>
             </LinearGradientBrush>
 
+            <FontFamily x:Key="HeadingFont">./Fonts/#Rajdhani SemiBold</FontFamily>
+            <FontFamily x:Key="BodyFont">./Fonts/#IBM Plex Mono</FontFamily>
+
             <Style TargetType="Window">
                 <Setter Property="Background" Value="{StaticResource BgBrush}"/>
-                <Setter Property="FontFamily" Value="Consolas"/>
+                <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
                 <Setter Property="FontSize" Value="14"/>
                 <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
             </Style>
 
             <Style TargetType="TextBlock">
-                <Setter Property="FontFamily" Value="Consolas"/>
+                <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
                 <Setter Property="FontSize" Value="14"/>
                 <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
             </Style>
 
+            <Style x:Key="HeadingText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                <Setter Property="FontFamily" Value="{StaticResource HeadingFont}"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+            </Style>
+
             <Style x:Key="BaseButtonStyle" TargetType="Button">
-                <Setter Property="FontFamily" Value="Consolas"/>
-                <Setter Property="Background" Value="#1E1E2E"/>
+                <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+                <Setter Property="Background" Value="#1A33E1FF"/>
                 <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Padding" Value="10,5"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="6"
-                                    Padding="{TemplateBinding Padding}"
-                                    RenderTransformOrigin="0.5,0.5">
-                                <Border.RenderTransform>
+                            <Grid RenderTransformOrigin="0.5,0.5">
+                                <Grid.RenderTransform>
                                     <ScaleTransform x:Name="BdScale" ScaleX="1" ScaleY="1"/>
-                                </Border.RenderTransform>
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
+                                </Grid.RenderTransform>
+                                <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        Padding="{TemplateBinding Padding}">
+                                    <Border.Effect>
+                                        <DropShadowEffect x:Name="BdGlow" Color="#33E1FF" BlurRadius="5" ShadowDepth="0" Opacity="0.45"/>
+                                    </Border.Effect>
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <Line X1="0" Y1="0" X2="7" Y2="0" Stroke="{StaticResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-1"/>
+                                <Line X1="0" Y1="0" X2="0" Y2="7" Stroke="{StaticResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-1"/>
+                                <Line X1="0" Y1="0" X2="7" Y2="0" Stroke="{StaticResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="-1"/>
+                                <Line X1="0" Y1="0" X2="0" Y2="7" Stroke="{StaticResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="-1"/>
+                            </Grid>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Trigger.EnterActions>
                                         <BeginStoryboard>
                                             <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleX" To="1.035" Duration="0:0:0.12"/>
-                                                <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleY" To="1.035" Duration="0:0:0.12"/>
+                                                <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleX" To="1.03" Duration="0:0:0.12"/>
+                                                <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleY" To="1.03" Duration="0:0:0.12"/>
+                                                <DoubleAnimation Storyboard.TargetName="BdGlow" Storyboard.TargetProperty="BlurRadius" To="16" Duration="0:0:0.15"/>
+                                                <DoubleAnimation Storyboard.TargetName="BdGlow" Storyboard.TargetProperty="Opacity" To="0.95" Duration="0:0:0.15"/>
                                             </Storyboard>
                                         </BeginStoryboard>
                                     </Trigger.EnterActions>
@@ -79,10 +134,11 @@
                                             <Storyboard>
                                                 <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.12"/>
                                                 <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.12"/>
+                                                <DoubleAnimation Storyboard.TargetName="BdGlow" Storyboard.TargetProperty="BlurRadius" To="5" Duration="0:0:0.15"/>
+                                                <DoubleAnimation Storyboard.TargetName="BdGlow" Storyboard.TargetProperty="Opacity" To="0.45" Duration="0:0:0.15"/>
                                             </Storyboard>
                                         </BeginStoryboard>
                                     </Trigger.ExitActions>
-                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
                                     <Setter Property="Opacity" Value="0.4"/>
@@ -95,64 +151,33 @@
             <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}"/>
 
             <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-                <Setter Property="Background" Value="{StaticResource AccentGradientBrush}"/>
+                <Setter Property="Background" Value="#332FE0FF"/>
                 <Setter Property="Foreground" Value="#F5FAFF"/>
                 <Setter Property="FontWeight" Value="Bold"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                                    CornerRadius="6" Padding="{TemplateBinding Padding}"
-                                    RenderTransformOrigin="0.5,0.5">
-                                <Border.RenderTransform>
-                                    <ScaleTransform x:Name="BdScale" ScaleX="1" ScaleY="1"/>
-                                </Border.RenderTransform>
-                                <Border.Effect>
-                                    <DropShadowEffect x:Name="BdGlow" Color="#35C1F0" BlurRadius="0" ShadowDepth="0" Opacity="0"/>
-                                </Border.Effect>
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Trigger.EnterActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleX" To="1.035" Duration="0:0:0.12"/>
-                                                <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleY" To="1.035" Duration="0:0:0.12"/>
-                                                <DoubleAnimation Storyboard.TargetName="BdGlow" Storyboard.TargetProperty="BlurRadius" To="16" Duration="0:0:0.15"/>
-                                                <DoubleAnimation Storyboard.TargetName="BdGlow" Storyboard.TargetProperty="Opacity" To="0.7" Duration="0:0:0.15"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.EnterActions>
-                                    <Trigger.ExitActions>
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.12"/>
-                                                <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.12"/>
-                                                <DoubleAnimation Storyboard.TargetName="BdGlow" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.15"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </Trigger.ExitActions>
-                                    <Setter TargetName="Bd" Property="Opacity" Value="0.9"/>
-                                </Trigger>
-                                <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Opacity" Value="0.4"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
             </Style>
 
             <Style TargetType="TextBox">
-                <Setter Property="FontFamily" Value="Consolas"/>
-                <Setter Property="Background" Value="#1E1E2E"/>
+                <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+                <Setter Property="Background" Value="#1A33E1FF"/>
                 <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Padding" Value="6,4"/>
                 <Setter Property="CaretBrush" Value="{StaticResource TextBrush}"/>
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect Color="#33E1FF" BlurRadius="5" ShadowDepth="0" Opacity="0.3"/>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsFocused" Value="True">
+                        <Setter Property="Effect">
+                            <Setter.Value>
+                                <DropShadowEffect Color="#33E1FF" BlurRadius="12" ShadowDepth="0" Opacity="0.8"/>
+                            </Setter.Value>
+                        </Setter>
+                    </Trigger>
+                </Style.Triggers>
             </Style>
 
             <Style TargetType="ComboBoxItem">
@@ -178,12 +203,17 @@
             </Style>
 
             <Style TargetType="ComboBox">
-                <Setter Property="FontFamily" Value="Consolas"/>
-                <Setter Property="Background" Value="#1E1E2E"/>
+                <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
+                <Setter Property="Background" Value="#1A33E1FF"/>
                 <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Padding" Value="8,6"/>
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect Color="#33E1FF" BlurRadius="5" ShadowDepth="0" Opacity="0.3"/>
+                    </Setter.Value>
+                </Setter>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ComboBox">
@@ -195,9 +225,8 @@
                                         <ControlTemplate TargetType="ToggleButton">
                                             <Border Background="{Binding Background, RelativeSource={RelativeSource AncestorType=ComboBox}}"
                                                     BorderBrush="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                                    BorderThickness="{Binding BorderThickness, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                                    CornerRadius="6">
-                                                <Path Data="M0,0 L5,5 L10,0" Stroke="{StaticResource MutedTextBrush}"
+                                                    BorderThickness="{Binding BorderThickness, RelativeSource={RelativeSource AncestorType=ComboBox}}">
+                                                <Path Data="M0,0 L5,5 L10,0" Stroke="{StaticResource AccentBrush}"
                                                       StrokeThickness="1.5" StrokeLineJoin="Round"
                                                       HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0"/>
                                             </Border>
@@ -210,9 +239,12 @@
                                                   HorizontalAlignment="Left" VerticalAlignment="Center"/>
                                 <Popup x:Name="Popup" IsOpen="{TemplateBinding IsDropDownOpen}"
                                        Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
-                                    <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush}"
-                                            BorderThickness="1" CornerRadius="6" MaxHeight="220"
+                                    <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource AccentBrush}"
+                                            BorderThickness="1" CornerRadius="2" MaxHeight="220"
                                             MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ComboBox}}">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="#33E1FF" BlurRadius="14" ShadowDepth="0" Opacity="0.6"/>
+                                        </Border.Effect>
                                         <ScrollViewer Margin="2" SnapsToDevicePixels="True">
                                             <ItemsPresenter/>
                                         </ScrollViewer>
@@ -222,6 +254,15 @@
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsDropDownOpen" Value="True">
+                        <Setter Property="Effect">
+                            <Setter.Value>
+                                <DropShadowEffect Color="#33E1FF" BlurRadius="12" ShadowDepth="0" Opacity="0.8"/>
+                            </Setter.Value>
+                        </Setter>
+                    </Trigger>
+                </Style.Triggers>
             </Style>
 
             <Style TargetType="CheckBox">
@@ -235,19 +276,25 @@
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <Border x:Name="Box" Width="18" Height="18" CornerRadius="4"
-                                        Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush}"
-                                        BorderThickness="1.5" VerticalAlignment="Center">
-                                    <Path x:Name="Check" Data="M2,6 L6,10 L13,2" Stroke="White" StrokeThickness="2"
+                                <Border x:Name="Box" Width="21" Height="21"
+                                        Background="#1A33E1FF" BorderBrush="{StaticResource AccentBrush}"
+                                        BorderThickness="1.5" VerticalAlignment="Center"
+                                        RenderTransformOrigin="0.5,0.5">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform/>
+                                    </Border.RenderTransform>
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#33E1FF" BlurRadius="7" ShadowDepth="0" Opacity="0.65"/>
+                                    </Border.Effect>
+                                    <Path x:Name="Check" Data="M2,7 L7,12 L15,2" Stroke="{StaticResource AccentBrush}" StrokeThickness="2.5"
                                           StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
                                           Visibility="Collapsed"/>
                                 </Border>
-                                <ContentPresenter Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                <ContentPresenter Grid.Column="1" Margin="9,0,0,0" VerticalAlignment="Center"/>
                             </Grid>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="Box" Property="Background" Value="{StaticResource AccentGradientBrush}"/>
-                                    <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                    <Setter TargetName="Box" Property="Background" Value="#5533E1FF"/>
                                     <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
                                 </Trigger>
                                 <Trigger Property="IsMouseOver" Value="True">
@@ -273,7 +320,7 @@
                         <ControlTemplate TargetType="ListBoxItem">
                             <Border x:Name="Bd" Background="{StaticResource CardBrush}"
                                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                                    CornerRadius="6" Padding="10,8">
+                                    CornerRadius="2" Padding="10,8">
                                 <ContentPresenter/>
                             </Border>
                             <ControlTemplate.Triggers>
@@ -294,10 +341,15 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Thumb">
-                            <Border x:Name="ThumbBorder" Background="{StaticResource BorderBrush}" CornerRadius="4" Margin="2"/>
+                            <Border x:Name="ThumbBorder" Background="{StaticResource HoloSegmentBrush}"
+                                    BorderBrush="{StaticResource AccentBrush}" BorderThickness="1" Margin="2" Opacity="0.55">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#33E1FF" BlurRadius="4" ShadowDepth="0" Opacity="0.5"/>
+                                </Border.Effect>
+                            </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="ThumbBorder" Property="Background" Value="{StaticResource AccentBrush}"/>
+                                    <Setter TargetName="ThumbBorder" Property="Opacity" Value="0.95"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
