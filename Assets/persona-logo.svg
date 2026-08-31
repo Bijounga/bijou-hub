@@ -1,0 +1,21 @@
+<svg width="680" height="650" viewBox="0 0 680 650" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Persona logo</title>
+<desc>A stylized bust logo of a round blue character with hexagonal white gem eyes, thin dark brows, a calm smile, and a red wrapped scarf with a draped flap over one shoulder.</desc>
+<defs>
+<clipPath id="headClip"><ellipse cx="340" cy="270" rx="175" ry="190"/></clipPath>
+</defs>
+<ellipse cx="340" cy="270" rx="175" ry="190" fill="#3DC6F0" stroke="#0B1420" stroke-width="7"/>
+<ellipse cx="230" cy="300" rx="110" ry="170" fill="#1C8FC2" clip-path="url(#headClip)"/>
+<path d="M215,175 Q255,152 300,178" stroke="#0B1420" stroke-width="11" fill="none" stroke-linecap="round"/>
+<path d="M380,178 Q425,152 465,175" stroke="#0B1420" stroke-width="11" fill="none" stroke-linecap="round"/>
+<polygon points="230,208 280,208 310,250 280,293 230,293 200,250" fill="#F2F6F8" stroke="#0B1420" stroke-width="6" stroke-linejoin="round"/>
+<polygon points="400,208 450,208 480,250 450,293 400,293 370,250" fill="#F2F6F8" stroke="#0B1420" stroke-width="6" stroke-linejoin="round"/>
+<ellipse cx="255" cy="278" rx="42" ry="16" fill="#B8D8E8"/>
+<ellipse cx="425" cy="278" rx="42" ry="16" fill="#B8D8E8"/>
+<path d="M300,345 Q340,365 380,345" stroke="#0B1420" stroke-width="9" fill="none" stroke-linecap="round"/>
+<path d="M210,500 Q340,540 470,500 L470,600 Q340,630 210,600 Z" fill="#2FA8D8" stroke="#0B1420" stroke-width="7" stroke-linejoin="round"/>
+<path d="M470,470 L525,560 L465,545 L455,480 Z" fill="#D6362E" stroke="#0B1420" stroke-width="7" stroke-linejoin="round"/>
+<path d="M470,470 L500,540 L465,545 L460,485 Z" fill="#8C1F2F"/>
+<path d="M190,430 Q340,480 490,430 L500,500 Q340,545 180,500 Z" fill="#D6362E" stroke="#0B1420" stroke-width="7" stroke-linejoin="round"/>
+<path d="M190,430 Q270,465 350,470 L345,505 Q265,500 180,500 Z" fill="#8C1F2F" opacity="0.85"/>
+</svg>

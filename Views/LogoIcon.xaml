@@ -1,0 +1,38 @@
+<UserControl x:Class="BijouHub.Views.LogoIcon"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <EllipseGeometry x:Key="DiscClipGeo" Center="340,340" RadiusX="284" RadiusY="284"/>
+    </UserControl.Resources>
+    <Viewbox Stretch="Uniform">
+        <Canvas Width="680" Height="650">
+            <Ellipse Canvas.Left="50" Canvas.Top="50" Width="580" Height="580"
+                     Fill="White" Stroke="#0B1420" StrokeThickness="12"/>
+
+            <Path Data="M195,525 A235,235 0 1,1 497,165" Clip="{StaticResource DiscClipGeo}"
+                  Stroke="#2FA8E0" StrokeThickness="120" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+            <Path Data="M413,564 A235,235 0 0,1 195,525" Clip="{StaticResource DiscClipGeo}"
+                  Stroke="#B9C4CC" StrokeThickness="100" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+            <Path Data="M215,470 A235,235 0 0,1 300,215" Clip="{StaticResource DiscClipGeo}"
+                  Stroke="#7FE0F5" StrokeThickness="34" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Opacity="0.85"/>
+
+            <Path Data="M470,230 Q425,300 435,400" Clip="{StaticResource DiscClipGeo}"
+                  Stroke="#0B1420" StrokeThickness="5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+
+            <Path Data="M340,500 L340,555" Clip="{StaticResource DiscClipGeo}"
+                  Stroke="#0B1420" StrokeThickness="5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+            <Path Data="M395,485 L410,538" Clip="{StaticResource DiscClipGeo}"
+                  Stroke="#0B1420" StrokeThickness="5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+            <Path Data="M285,485 L270,538" Clip="{StaticResource DiscClipGeo}"
+                  Stroke="#0B1420" StrokeThickness="5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+            <Path Data="M255,515 L370,555" Clip="{StaticResource DiscClipGeo}"
+                  Stroke="#F2F6F8" StrokeThickness="5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Opacity="0.8"/>
+
+            <Ellipse Canvas.Left="59" Canvas.Top="416" Width="72" Height="88"
+                     Fill="#F2F6F8" Stroke="#0B1420" StrokeThickness="6"/>
+
+            <Ellipse Canvas.Left="50" Canvas.Top="50" Width="580" Height="580"
+                     Fill="Transparent" Stroke="#0B1420" StrokeThickness="12"/>
+        </Canvas>
+    </Viewbox>
+</UserControl>

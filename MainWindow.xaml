@@ -1,0 +1,331 @@
+<Window x:Class="BijouHub.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BijouHub"
+        mc:Ignorable="d"
+        Title="BijouHub" Height="820" Width="1280" MinHeight="520" MinWidth="760"
+        WindowStartupLocation="CenterScreen"
+        Icon="Assets/app-icon.ico"
+        Background="{StaticResource BgBrush}"
+        PreviewKeyDown="Window_PreviewKeyDown">
+    <Grid x:Name="RootGrid">
+        <Grid.LayoutTransform>
+            <ScaleTransform x:Name="AppScaleTransform" ScaleX="1" ScaleY="1"/>
+        </Grid.LayoutTransform>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="240"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0" ClipToBounds="True">
+            <Grid>
+            <Ellipse Width="220" Height="220" Fill="{StaticResource AccentGradientBrush}" Opacity="0.10"
+                     HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-90,-110,0,0" IsHitTestVisible="False">
+                <Ellipse.Effect>
+                    <BlurEffect Radius="60"/>
+                </Ellipse.Effect>
+            </Ellipse>
+            <Grid Margin="16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="2*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="2*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="2,0,0,24"
+                            Cursor="Hand" MouseLeftButtonDown="HomeHeader_Click">
+                    <Polygon Points="6,0 18,0 24,8 18,16 6,16 0,8"
+                             Fill="{StaticResource GemGradientBrush}"
+                             Stroke="#071018" StrokeThickness="1.2" StrokeLineJoin="Round"
+                             Width="24" Height="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="BijouHub" FontSize="19" FontWeight="Bold" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <TextBlock Grid.Row="1" Text="MODES" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="4,0,0,8"/>
+
+                <ListBox x:Name="ModesList" Grid.Row="2"
+                         AlternationCount="3"
+                         SelectionChanged="ModesList_SelectionChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="4"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" CornerRadius="2" Margin="0,0,10,0"
+                                        Background="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=(ItemsControl.AlternationIndex), Converter={StaticResource IndexToBrushConverter}}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" FontSize="13"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <Button Grid.Row="3" Content="+ New Mode" Style="{StaticResource AccentButton}" Margin="0,8,8,0" Padding="10,8" Click="NewMode_Click"/>
+
+                <TextBlock Grid.Row="4" Text="PROJECTS" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="4,16,0,8"/>
+
+                <ListBox x:Name="ProjectsList" Grid.Row="5"
+                         AlternationCount="3"
+                         SelectionChanged="ProjectsList_SelectionChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="4"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" CornerRadius="2" Margin="0,0,10,0"
+                                        Background="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=(ItemsControl.AlternationIndex), Converter={StaticResource IndexToBrushConverter}}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" FontSize="13"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <Button Grid.Row="6" Content="+ New Project" Style="{StaticResource AccentButton}" Margin="0,8,0,0" Padding="10,8" Click="NewProject_Click"/>
+                <Button Grid.Row="7" Content="Session Log" Margin="0,8,0,0" Click="SessionLog_Click"/>
+            </Grid>
+            </Grid>
+        </Border>
+
+        <!-- Main content -->
+        <Grid Grid.Column="1" Margin="28">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Polygon Points="11,0 33,0 44,15 33,30 11,30 0,15"
+                         Fill="{StaticResource GemGradientBrush}"
+                         Stroke="#071018" StrokeThickness="1.5" StrokeLineJoin="Round"
+                         Width="44" Height="30" Opacity="0.45" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                <TextBlock Text="Select a mode, or create one to get started."
+                           Foreground="{StaticResource MutedTextBrush}" FontSize="14" HorizontalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Mode detail (idle, not launched) -->
+            <StackPanel x:Name="ModeDetailPanel" Visibility="Collapsed">
+                <TextBlock x:Name="ModeDetailName" FontSize="26" FontWeight="Bold" Margin="0,0,0,20"/>
+
+                <TextBlock Text="LAUNCH ITEMS" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                <ItemsControl x:Name="ModeDetailLaunchItems" Margin="0,0,0,20">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush}"
+                                    BorderThickness="1" CornerRadius="6" Padding="10,7" Margin="0,0,0,6">
+                                <TextBlock Text="{Binding DisplayName}"/>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="BLOCKED" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                <ItemsControl x:Name="ModeDetailBlockItems" Margin="0,0,0,28">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource DangerBrush}"
+                                    BorderThickness="1" CornerRadius="6" Padding="10,7" Margin="0,0,0,6">
+                                <TextBlock Text="{Binding ProcessName}"/>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="▶  Launch" Style="{StaticResource AccentButton}" Padding="20,9" Click="Launch_Click"/>
+                    <Button Content="Edit" Margin="8,0,0,0" Padding="16,9" Click="EditMode_Click"/>
+                    <Button Content="Delete" Margin="8,0,0,0" Padding="16,9" Click="DeleteMode_Click"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Active session -->
+            <StackPanel x:Name="ActiveSessionPanel" Visibility="Collapsed">
+                <TextBlock x:Name="ActiveModeName" FontSize="26" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBlock x:Name="ActiveContextText" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,0,4"/>
+                <TextBlock x:Name="ActiveStatus" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,24"/>
+
+                <TextBlock x:Name="TimerDisplay" Text="00:00:00" FontSize="52" FontWeight="Bold"
+                           Foreground="{StaticResource AccentBrush}" Margin="0,0,0,28">
+                    <TextBlock.Effect>
+                        <DropShadowEffect x:Name="TimerGlow" Color="#35C1F0" BlurRadius="24" ShadowDepth="0" Opacity="0.6"/>
+                    </TextBlock.Effect>
+                    <TextBlock.Triggers>
+                        <EventTrigger RoutedEvent="Loaded">
+                            <BeginStoryboard>
+                                <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                    <DoubleAnimation Storyboard.TargetName="TimerGlow" Storyboard.TargetProperty="Opacity"
+                                                     From="0.35" To="0.8" Duration="0:0:1.6"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </TextBlock.Triggers>
+                </TextBlock>
+
+                <TextBlock Text="ACTIVITY" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
+                <StackPanel x:Name="BlockNotifications" Margin="0,0,0,28"/>
+
+                <Button Content="■  Finish Session" Padding="16,8" HorizontalAlignment="Left" Click="FinishSession_Click"/>
+            </StackPanel>
+
+            <!-- Project detail -->
+            <ScrollViewer x:Name="ProjectDetailPanel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="380"/>
+                        <ColumnDefinition Width="24"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock x:Name="ProjectDetailName" FontSize="26" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                        <Border Width="320" Height="14" CornerRadius="7" Background="{StaticResource CardBrush}"
+                                HorizontalAlignment="Left" Margin="0,0,0,4">
+                            <Border x:Name="ProjectProgressFill" Width="0" Height="14" CornerRadius="7"
+                                    Background="{StaticResource AccentGradientBrush}" HorizontalAlignment="Left"/>
+                        </Border>
+                        <TextBlock x:Name="ProjectProgressLabel" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,0,4"/>
+                        <TextBlock x:Name="ProjectTimeSpentText" Foreground="{StaticResource AccentBrush}" FontSize="12" Margin="0,0,0,20"/>
+
+                        <TextBlock Text="GOALS" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                        <ItemsControl x:Name="ProjectGoalsDisplay" Margin="0,0,0,20">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush}"
+                                            BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,6">
+                                        <StackPanel>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <CheckBox Grid.Column="0" IsChecked="{Binding IsComplete, Mode=OneWay}"
+                                                          IsHitTestVisible="False" Margin="0,0,8,0"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" FontWeight="Bold"/>
+                                                <TextBlock Grid.Column="2" Text="{Binding Weight, StringFormat={}{0}%}"
+                                                           Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <ItemsControl ItemsSource="{Binding SubGoals}" Margin="26,8,0,0">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,0,0,6">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <CheckBox Grid.Column="0" IsChecked="{Binding IsComplete, Mode=OneWay}"
+                                                                      IsHitTestVisible="False" Margin="0,0,8,0"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center"/>
+                                                            <TextBlock Grid.Column="2" Text="{Binding Weight, StringFormat={}{0}%}"
+                                                                       Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center"/>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                            <Button Content="▶  Start Session" Style="{StaticResource AccentButton}" Padding="20,9" Click="StartProjectSession_Click"/>
+                            <Button Content="Edit" Margin="8,0,0,0" Padding="16,9" Click="EditProject_Click"/>
+                            <Button Content="Delete" Margin="8,0,0,0" Padding="16,9" Click="DeleteProject_Click"/>
+                        </StackPanel>
+
+                        <TextBlock Text="SESSION LOG" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                        <ItemsControl x:Name="ProjectNotesDisplay"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <DockPanel LastChildFill="False" Margin="0,0,0,8">
+                            <TextBlock Text="MY NOTES" Foreground="{StaticResource MutedTextBrush}" FontSize="11" VerticalAlignment="Center"/>
+                            <Button Content="Keybinds" DockPanel.Dock="Right" Padding="8,3" Click="OpenKeybinds_Click"/>
+                        </DockPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <Button Content="B" FontWeight="Bold" Padding="12,4" Click="NotesBold_Click" ToolTip="Bold"/>
+                            <Button Content="I" FontStyle="Italic" Padding="12,4" Margin="4,0,0,0" Click="NotesItalic_Click" ToolTip="Italic"/>
+                            <Button Content="H" Padding="12,4" Margin="4,0,0,0" Click="NotesHeading_Click" ToolTip="Heading"/>
+                            <Button Content="•—" Padding="12,4" Margin="4,0,0,0" Click="NotesBullet_Click" ToolTip="Bullet list"/>
+                            <Button Content="☑" Padding="12,4" Margin="4,0,0,0" Click="NotesChecklist_Click" ToolTip="Checklist"/>
+                            <ComboBox x:Name="NotesFontSizeCombo" Width="56" Margin="8,0,0,0" SelectionChanged="NotesFontSizeCombo_SelectionChanged" ToolTip="Font size"/>
+                            <StackPanel Margin="2,0,0,0" VerticalAlignment="Stretch">
+                                <Button Content="▲" FontSize="8" Padding="4,1" Height="15" Click="NotesFontSizeUp_Click"/>
+                                <Button Content="▼" FontSize="8" Padding="4,1" Height="15" Margin="0,1,0,0" Click="NotesFontSizeDown_Click"/>
+                            </StackPanel>
+                            <ComboBox x:Name="NotesFontFamilyCombo" Width="150" Margin="8,0,0,0" SelectionChanged="NotesFontFamilyCombo_SelectionChanged" ToolTip="Font"/>
+                        </StackPanel>
+                        <RichTextBox x:Name="NotesRichBox" Height="440"
+                                     Background="{StaticResource CardBrush}" Foreground="{StaticResource TextBrush}"
+                                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                     Padding="12" AcceptsTab="True" VerticalScrollBarVisibility="Auto"/>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+
+            <!-- Home dashboard -->
+            <ScrollViewer x:Name="HomePanel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock x:Name="HomeWelcomeText" Text="Welcome back" FontSize="28" FontWeight="Bold" Margin="0,0,0,4"/>
+                    <TextBlock x:Name="HomeGreetingText" FontSize="16" Margin="0,0,0,24" TextWrapping="Wrap"
+                               Foreground="{StaticResource AccentBrush}">
+                        <TextBlock.Effect>
+                            <DropShadowEffect Color="#35C1F0" BlurRadius="14" ShadowDepth="0" Opacity="0.4"/>
+                        </TextBlock.Effect>
+                    </TextBlock>
+
+                    <TextBlock Text="TODAY" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                    <TextBlock x:Name="HomeTodayText" FontSize="32" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
+                    <TextBlock x:Name="HomeWeekText" Foreground="{StaticResource MutedTextBrush}" FontSize="13" Margin="0,0,0,24"/>
+
+                    <TextBlock Text="PROJECTS" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                    <ItemsControl x:Name="HomeProjectsList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="0,0,0,8"
+                                        Cursor="Hand" MouseLeftButtonDown="HomeProjectRow_Click">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{StaticResource CardBrush}"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource CardHoverBrush}"/>
+                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Bold"/>
+                                            <TextBlock Text="{Binding NextGoalSummary}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Text="{Binding CompletionPercentText}"
+                                                   Foreground="{StaticResource AccentBrush}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>
