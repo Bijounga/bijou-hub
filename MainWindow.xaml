@@ -107,9 +107,29 @@
         <Grid Grid.Column="1">
             <Rectangle Fill="{StaticResource DotGridBrush}" IsHitTestVisible="False"/>
             <Grid Margin="28">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
+
+            <Border x:Name="ActiveSessionBanner" Visibility="Collapsed" Background="{StaticResource CardBrush}"
+                    BorderBrush="{StaticResource AccentBrush}" BorderThickness="1" CornerRadius="2" Padding="12,7"
+                    HorizontalAlignment="Right" VerticalAlignment="Top" Cursor="Hand"
+                    MouseLeftButtonDown="ActiveSessionBanner_Click" Panel.ZIndex="10">
+                <Border.Effect>
+                    <DropShadowEffect Color="#33E1FF" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
+                </Border.Effect>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="⏱" Margin="0,0,8,0" Foreground="{StaticResource AccentBrush}"/>
+                    <TextBlock x:Name="ActiveSessionBannerText" Foreground="{StaticResource AccentBrush}" FontWeight="Bold"/>
+                    <TextBlock Text="  ·  click to return" Foreground="{StaticResource MutedTextBrush}" Margin="4,0,0,0"/>
+                </StackPanel>
+            </Border>
 
             <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Polygon Points="11,0 33,0 44,15 33,30 11,30 0,15"
@@ -181,19 +201,16 @@
                 <TextBlock Text="// ACTIVITY" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
                 <StackPanel x:Name="BlockNotifications" Margin="0,0,0,28"/>
 
-                <Button Content="■  Finish Session" Padding="16,8" HorizontalAlignment="Left" Click="FinishSession_Click"/>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="■  Finish Session" Padding="16,8" Click="FinishSession_Click"/>
+                    <Button x:Name="NotesToggleButton" Content="Notes" Margin="8,0,0,0" Padding="16,8" Click="NotesToggle_Click"/>
+                    <Button x:Name="PopoutToggleButton" Content="Pop Out" Margin="8,0,0,0" Padding="16,8" Click="PopoutToggle_Click"/>
+                </StackPanel>
             </StackPanel>
 
             <!-- Project detail -->
             <ScrollViewer x:Name="ProjectDetailPanel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="380"/>
-                        <ColumnDefinition Width="24"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <StackPanel Grid.Column="0">
+                    <StackPanel MaxWidth="380" HorizontalAlignment="Left">
                         <TextBlock x:Name="ProjectDetailName" Style="{StaticResource HeadingText}" FontSize="26" Margin="0,0,0,12"/>
 
                         <Border Width="320" Height="14" CornerRadius="3" Background="{StaticResource CardBrush}"
@@ -292,41 +309,16 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                            <Button Content="▶  Start Session" Style="{StaticResource AccentButton}" Padding="20,9" Click="StartProjectSession_Click"/>
-                            <Button Content="Edit" Margin="8,0,0,0" Padding="16,9" Click="EditProject_Click"/>
-                            <Button Content="Delete" Margin="8,0,0,0" Padding="16,9" Click="DeleteProject_Click"/>
-                        </StackPanel>
+                        <WrapPanel Margin="0,0,0,12">
+                            <Button Content="▶  Start Session" Style="{StaticResource AccentButton}" Padding="20,9" Click="StartProjectSession_Click" Margin="0,0,8,8"/>
+                            <Button Content="Edit" Padding="16,9" Click="EditProject_Click" Margin="0,0,8,8"/>
+                            <Button Content="Delete" Padding="16,9" Click="DeleteProject_Click" Margin="0,0,8,8"/>
+                            <Button x:Name="ProjectNotesToggleButton" Content="Hide Notes" Padding="16,9" Click="NotesToggle_Click" Margin="0,0,8,8"/>
+                        </WrapPanel>
 
                         <TextBlock Text="// SESSION LOG" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
                         <ItemsControl x:Name="ProjectNotesDisplay"/>
                     </StackPanel>
-
-                    <StackPanel Grid.Column="2">
-                        <DockPanel LastChildFill="False" Margin="0,0,0,8">
-                            <TextBlock Text="// MY NOTES" Foreground="{StaticResource MutedTextBrush}" FontSize="11" VerticalAlignment="Center"/>
-                            <Button Content="Keybinds" DockPanel.Dock="Right" Padding="8,3" Click="OpenKeybinds_Click"/>
-                        </DockPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <Button Content="B" FontWeight="Bold" Padding="12,4" Click="NotesBold_Click" ToolTip="Bold"/>
-                            <Button Content="I" FontStyle="Italic" Padding="12,4" Margin="4,0,0,0" Click="NotesItalic_Click" ToolTip="Italic"/>
-                            <Button Content="H" Padding="12,4" Margin="4,0,0,0" Click="NotesHeading_Click" ToolTip="Heading"/>
-                            <Button Content="•—" Padding="12,4" Margin="4,0,0,0" Click="NotesBullet_Click" ToolTip="Bullet list"/>
-                            <Button Content="☑" Padding="12,4" Margin="4,0,0,0" Click="NotesChecklist_Click" ToolTip="Checklist"/>
-                            <ComboBox x:Name="NotesFontSizeCombo" Width="56" Margin="8,0,0,0" SelectionChanged="NotesFontSizeCombo_SelectionChanged" ToolTip="Font size"/>
-                            <StackPanel Margin="2,0,0,0" VerticalAlignment="Stretch">
-                                <Button Content="▲" FontSize="8" Padding="4,1" Height="15" Click="NotesFontSizeUp_Click"/>
-                                <Button Content="▼" FontSize="8" Padding="4,1" Height="15" Margin="0,1,0,0" Click="NotesFontSizeDown_Click"/>
-                            </StackPanel>
-                            <ComboBox x:Name="NotesFontFamilyCombo" Width="150" Margin="8,0,0,0" SelectionChanged="NotesFontFamilyCombo_SelectionChanged" ToolTip="Font"/>
-                        </StackPanel>
-                        <RichTextBox x:Name="NotesRichBox" Height="440"
-                                     Background="{StaticResource CardBrush}" Foreground="{StaticResource TextBrush}"
-                                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                                     Padding="12" AcceptsTab="True" VerticalScrollBarVisibility="Auto"
-                                     PreviewMouseLeftButtonDown="NotesRichBox_PreviewMouseLeftButtonDown"/>
-                    </StackPanel>
-                </Grid>
             </ScrollViewer>
 
             <!-- Home dashboard -->
@@ -380,6 +372,33 @@
                     </ItemsControl>
                 </StackPanel>
             </ScrollViewer>
+            </Grid>
+
+            <!-- Shared notes panel: toggleable, shown alongside Project Detail or Active Session -->
+            <StackPanel x:Name="NotesPanel" Grid.Column="1" Width="420" Margin="24,0,0,0" Visibility="Collapsed">
+                <DockPanel LastChildFill="False" Margin="0,0,0,8">
+                    <TextBlock Text="// MY NOTES" Foreground="{StaticResource MutedTextBrush}" FontSize="11" VerticalAlignment="Center"/>
+                    <Button Content="Keybinds" DockPanel.Dock="Right" Padding="8,3" Click="OpenKeybinds_Click"/>
+                </DockPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <Button Content="B" FontWeight="Bold" Padding="12,4" Click="NotesBold_Click" ToolTip="Bold"/>
+                    <Button Content="I" FontStyle="Italic" Padding="12,4" Margin="4,0,0,0" Click="NotesItalic_Click" ToolTip="Italic"/>
+                    <Button Content="H" Padding="12,4" Margin="4,0,0,0" Click="NotesHeading_Click" ToolTip="Heading"/>
+                    <Button Content="•—" Padding="12,4" Margin="4,0,0,0" Click="NotesBullet_Click" ToolTip="Bullet list"/>
+                    <Button Content="☑" Padding="12,4" Margin="4,0,0,0" Click="NotesChecklist_Click" ToolTip="Checklist"/>
+                    <ComboBox x:Name="NotesFontSizeCombo" Width="56" Margin="8,0,0,0" SelectionChanged="NotesFontSizeCombo_SelectionChanged" ToolTip="Font size"/>
+                    <StackPanel Margin="2,0,0,0" VerticalAlignment="Stretch">
+                        <Button Content="▲" FontSize="8" Padding="4,1" Height="15" Click="NotesFontSizeUp_Click"/>
+                        <Button Content="▼" FontSize="8" Padding="4,1" Height="15" Margin="0,1,0,0" Click="NotesFontSizeDown_Click"/>
+                    </StackPanel>
+                    <ComboBox x:Name="NotesFontFamilyCombo" Width="150" Margin="8,0,0,0" SelectionChanged="NotesFontFamilyCombo_SelectionChanged" ToolTip="Font"/>
+                </StackPanel>
+                <RichTextBox x:Name="NotesRichBox" Height="440"
+                             Background="{StaticResource CardBrush}" Foreground="{StaticResource TextBrush}"
+                             BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                             Padding="12" AcceptsTab="True" VerticalScrollBarVisibility="Auto"
+                             PreviewMouseLeftButtonDown="NotesRichBox_PreviewMouseLeftButtonDown"/>
+            </StackPanel>
             </Grid>
         </Grid>
     </Grid>

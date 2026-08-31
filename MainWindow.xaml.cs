@@ -42,6 +42,10 @@ public partial class MainWindow : Window
     private int _activeSeconds;
     private int _idleSeconds;
     private bool _isIdle;
+    private bool _notesVisible = true;
+    private TimerPopoutWindow? _timerPopout;
+
+    private bool IsSessionActive => _activeMode != null || _activeProject != null;
 
     public MainWindow()
     {
@@ -49,7 +53,8 @@ public partial class MainWindow : Window
         DarkTitleBar.Apply(this);
         Closing += (_, _) =>
         {
-            if (ProjectDetailPanel.Visibility == Visibility.Visible) SaveFreeformNotes();
+            if (NotesPanel.Visibility == Visibility.Visible) SaveFreeformNotes();
+            _timerPopout?.Close();
             _settingsStore.Save(new AppSettings { ZoomLevel = AppScaleTransform.ScaleX });
         };
 
@@ -148,15 +153,20 @@ public partial class MainWindow : Window
 
     private void ModesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_activeMode != null) return; // don't let browsing interrupt an active session's view
-
         if (ModesList.SelectedItem is not WorkMode mode)
         {
-            ShowEmptyState();
+            if (!IsSessionActive) ShowEmptyState();
             return;
         }
 
         ProjectsList.SelectedItem = null;
+
+        if (mode == _activeMode)
+        {
+            ShowActiveSessionPanel();
+            return;
+        }
+
         ShowModeDetail(mode);
     }
 
@@ -206,15 +216,20 @@ public partial class MainWindow : Window
 
     private void ProjectsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_activeMode != null) return;
-
         if (ProjectsList.SelectedItem is not Project project)
         {
-            ShowEmptyState();
+            if (!IsSessionActive) ShowEmptyState();
             return;
         }
 
         ModesList.SelectedItem = null;
+
+        if (project == _activeProject)
+        {
+            ShowActiveSessionPanel();
+            return;
+        }
+
         ShowProjectDetail(project);
     }
 
@@ -271,7 +286,7 @@ public partial class MainWindow : Window
 
     private void HideAllPanels()
     {
-        if (ProjectDetailPanel.Visibility == Visibility.Visible)
+        if (NotesPanel.Visibility == Visibility.Visible)
             SaveFreeformNotes();
 
         EmptyState.Visibility = Visibility.Collapsed;
@@ -279,6 +294,71 @@ public partial class MainWindow : Window
         ActiveSessionPanel.Visibility = Visibility.Collapsed;
         ProjectDetailPanel.Visibility = Visibility.Collapsed;
         HomePanel.Visibility = Visibility.Collapsed;
+
+        ActiveSessionBanner.Visibility = IsSessionActive ? Visibility.Visible : Visibility.Collapsed;
+        if (IsSessionActive)
+            ActiveSessionBannerText.Text = TimerDisplay.Text;
+    }
+
+    private void UpdateNotesPanelVisibility()
+    {
+        var show = _notesVisible && _detailProject != null;
+        NotesPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+
+        var label = _notesVisible ? "Hide Notes" : "Notes";
+        if (NotesToggleButton != null) NotesToggleButton.Content = label;
+        if (ProjectNotesToggleButton != null) ProjectNotesToggleButton.Content = label;
+    }
+
+    private void NotesToggle_Click(object sender, RoutedEventArgs e)
+    {
+        _notesVisible = !_notesVisible;
+        UpdateNotesPanelVisibility();
+    }
+
+    private void ActiveSessionBanner_Click(object sender, MouseButtonEventArgs e)
+    {
+        ShowActiveSessionPanel();
+    }
+
+    private void PopoutToggle_Click(object sender, RoutedEventArgs e)
+    {
+        if (_timerPopout != null)
+        {
+            _timerPopout.Close();
+            return;
+        }
+
+        var popout = new TimerPopoutWindow();
+        popout.UpdateDisplay(_activeProject?.Name ?? _activeMode?.Name ?? "Session", TimerDisplay.Text, ActiveStatus.Text);
+        popout.DockRequested += () => popout.Close();
+        popout.FinishRequested += () =>
+        {
+            popout.Close();
+            FinishSession_Click(this, new RoutedEventArgs());
+        };
+        popout.Closed += (_, _) =>
+        {
+            _timerPopout = null;
+            PopoutToggleButton.Content = "Pop Out";
+        };
+
+        _timerPopout = popout;
+        PopoutToggleButton.Content = "Dock";
+        popout.Show();
+    }
+
+    private void ShowActiveSessionPanel()
+    {
+        HideAllPanels();
+        ActiveSessionPanel.Visibility = Visibility.Visible;
+        FadeIn(ActiveSessionPanel);
+        ActiveSessionBanner.Visibility = Visibility.Collapsed;
+
+        _detailProject = _activeProject;
+        if (_activeProject != null)
+            LoadFreeformNotes(_activeProject);
+        UpdateNotesPanelVisibility();
     }
 
     private static void FadeIn(UIElement element)
@@ -320,6 +400,9 @@ public partial class MainWindow : Window
         HideAllPanels();
         EmptyState.Visibility = Visibility.Visible;
         FadeIn(EmptyState);
+
+        _detailProject = null;
+        UpdateNotesPanelVisibility();
     }
 
     private void ShowModeDetail(WorkMode mode)
@@ -331,6 +414,9 @@ public partial class MainWindow : Window
         TypewriterReveal(ModeDetailName, mode.Name);
         ModeDetailLaunchItems.ItemsSource = mode.LaunchItems;
         ModeDetailBlockItems.ItemsSource = mode.BlockItems;
+
+        _detailProject = null;
+        UpdateNotesPanelVisibility();
     }
 
     private void GoalCheckBox_Changed(object sender, RoutedEventArgs e)
@@ -397,6 +483,7 @@ public partial class MainWindow : Window
 
         LoadFreeformNotes(project);
         ApplyNoteKeybinds();
+        UpdateNotesPanelVisibility();
     }
 
     // WPF's RichTextBox XAML serializers (both "Xaml" and "XamlPackage") silently drop
@@ -507,6 +594,9 @@ public partial class MainWindow : Window
         HomePanel.Visibility = Visibility.Visible;
         FadeIn(HomePanel);
 
+        _detailProject = null;
+        UpdateNotesPanelVisibility();
+
         var greeting = Greetings.Random();
         TypewriterReveal(HomeWelcomeText, "Welcome back", msPerChar: 8);
         TypewriterReveal(HomeGreetingText, greeting, msPerChar: 8);
@@ -522,7 +612,6 @@ public partial class MainWindow : Window
 
     private void HomeHeader_Click(object sender, MouseButtonEventArgs e)
     {
-        if (_activeMode != null) return; // don't interrupt an active session's view
         ModesList.SelectedItem = null;
         ProjectsList.SelectedItem = null;
         ShowHome();
@@ -530,9 +619,15 @@ public partial class MainWindow : Window
 
     private void HomeProjectRow_Click(object sender, MouseButtonEventArgs e)
     {
-        if (_activeMode != null) return;
-        if (sender is FrameworkElement { DataContext: Project project })
-            SelectProjectAndShowDetail(project);
+        if (sender is not FrameworkElement { DataContext: Project project }) return;
+
+        if (project == _activeProject)
+        {
+            ShowActiveSessionPanel();
+            return;
+        }
+
+        SelectProjectAndShowDetail(project);
     }
 
     private static string FormatSpan(int totalSeconds)
@@ -600,9 +695,7 @@ public partial class MainWindow : Window
         ActiveStatus.Text = "Active";
         TimerDisplay.Text = "00:00:00";
 
-        HideAllPanels();
-        ActiveSessionPanel.Visibility = Visibility.Visible;
-        FadeIn(ActiveSessionPanel);
+        ShowActiveSessionPanel();
 
         if (mode != null)
             _blockWatcher.Start(mode);
@@ -633,6 +726,11 @@ public partial class MainWindow : Window
         }
 
         TimerDisplay.Text = TimeSpan.FromSeconds(_activeSeconds).ToString(@"hh\:mm\:ss");
+
+        if (ActiveSessionBanner.Visibility == Visibility.Visible)
+            ActiveSessionBannerText.Text = TimerDisplay.Text;
+
+        _timerPopout?.UpdateDisplay(_activeProject?.Name ?? _activeMode?.Name ?? "Session", TimerDisplay.Text, ActiveStatus.Text);
 
         if (_targetMinutes is int target && !_budgetAlertShown && _activeSeconds >= target * 60)
         {
@@ -764,6 +862,8 @@ public partial class MainWindow : Window
         _blockReminderTimer.Stop();
         _pendingBlockRows.Clear();
         CloseAllAlertWindows();
+        _timerPopout?.Close();
+        _timerPopout = null;
 
         string? note = null;
         var finishedProject = _activeProject;
