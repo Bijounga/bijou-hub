@@ -1,5 +1,7 @@
 using System.Windows;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace BijouHub.Views;
 
@@ -25,8 +27,25 @@ public partial class TimerPopoutWindow : Window
 
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.ButtonState == MouseButtonState.Pressed)
-            DragMove();
+        if (e.ButtonState != MouseButtonState.Pressed) return;
+        if (IsDescendantOf(e.OriginalSource as DependencyObject, ResizeThumb)) return;
+        DragMove();
+    }
+
+    private static bool IsDescendantOf(DependencyObject? element, DependencyObject ancestor)
+    {
+        while (element != null)
+        {
+            if (element == ancestor) return true;
+            element = VisualTreeHelper.GetParent(element);
+        }
+        return false;
+    }
+
+    private void ResizeThumb_DragDelta(object sender, DragDeltaEventArgs e)
+    {
+        Width = Math.Max(MinWidth, Width + e.HorizontalChange);
+        Height = Math.Max(MinHeight, Height + e.VerticalChange);
     }
 
     private void Close_Click(object sender, MouseButtonEventArgs e) => DockRequested?.Invoke();
