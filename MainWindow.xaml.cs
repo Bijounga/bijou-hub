@@ -508,8 +508,8 @@ public partial class MainWindow : Window
         FadeIn(HomePanel);
 
         var greeting = Greetings.Random();
-        TypewriterReveal(HomeWelcomeText, "Welcome back",
-            onComplete: () => TypewriterReveal(HomeGreetingText, greeting));
+        TypewriterReveal(HomeWelcomeText, "Welcome back", msPerChar: 8);
+        TypewriterReveal(HomeGreetingText, greeting, msPerChar: 8);
 
         var todaySeconds = _logService.GetTodayTotalSeconds();
         HomeTodayText.Text = FormatSpan(todaySeconds);

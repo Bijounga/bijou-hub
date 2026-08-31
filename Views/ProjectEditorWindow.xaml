@@ -71,7 +71,7 @@
                                         </CheckBox.Style>
                                     </CheckBox>
                                     <TextBox Grid.Column="2" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBox Grid.Column="3" Text="{Binding Weight, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Weight %"/>
+                                    <TextBox Grid.Column="3" Text="{Binding Weight, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Weight %" LostFocus="WeightBox_LostFocus"/>
                                     <Button Grid.Column="4" Content="+ Sub" Padding="6,2" Margin="0,0,4,0" Click="AddSubGoal_Click" Tag="{Binding}"/>
                                     <Button Grid.Column="5" Content="Remove" Padding="6,2" Click="RemoveGoal_Click" Tag="{Binding}"/>
                                 </Grid>
@@ -93,7 +93,7 @@
                                                            VerticalAlignment="Center" Cursor="SizeAll" ToolTip="Drag to reorder"/>
                                                 <CheckBox Grid.Column="1" IsChecked="{Binding IsComplete}" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                                 <TextBox Grid.Column="2" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                                <TextBox Grid.Column="3" Text="{Binding Weight, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Weight %"/>
+                                                <TextBox Grid.Column="3" Text="{Binding Weight, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Weight %" LostFocus="WeightBox_LostFocus"/>
                                                 <Button Grid.Column="4" Content="Remove" Padding="6,2" Click="RemoveSubGoal_Click" Tag="{Binding}"/>
                                             </Grid>
                                         </DataTemplate>

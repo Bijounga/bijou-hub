@@ -164,20 +164,32 @@
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Padding" Value="6,4"/>
                 <Setter Property="CaretBrush" Value="{StaticResource TextBrush}"/>
-                <Setter Property="Effect">
+                <Setter Property="Template">
                     <Setter.Value>
-                        <DropShadowEffect Color="#33E1FF" BlurRadius="5" ShadowDepth="0" Opacity="0.3"/>
+                        <ControlTemplate TargetType="TextBox">
+                            <Grid>
+                                <Border x:Name="Glow" Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#33E1FF" BlurRadius="5" ShadowDepth="0" Opacity="0.3"/>
+                                    </Border.Effect>
+                                </Border>
+                                <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
+                                              VerticalAlignment="Center"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsFocused" Value="True">
+                                    <Setter TargetName="Glow" Property="Effect">
+                                        <Setter.Value>
+                                            <DropShadowEffect Color="#33E1FF" BlurRadius="12" ShadowDepth="0" Opacity="0.8"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
                     </Setter.Value>
                 </Setter>
-                <Style.Triggers>
-                    <Trigger Property="IsFocused" Value="True">
-                        <Setter Property="Effect">
-                            <Setter.Value>
-                                <DropShadowEffect Color="#33E1FF" BlurRadius="12" ShadowDepth="0" Opacity="0.8"/>
-                            </Setter.Value>
-                        </Setter>
-                    </Trigger>
-                </Style.Triggers>
             </Style>
 
             <Style TargetType="ComboBoxItem">
@@ -209,27 +221,27 @@
                 <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Padding" Value="8,6"/>
-                <Setter Property="Effect">
-                    <Setter.Value>
-                        <DropShadowEffect Color="#33E1FF" BlurRadius="5" ShadowDepth="0" Opacity="0.3"/>
-                    </Setter.Value>
-                </Setter>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ComboBox">
                             <Grid>
+                                <Border x:Name="Chrome" Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#33E1FF" BlurRadius="5" ShadowDepth="0" Opacity="0.3"/>
+                                    </Border.Effect>
+                                </Border>
                                 <ToggleButton x:Name="Toggle"
                                               IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
-                                              ClickMode="Press" Focusable="False">
+                                              ClickMode="Press" Focusable="False" Background="Transparent" BorderThickness="0">
                                     <ToggleButton.Template>
                                         <ControlTemplate TargetType="ToggleButton">
-                                            <Border Background="{Binding Background, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                                    BorderBrush="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                                    BorderThickness="{Binding BorderThickness, RelativeSource={RelativeSource AncestorType=ComboBox}}">
+                                            <Grid Background="Transparent">
                                                 <Path Data="M0,0 L5,5 L10,0" Stroke="{StaticResource AccentBrush}"
                                                       StrokeThickness="1.5" StrokeLineJoin="Round"
                                                       HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                            </Border>
+                                            </Grid>
                                         </ControlTemplate>
                                     </ToggleButton.Template>
                                 </ToggleButton>
@@ -251,18 +263,18 @@
                                     </Border>
                                 </Popup>
                             </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsDropDownOpen" Value="True">
+                                    <Setter TargetName="Chrome" Property="Effect">
+                                        <Setter.Value>
+                                            <DropShadowEffect Color="#33E1FF" BlurRadius="12" ShadowDepth="0" Opacity="0.8"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
-                <Style.Triggers>
-                    <Trigger Property="IsDropDownOpen" Value="True">
-                        <Setter Property="Effect">
-                            <Setter.Value>
-                                <DropShadowEffect Color="#33E1FF" BlurRadius="12" ShadowDepth="0" Opacity="0.8"/>
-                            </Setter.Value>
-                        </Setter>
-                    </Trigger>
-                </Style.Triggers>
             </Style>
 
             <Style TargetType="CheckBox">

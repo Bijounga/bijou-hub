@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -48,6 +49,9 @@ public static class ListReorderBehavior
 
         listBox.PreviewMouseLeftButtonDown += (_, e) =>
         {
+            if (IsInteractiveElement(e.OriginalSource as DependencyObject, listBox))
+                return;
+
             dragStart = e.GetPosition(listBox);
             draggedItem = GetContainerAtPoint(listBox, dragStart.Value)?.DataContext as T;
         };
@@ -141,6 +145,17 @@ public static class ListReorderBehavior
         };
 
         listBox.AllowDrop = true;
+    }
+
+    private static bool IsInteractiveElement(DependencyObject? element, ListBox listBox)
+    {
+        while (element != null && element != listBox)
+        {
+            if (element is TextBoxBase or ButtonBase or ComboBox)
+                return true;
+            element = VisualTreeHelper.GetParent(element);
+        }
+        return false;
     }
 
     private static ListBoxItem? GetContainerAtPoint(ListBox listBox, Point p)
