@@ -49,11 +49,23 @@ public static class ListReorderBehavior
 
         listBox.PreviewMouseLeftButtonDown += (_, e) =>
         {
+            // Always clear first: a prior click that armed but never actually dragged
+            // (e.g. a plain click on the handle) must not leave stale state behind for
+            // a later, unrelated MouseMove to pick up.
+            dragStart = null;
+            draggedItem = null;
+
             if (IsInteractiveElement(e.OriginalSource as DependencyObject, listBox))
                 return;
 
             dragStart = e.GetPosition(listBox);
             draggedItem = GetContainerAtPoint(listBox, dragStart.Value)?.DataContext as T;
+        };
+
+        listBox.PreviewMouseLeftButtonUp += (_, _) =>
+        {
+            dragStart = null;
+            draggedItem = null;
         };
 
         listBox.PreviewMouseMove += (_, e) =>
