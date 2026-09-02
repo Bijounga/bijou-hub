@@ -24,12 +24,14 @@ public partial class MainWindow : Window
     private readonly BlockWatcher _blockWatcher = new();
     private readonly KeybindStore _keybindStore = new();
     private readonly AppSettingsStore _settingsStore = new();
+    private readonly QuickLaunchStore _quickLaunchStore = new();
     private readonly DispatcherTimer _tickTimer;
     private readonly DispatcherTimer _blockReminderTimer;
     private readonly Dictionary<string, DockPanel> _pendingBlockRows = new();
     private readonly Dictionary<string, BlockAlertWindow> _pendingAlertWindows = new();
     private List<WorkMode> _modes = new();
     private List<Project> _projects = new();
+    private List<QuickLaunchApp> _quickLaunchApps = new();
     private Project? _detailProject;
 
     private WorkMode? _activeMode;
@@ -80,8 +82,13 @@ public partial class MainWindow : Window
                 System.Media.SystemSounds.Exclamation.Play();
         };
 
+        _quickLaunchApps = _quickLaunchStore.Load();
+        foreach (var app in _quickLaunchApps)
+            app.Icon = IconExtractor.GetIcon(app.Path);
+
         InitNotesToolbar();
         SetupAnimatedProgressFill();
+        RefreshQuickLaunchPanel();
         ShowHome();
     }
 
@@ -189,7 +196,7 @@ public partial class MainWindow : Window
         if (editor.ShowDialog() != true) return;
 
         PersistAndRefreshModeList();
-        ShowModeDetail(mode);
+        ModesList.SelectedItem = mode;
     }
 
     private void DeleteMode_Click(object sender, RoutedEventArgs e)
@@ -252,7 +259,7 @@ public partial class MainWindow : Window
         if (editor.ShowDialog() != true) return;
 
         PersistAndRefreshProjectList();
-        ShowProjectDetail(project);
+        ProjectsList.SelectedItem = project;
     }
 
     private void DeleteProject_Click(object sender, RoutedEventArgs e)
@@ -628,6 +635,129 @@ public partial class MainWindow : Window
         }
 
         SelectProjectAndShowDetail(project);
+    }
+
+    // ---------- Quick launch ----------
+
+    private void RefreshQuickLaunchPanel()
+    {
+        QuickLaunchPanel.Children.Clear();
+
+        foreach (var app in _quickLaunchApps)
+            QuickLaunchPanel.Children.Add(BuildQuickLaunchTile(app));
+
+        QuickLaunchPanel.Children.Add(BuildAddQuickLaunchTile());
+    }
+
+    private Button BuildQuickLaunchTile(QuickLaunchApp app)
+    {
+        var stack = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+        stack.Children.Add(new Image
+        {
+            Source = app.Icon,
+            Width = 36,
+            Height = 36,
+            Margin = new Thickness(0, 0, 0, 8),
+            HorizontalAlignment = HorizontalAlignment.Center
+        });
+        stack.Children.Add(new TextBlock
+        {
+            Text = app.Name,
+            FontSize = 11,
+            TextAlignment = TextAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            MaxWidth = 84,
+            Foreground = (System.Windows.Media.Brush)FindResource("TextBrush")
+        });
+
+        var button = new Button
+        {
+            Style = (Style)FindResource("QuickLaunchTileStyle"),
+            Content = stack,
+            Tag = app,
+            ToolTip = app.Name
+        };
+        button.Click += QuickLaunchTile_Click;
+
+        var removeItem = new MenuItem { Header = "Remove" };
+        removeItem.Click += (_, _) => RemoveQuickLaunchApp(app);
+        button.ContextMenu = new ContextMenu { Items = { removeItem } };
+
+        return button;
+    }
+
+    private Button BuildAddQuickLaunchTile()
+    {
+        var stack = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+        stack.Children.Add(new TextBlock
+        {
+            Text = "+",
+            FontSize = 28,
+            FontWeight = FontWeights.Bold,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Foreground = (System.Windows.Media.Brush)FindResource("AccentBrush"),
+            Margin = new Thickness(0, 0, 0, 2)
+        });
+        stack.Children.Add(new TextBlock
+        {
+            Text = "Add App",
+            FontSize = 11,
+            TextAlignment = TextAlignment.Center,
+            Foreground = (System.Windows.Media.Brush)FindResource("MutedTextBrush")
+        });
+
+        var button = new Button
+        {
+            Style = (Style)FindResource("QuickLaunchTileStyle"),
+            Content = stack,
+            ToolTip = "Add an app to Quick Launch"
+        };
+        button.Click += AddQuickLaunchApp_Click;
+        return button;
+    }
+
+    private void QuickLaunchTile_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: QuickLaunchApp app } button) return;
+        PopAnimate(button);
+
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = app.Path,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Couldn't launch \"{app.Name}\":\n{ex.Message}", "Quick Launch",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void AddQuickLaunchApp_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = "Executable (*.exe)|*.exe|All files (*.*)|*.*" };
+        if (dlg.ShowDialog() != true) return;
+
+        var app = new QuickLaunchApp
+        {
+            Name = System.IO.Path.GetFileNameWithoutExtension(dlg.FileName),
+            Path = dlg.FileName
+        };
+        app.Icon = IconExtractor.GetIcon(app.Path);
+
+        _quickLaunchApps.Add(app);
+        _quickLaunchStore.Save(_quickLaunchApps);
+        RefreshQuickLaunchPanel();
+    }
+
+    private void RemoveQuickLaunchApp(QuickLaunchApp app)
+    {
+        _quickLaunchApps.Remove(app);
+        _quickLaunchStore.Save(_quickLaunchApps);
+        RefreshQuickLaunchPanel();
     }
 
     private static string FormatSpan(int totalSeconds)

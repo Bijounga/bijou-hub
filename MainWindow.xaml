@@ -317,7 +317,14 @@
                         </WrapPanel>
 
                         <TextBlock Text="// SESSION LOG" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
-                        <ItemsControl x:Name="ProjectNotesDisplay"/>
+                        <ItemsControl x:Name="ProjectNotesDisplay">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                               Foreground="{StaticResource TextBrush}" FontSize="12"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
             </ScrollViewer>
 
@@ -331,6 +338,9 @@
                             <DropShadowEffect Color="#33E1FF" BlurRadius="14" ShadowDepth="0" Opacity="0.4"/>
                         </TextBlock.Effect>
                     </TextBlock>
+
+                    <TextBlock Text="// QUICK LAUNCH" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
+                    <WrapPanel x:Name="QuickLaunchPanel" Margin="0,0,0,24"/>
 
                     <TextBlock Text="// TODAY" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
                     <TextBlock x:Name="HomeTodayText" FontSize="32" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
