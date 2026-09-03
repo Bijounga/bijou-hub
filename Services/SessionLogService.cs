@@ -1,4 +1,6 @@
 using System.IO;
+using System.Linq;
+using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using BijouHub.Models;
 
@@ -6,141 +8,45 @@ namespace BijouHub.Services;
 
 public class SessionLogService
 {
-    private readonly string _connectionString;
+    private readonly string _filePath;
 
     public SessionLogService()
     {
-        var dir = System.IO.Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "BijouHub");
-        Directory.CreateDirectory(dir);
-        var dbPath = System.IO.Path.Combine(dir, "sessions.db");
-        _connectionString = $"Data Source={dbPath}";
-        Init();
+        _filePath = Path.Combine(DataPaths.SyncDir, "sessions.json");
+        if (!File.Exists(_filePath))
+            MigrateFromLegacySqlite();
     }
 
-    private void Init()
+    // Session history used to live in a local SQLite file, which doesn't play well with
+    // cloud-synced folders (concurrent-write corruption risk) and doesn't travel with a
+    // custom sync folder anyway. Import it once into the new JSON store; the .db file is
+    // left in place afterward, untouched, as a harmless backup.
+    private void MigrateFromLegacySqlite()
     {
-        using var conn = new SqliteConnection(_connectionString);
-        conn.Open();
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = @"
-            CREATE TABLE IF NOT EXISTS Sessions (
-                Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                ModeName TEXT NOT NULL,
-                StartTime TEXT NOT NULL,
-                EndTime TEXT NOT NULL,
-                ActiveSeconds INTEGER NOT NULL,
-                IdleSeconds INTEGER NOT NULL
-            );";
-        cmd.ExecuteNonQuery();
+        var legacyDbPath = Path.Combine(DataPaths.LocalDir, "sessions.db");
+        if (!File.Exists(legacyDbPath)) return;
 
-        MigrateAddColumnIfMissing(conn, "ProjectId", "TEXT");
-        MigrateAddColumnIfMissing(conn, "ProjectName", "TEXT");
-        MigrateAddColumnIfMissing(conn, "GoalId", "TEXT");
-        MigrateAddColumnIfMissing(conn, "GoalName", "TEXT");
-        MigrateAddColumnIfMissing(conn, "Note", "TEXT");
-    }
-
-    private static void MigrateAddColumnIfMissing(SqliteConnection conn, string columnName, string sqlType)
-    {
-        var checkCmd = conn.CreateCommand();
-        checkCmd.CommandText = "PRAGMA table_info(Sessions);";
-        using (var reader = checkCmd.ExecuteReader())
+        try
         {
-            while (reader.Read())
-            {
-                if (string.Equals(reader.GetString(1), columnName, StringComparison.OrdinalIgnoreCase))
-                    return;
-            }
+            var records = ReadLegacySqlite(legacyDbPath);
+            if (records.Count > 0)
+                Save(records);
         }
-
-        var alterCmd = conn.CreateCommand();
-        alterCmd.CommandText = $"ALTER TABLE Sessions ADD COLUMN {columnName} {sqlType};";
-        alterCmd.ExecuteNonQuery();
+        catch
+        {
+            // Legacy DB unreadable; start fresh rather than block the app.
+        }
     }
 
-    public void InsertSession(SessionRecord record)
+    private static List<SessionRecord> ReadLegacySqlite(string dbPath)
     {
-        using var conn = new SqliteConnection(_connectionString);
-        conn.Open();
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = @"
-            INSERT INTO Sessions (ModeName, StartTime, EndTime, ActiveSeconds, IdleSeconds, ProjectId, ProjectName, GoalId, GoalName, Note)
-            VALUES ($modeName, $startTime, $endTime, $activeSeconds, $idleSeconds, $projectId, $projectName, $goalId, $goalName, $note);";
-        cmd.Parameters.AddWithValue("$modeName", record.ModeName);
-        cmd.Parameters.AddWithValue("$startTime", record.StartTime.ToString("o"));
-        cmd.Parameters.AddWithValue("$endTime", record.EndTime.ToString("o"));
-        cmd.Parameters.AddWithValue("$activeSeconds", record.ActiveSeconds);
-        cmd.Parameters.AddWithValue("$idleSeconds", record.IdleSeconds);
-        cmd.Parameters.AddWithValue("$projectId", (object?)record.ProjectId ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("$projectName", (object?)record.ProjectName ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("$goalId", (object?)record.GoalId ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("$goalName", (object?)record.GoalName ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("$note", (object?)record.Note ?? DBNull.Value);
-        cmd.ExecuteNonQuery();
-    }
-
-    public List<SessionRecord> GetAll()
-    {
-        using var conn = new SqliteConnection(_connectionString);
+        var result = new List<SessionRecord>();
+        using var conn = new SqliteConnection($"Data Source={dbPath}");
         conn.Open();
         var cmd = conn.CreateCommand();
         cmd.CommandText = @"SELECT Id, ModeName, StartTime, EndTime, ActiveSeconds, IdleSeconds,
                                     ProjectId, ProjectName, GoalId, GoalName, Note
                              FROM Sessions ORDER BY StartTime DESC;";
-        return ReadAll(cmd);
-    }
-
-    public List<SessionRecord> GetForProject(string projectId)
-    {
-        using var conn = new SqliteConnection(_connectionString);
-        conn.Open();
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = @"SELECT Id, ModeName, StartTime, EndTime, ActiveSeconds, IdleSeconds,
-                                    ProjectId, ProjectName, GoalId, GoalName, Note
-                             FROM Sessions WHERE ProjectId = $projectId ORDER BY StartTime DESC;";
-        cmd.Parameters.AddWithValue("$projectId", projectId);
-        return ReadAll(cmd);
-    }
-
-    public int GetTodayTotalSeconds()
-    {
-        var todayStart = DateTime.Today;
-        return GetTotalSecondsSince(todayStart);
-    }
-
-    public Dictionary<DateTime, int> GetLastNDaysTotals(int days)
-    {
-        var since = DateTime.Today.AddDays(-(days - 1));
-        var result = new Dictionary<DateTime, int>();
-        for (var d = since; d <= DateTime.Today; d = d.AddDays(1))
-            result[d] = 0;
-
-        foreach (var record in GetAll())
-        {
-            var day = record.StartTime.Date;
-            if (day >= since && result.ContainsKey(day))
-                result[day] += record.ActiveSeconds;
-        }
-
-        return result;
-    }
-
-    private int GetTotalSecondsSince(DateTime since)
-    {
-        using var conn = new SqliteConnection(_connectionString);
-        conn.Open();
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT COALESCE(SUM(ActiveSeconds), 0) FROM Sessions WHERE StartTime >= $since;";
-        cmd.Parameters.AddWithValue("$since", since.ToString("o"));
-        var result = cmd.ExecuteScalar();
-        return result == null || result == DBNull.Value ? 0 : Convert.ToInt32(result);
-    }
-
-    private static List<SessionRecord> ReadAll(SqliteCommand cmd)
-    {
-        var result = new List<SessionRecord>();
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
         {
@@ -160,5 +66,66 @@ public class SessionLogService
             });
         }
         return result;
+    }
+
+    private List<SessionRecord> LoadAll()
+    {
+        if (!File.Exists(_filePath)) return new List<SessionRecord>();
+
+        var json = File.ReadAllText(_filePath);
+        if (string.IsNullOrWhiteSpace(json)) return new List<SessionRecord>();
+
+        return JsonSerializer.Deserialize<List<SessionRecord>>(json) ?? new List<SessionRecord>();
+    }
+
+    private void Save(List<SessionRecord> records)
+    {
+        var json = JsonSerializer.Serialize(records, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(_filePath, json);
+    }
+
+    public void InsertSession(SessionRecord record)
+    {
+        var all = LoadAll();
+        record.Id = all.Count == 0 ? 1 : all.Max(r => r.Id) + 1;
+        all.Add(record);
+        Save(all);
+    }
+
+    public List<SessionRecord> GetAll()
+    {
+        return LoadAll().OrderByDescending(r => r.StartTime).ToList();
+    }
+
+    public List<SessionRecord> GetForProject(string projectId)
+    {
+        return LoadAll().Where(r => r.ProjectId == projectId).OrderByDescending(r => r.StartTime).ToList();
+    }
+
+    public int GetTodayTotalSeconds()
+    {
+        return GetTotalSecondsSince(DateTime.Today);
+    }
+
+    public Dictionary<DateTime, int> GetLastNDaysTotals(int days)
+    {
+        var since = DateTime.Today.AddDays(-(days - 1));
+        var result = new Dictionary<DateTime, int>();
+        for (var d = since; d <= DateTime.Today; d = d.AddDays(1))
+            result[d] = 0;
+
+        foreach (var record in LoadAll())
+        {
+            var day = record.StartTime.Date;
+            if (day >= since && result.ContainsKey(day))
+                result[day] += record.ActiveSeconds;
+        }
+
+        return result;
+    }
+
+    private int GetTotalSecondsSince(DateTime since)
+    {
+        return LoadAll().Where(r => r.StartTime >= since).Sum(r => r.ActiveSeconds);
     }
 }

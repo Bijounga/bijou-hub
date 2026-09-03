@@ -6,6 +6,11 @@ namespace BijouHub.Services;
 public class AppSettings
 {
     public double ZoomLevel { get; set; } = 1.0;
+
+    // Null/empty means "use the default local folder". When set, points at a folder
+    // the user syncs across devices (Dropbox, Google Drive, OneDrive, iCloud Drive, ...)
+    // so Projects and session history follow them between machines.
+    public string? DataFolderPath { get; set; }
 }
 
 public class AppSettingsStore

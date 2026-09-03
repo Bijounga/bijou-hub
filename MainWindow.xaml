@@ -38,6 +38,7 @@
                     <RowDefinition Height="2*"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <Grid Grid.Row="0" Margin="0,0,0,24" Cursor="Hand" MouseLeftButtonDown="HomeHeader_Click">
@@ -99,6 +100,8 @@
 
                 <Button Grid.Row="6" Content="+ New Project" Style="{StaticResource AccentButton}" Margin="0,8,0,0" Padding="10,8" Click="NewProject_Click"/>
                 <Button Grid.Row="7" Content="Session Log" Margin="0,8,0,0" Click="SessionLog_Click"/>
+                <Button x:Name="SyncFolderButton" Grid.Row="8" Content="Sync Folder..." Margin="0,8,0,0" Click="SyncFolder_Click"
+                        ToolTip="Point Projects and session history at a folder you sync across devices"/>
             </Grid>
             </Grid>
         </Border>

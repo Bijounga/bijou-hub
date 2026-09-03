@@ -10,11 +10,7 @@ public class ProjectStore
 
     public ProjectStore()
     {
-        var dir = System.IO.Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "BijouHub");
-        Directory.CreateDirectory(dir);
-        _filePath = System.IO.Path.Combine(dir, "projects.json");
+        _filePath = System.IO.Path.Combine(DataPaths.SyncDir, "projects.json");
     }
 
     public List<Project> Load()

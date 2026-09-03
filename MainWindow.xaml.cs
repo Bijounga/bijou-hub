@@ -89,6 +89,7 @@ public partial class MainWindow : Window
         InitNotesToolbar();
         SetupAnimatedProgressFill();
         RefreshQuickLaunchPanel();
+        UpdateSyncFolderButtonLabel();
         ShowHome();
     }
 
@@ -1051,6 +1052,63 @@ public partial class MainWindow : Window
     {
         var win = new SessionLogWindow(_logService) { Owner = this };
         win.ShowDialog();
+    }
+
+    // ---------- Sync folder ----------
+
+    private void UpdateSyncFolderButtonLabel()
+    {
+        var settings = _settingsStore.Load();
+        if (string.IsNullOrEmpty(settings.DataFolderPath))
+        {
+            SyncFolderButton.Content = "Sync Folder...";
+            SyncFolderButton.ToolTip = "Point Projects and session history at a folder you sync across devices";
+        }
+        else
+        {
+            SyncFolderButton.Content = "🔗 Synced";
+            SyncFolderButton.ToolTip = $"Syncing via: {settings.DataFolderPath}\nClick to change";
+        }
+    }
+
+    private void SyncFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFolderDialog { Title = "Choose a folder to sync Projects & session history through" };
+        if (dlg.ShowDialog() != true) return;
+
+        var chosen = dlg.FolderName;
+        var hasExistingSyncedData = File.Exists(System.IO.Path.Combine(chosen, "projects.json"))
+            || File.Exists(System.IO.Path.Combine(chosen, "sessions.json"));
+
+        if (!hasExistingSyncedData)
+        {
+            // First time pointing here: bring existing data along so nothing's lost.
+            foreach (var fileName in new[] { "projects.json", "sessions.json" })
+            {
+                var source = System.IO.Path.Combine(DataPaths.SyncDir, fileName);
+                var dest = System.IO.Path.Combine(chosen, fileName);
+                if (File.Exists(source) && !File.Exists(dest))
+                    File.Copy(source, dest);
+            }
+        }
+
+        var settings = _settingsStore.Load();
+        settings.DataFolderPath = chosen;
+        _settingsStore.Save(settings);
+        UpdateSyncFolderButtonLabel();
+
+        var restart = MessageBox.Show(
+            hasExistingSyncedData
+                ? "Found existing BijouHub data in this folder — it'll be used from now on.\n\nRestart now to apply?"
+                : "Your projects and session history have been copied into this folder, and BijouHub will read/write there from now on.\n\nRestart now to apply?",
+            "Sync Folder", MessageBoxButton.YesNo, MessageBoxImage.Information);
+
+        if (restart != MessageBoxResult.Yes) return;
+
+        var exePath = Environment.ProcessPath;
+        if (!string.IsNullOrEmpty(exePath))
+            System.Diagnostics.Process.Start(exePath);
+        Application.Current.Shutdown();
     }
 
     // ---------- Zoom ----------
