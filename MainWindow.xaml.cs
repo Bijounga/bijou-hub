@@ -57,7 +57,9 @@ public partial class MainWindow : Window
         {
             if (NotesPanel.Visibility == Visibility.Visible) SaveFreeformNotes();
             _timerPopout?.Close();
-            _settingsStore.Save(new AppSettings { ZoomLevel = AppScaleTransform.ScaleX });
+            var currentSettings = _settingsStore.Load();
+            currentSettings.ZoomLevel = AppScaleTransform.ScaleX;
+            _settingsStore.Save(currentSettings);
         };
 
         var settings = _settingsStore.Load();
@@ -91,6 +93,39 @@ public partial class MainWindow : Window
         RefreshQuickLaunchPanel();
         UpdateSyncFolderButtonLabel();
         ShowHome();
+        _ = CheckForUpdateAsync();
+    }
+
+    private UpdateInfo? _pendingUpdate;
+
+    private async Task CheckForUpdateAsync()
+    {
+        var update = await UpdateService.CheckForUpdateAsync();
+        if (update == null) return;
+
+        _pendingUpdate = update;
+        UpdateButton.Content = $"⬆ Update to v{update.Version}";
+        UpdateButton.ToolTip = "A new version of BijouHub is available. Click to download and restart.";
+        UpdateButton.Visibility = Visibility.Visible;
+    }
+
+    private async void UpdateButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_pendingUpdate == null) return;
+
+        UpdateButton.IsEnabled = false;
+        UpdateButton.Content = "Downloading update...";
+        try
+        {
+            await UpdateService.DownloadAndApplyAsync(_pendingUpdate.DownloadUrl);
+        }
+        catch (Exception ex)
+        {
+            UpdateButton.IsEnabled = true;
+            UpdateButton.Content = $"⬆ Update to v{_pendingUpdate.Version}";
+            MessageBox.Show($"Couldn't apply the update: {ex.Message}", "Update Failed",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     private void SetupAnimatedProgressFill()
