@@ -1,0 +1,56 @@
+name: Build macOS DMG
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to attach the DMG to (e.g. v1.2.0)"
+        required: true
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-dmg:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        rid: [osx-arm64, osx-x64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Publish
+        run: >
+          dotnet publish BijouHub.Mac/BijouHub.Mac.csproj -c Release
+          -r ${{ matrix.rid }} --self-contained true
+          -p:PublishSingleFile=false
+          -o publish-mac
+
+      - name: Assemble .app bundle
+        run: |
+          APP="BijouHub.app"
+          mkdir -p "$APP/Contents/MacOS"
+          mkdir -p "$APP/Contents/Resources"
+          cp -R publish-mac/* "$APP/Contents/MacOS/"
+          cp BijouHub.Mac/Info.plist "$APP/Contents/Info.plist"
+          chmod +x "$APP/Contents/MacOS/BijouHub.Mac"
+
+      - name: Create DMG
+        run: |
+          mkdir -p dmg-root
+          cp -R BijouHub.app dmg-root/
+          ln -s /Applications dmg-root/Applications
+          hdiutil create -volname "BijouHub" -srcfolder dmg-root -ov -format UDZO "BijouHub-${{ matrix.rid }}.dmg"
+
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.event.inputs.tag || github.event.release.tag_name }}"
+          gh release upload "$TAG" "BijouHub-${{ matrix.rid }}.dmg" --clobber --repo "${{ github.repository }}"
