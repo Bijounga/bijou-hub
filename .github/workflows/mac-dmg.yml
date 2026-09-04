@@ -41,24 +41,71 @@ jobs:
           cp BijouHub.Mac/Info.plist "$APP/Contents/Info.plist"
           chmod +x "$APP/Contents/MacOS/BijouHub.Mac"
 
+      - name: Generate app icon
+        run: |
+          SRC="BijouHub.Mac/Packaging/icon-source.png"
+          ICONSET="icon.iconset"
+          mkdir -p "$ICONSET"
+          for size in 16 32 128 256 512; do
+            sips -z $size $size "$SRC" --out "$ICONSET/icon_${size}x${size}.png" >/dev/null
+            double=$((size * 2))
+            sips -z $double $double "$SRC" --out "$ICONSET/icon_${size}x${size}@2x.png" >/dev/null
+          done
+          iconutil -c icns "$ICONSET" -o "BijouHub.app/Contents/Resources/icon.icns"
+
       - name: Ad-hoc code sign
         # No paid Apple Developer certificate to sign with, but Apple Silicon refuses to run
         # ANY unsigned binary at all (not just a Gatekeeper warning — a hard "is damaged and
         # can't be opened" refusal), even for free/unsigned distribution. An ad-hoc signature
         # (identity "-") satisfies that requirement without needing a certificate. Sign the
-        # nested native libraries first, then the outer bundle, so the bundle's seal covers
-        # already-signed content correctly.
+        # nested native libraries first, then the outer bundle (must be the last thing that
+        # touches the bundle's contents, including the icon above, or the seal breaks).
         run: |
           find BijouHub.app/Contents/MacOS -type f \( -name "*.dylib" -o -perm +111 \) -exec codesign --force --sign - {} \;
           codesign --force --deep --sign - BijouHub.app
           codesign --verify --verbose BijouHub.app
 
-      - name: Create DMG
+      - name: Create styled DMG
+        # A plain `hdiutil create -srcfolder` gives a bare Finder window with small default
+        # icons. Build it the way a normal Mac installer looks instead: a read-write image,
+        # laid out via Finder/AppleScript (big icons, app on the left, an Applications
+        # shortcut on the right so the user just drags one onto the other), then flattened to
+        # a compressed read-only DMG for distribution.
         run: |
           mkdir -p dmg-root
           cp -R BijouHub.app dmg-root/
           ln -s /Applications dmg-root/Applications
-          hdiutil create -volname "BijouHub" -srcfolder dmg-root -ov -format UDZO "BijouHub-${{ matrix.rid }}.dmg"
+
+          VOL_NAME="BijouHub"
+          hdiutil create -volname "$VOL_NAME" -srcfolder dmg-root -ov -format UDRW -size 200m rw-temp.dmg
+          MOUNT_DIR="/Volumes/$VOL_NAME"
+          hdiutil attach rw-temp.dmg -readwrite -noverify -noautoopen
+
+          osascript <<EOF
+          tell application "Finder"
+            tell disk "$VOL_NAME"
+              open
+              set current view of container window to icon view
+              set toolbar visible of container window to false
+              set statusbar visible of container window to false
+              set the bounds of container window to {200, 120, 760, 480}
+              set viewOptions to the icon view options of container window
+              set arrangement of viewOptions to not arranged
+              set icon size of viewOptions to 128
+              set position of item "BijouHub.app" of container window to {140, 160}
+              set position of item "Applications" of container window to {420, 160}
+              close
+              open
+              update without registering applications
+              delay 2
+            end tell
+          end tell
+          EOF
+
+          sync
+          hdiutil detach "$MOUNT_DIR"
+          hdiutil convert rw-temp.dmg -format UDZO -o "BijouHub-${{ matrix.rid }}.dmg"
+          rm -f rw-temp.dmg
 
       - name: Upload to release
         env:
