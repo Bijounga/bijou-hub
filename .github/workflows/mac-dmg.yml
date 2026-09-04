@@ -53,17 +53,71 @@ jobs:
           done
           iconutil -c icns "$ICONSET" -o "BijouHub.app/Contents/Resources/icon.icns"
 
-      - name: Ad-hoc code sign
-        # No paid Apple Developer certificate to sign with, but Apple Silicon refuses to run
-        # ANY unsigned binary at all (not just a Gatekeeper warning — a hard "is damaged and
-        # can't be opened" refusal), even for free/unsigned distribution. An ad-hoc signature
-        # (identity "-") satisfies that requirement without needing a certificate. Sign the
-        # nested native libraries first, then the outer bundle (must be the last thing that
-        # touches the bundle's contents, including the icon above, or the seal breaks).
+      # --- Signing -------------------------------------------------------
+      # Two paths, chosen automatically by whether a real certificate is
+      # configured. Without one, we fall back to ad-hoc signing (identity
+      # "-"), which only satisfies Apple Silicon's "must be signed at all"
+      # requirement and gets no Gatekeeper trust — every fresh download
+      # still shows the "unidentified developer" prompt once. With a
+      # Developer ID Application certificate (APPLE_CERTIFICATE_P12_BASE64
+      # etc. set as repo secrets), we sign with hardened runtime + the
+      # entitlements .NET's JIT needs, then notarize with Apple and staple
+      # the ticket — that's what makes Gatekeeper trust it silently.
+      - name: Determine signing mode
+        id: signing
+        run: |
+          if [ -n "${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}" ]; then
+            echo "mode=full" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=adhoc" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Import Developer ID certificate
+        if: steps.signing.outputs.mode == 'full'
+        env:
+          P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          KEYCHAIN_PASSWORD=$(uuidgen)
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+          echo "$P12_BASE64" | base64 --decode > cert.p12
+          security import cert.p12 -k build.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          rm -f cert.p12
+
+      - name: Code sign (ad-hoc)
+        if: steps.signing.outputs.mode == 'adhoc'
         run: |
           find BijouHub.app/Contents/MacOS -type f \( -name "*.dylib" -o -perm +111 \) -exec codesign --force --sign - {} \;
           codesign --force --deep --sign - BijouHub.app
           codesign --verify --verbose BijouHub.app
+
+      - name: Code sign (Developer ID + hardened runtime)
+        if: steps.signing.outputs.mode == 'full'
+        env:
+          IDENTITY: "Developer ID Application: ${{ secrets.APPLE_DEVELOPER_NAME }} (${{ secrets.APPLE_TEAM_ID }})"
+        run: |
+          find BijouHub.app/Contents/MacOS -type f \( -name "*.dylib" -o -perm +111 \) \
+            -exec codesign --force --options runtime --entitlements BijouHub.Mac/Packaging/entitlements.plist --sign "$IDENTITY" {} \;
+          codesign --force --deep --options runtime --entitlements BijouHub.Mac/Packaging/entitlements.plist --sign "$IDENTITY" BijouHub.app
+          codesign --verify --verbose BijouHub.app
+
+      - name: Notarize and staple
+        if: steps.signing.outputs.mode == 'full'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          ditto -c -k --keepParent BijouHub.app BijouHub-notarize.zip
+          xcrun notarytool submit BijouHub-notarize.zip \
+            --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+          xcrun stapler staple BijouHub.app
+          rm -f BijouHub-notarize.zip
+      # ---------------------------------------------------------------
 
       - name: Create styled DMG
         # A plain `hdiutil create -srcfolder` gives a bare Finder window with small default
@@ -106,6 +160,10 @@ jobs:
           hdiutil detach "$MOUNT_DIR"
           hdiutil convert rw-temp.dmg -format UDZO -o "BijouHub-${{ matrix.rid }}.dmg"
           rm -f rw-temp.dmg
+
+      - name: Staple DMG
+        if: steps.signing.outputs.mode == 'full'
+        run: xcrun stapler staple "BijouHub-${{ matrix.rid }}.dmg"
 
       - name: Upload to release
         env:
