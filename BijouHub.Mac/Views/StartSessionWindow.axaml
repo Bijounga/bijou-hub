@@ -1,0 +1,25 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="BijouHub.Mac.Views.StartSessionWindow"
+        Title="Start Session" Width="420" Height="340"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="{StaticResource BgBrush}">
+    <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*,Auto">
+        <TextBlock Name="ProjectNameText" Classes="heading" FontSize="18" Margin="0,0,0,16"/>
+
+        <TextBlock Grid.Row="1" Text="// WORKING ON" Classes="muted"/>
+        <ComboBox Name="GoalCombo" Grid.Row="2" Margin="0,4,0,16" HorizontalAlignment="Stretch"/>
+
+        <TextBlock Grid.Row="3" Text="// TIME BUDGET" Classes="muted"/>
+        <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,4,0,16">
+            <ComboBox Name="BudgetCombo" Width="160" SelectionChanged="BudgetCombo_SelectionChanged"/>
+            <TextBox Name="CustomBudgetBox" Width="80" Margin="8,0,0,0" IsVisible="False" Watermark="minutes"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Cancel" Width="90" Margin="0,0,8,0" Click="Cancel_Click"/>
+            <Button Classes="accent" Content="▶ Start" Width="100" Click="Start_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

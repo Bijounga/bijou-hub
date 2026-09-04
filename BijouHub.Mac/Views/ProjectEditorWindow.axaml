@@ -1,0 +1,66 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:models="clr-namespace:BijouHub.Models;assembly=BijouHub.Core"
+        xmlns:views="clr-namespace:BijouHub.Mac.Views"
+        x:Class="BijouHub.Mac.Views.ProjectEditorWindow"
+        Title="Edit Project" Width="680" Height="640"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BgBrush}">
+    <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,*,Auto">
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="// PROJECT NAME" Classes="muted"/>
+            <TextBox Name="NameBox" FontSize="16" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Margin="0,0,0,16">
+            <TextBlock Text="// DEFAULT SESSION BUDGET (MINUTES, OPTIONAL)" Classes="muted"/>
+            <TextBox Name="BudgetBox" Width="120" HorizontalAlignment="Left" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+            <TextBlock Grid.Column="0" Text="// GOALS" Classes="muted" VerticalAlignment="Center"/>
+            <Button Grid.Column="1" Content="+ Goal" Click="AddGoal_Click"/>
+        </Grid>
+
+        <ScrollViewer Grid.Row="3">
+            <ItemsControl Name="GoalsList">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="models:Goal">
+                        <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrushColor}"
+                                BorderThickness="1" Padding="10,8" Margin="0,0,0,8">
+                            <StackPanel>
+                                <Grid ColumnDefinitions="Auto,*,60,Auto,Auto">
+                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsComplete}" Margin="0,0,8,0" VerticalAlignment="Center"
+                                              IsVisible="{Binding SubGoals.Count, Converter={x:Static views:ProjectEditorWindow.IsZeroConverter}}"/>
+                                    <TextBox Grid.Column="1" Text="{Binding Name}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="2" Text="{Binding Weight}" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip.Tip="Weight %"/>
+                                    <Button Grid.Column="3" Content="+ Sub" Padding="6,2" Margin="0,0,4,0" Click="AddSubGoal_Click" Tag="{Binding}"/>
+                                    <Button Grid.Column="4" Content="Remove" Padding="6,2" Click="RemoveGoal_Click" Tag="{Binding}"/>
+                                </Grid>
+
+                                <ItemsControl ItemsSource="{Binding SubGoals}" Margin="30,8,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="models:Goal">
+                                            <Grid ColumnDefinitions="Auto,*,60,Auto" Margin="0,0,0,6">
+                                                <CheckBox Grid.Column="0" IsChecked="{Binding IsComplete}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Name}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                <TextBox Grid.Column="2" Text="{Binding Weight}" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip.Tip="Weight %"/>
+                                                <Button Grid.Column="3" Content="Remove" Padding="6,2" Click="RemoveSubGoal_Click" Tag="{Binding}"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Cancel" Width="90" Margin="0,0,8,0" Click="Cancel_Click"/>
+            <Button Classes="accent" Content="Save" Width="90" Click="Save_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

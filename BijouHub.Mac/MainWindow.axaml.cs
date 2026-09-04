@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using BijouHub.Mac.Services;
+using BijouHub.Mac.Views;
 using BijouHub.Models;
 using BijouHub.Services;
 
@@ -17,9 +18,14 @@ public partial class MainWindow : Window
 
     private ObservableCollection<Project> _projects = new();
     private Project? _activeProject;
+    private Project? _notesLoadedFor;
 
     private DateTime? _sessionStart;
+    private Goal? _sessionGoal;
+    private int? _sessionTargetMinutes;
     private DispatcherTimer? _tickTimer;
+
+    private bool _notesVisible = true;
 
     private MacUpdateInfo? _pendingUpdate;
 
@@ -36,6 +42,8 @@ public partial class MainWindow : Window
         VersionButton.Content = $"v{MacUpdateService.GetCurrentVersion()}";
         _ = CheckForUpdateAsync(silent: true);
         _ = Task.Run(MacUpdateService.EjectStaleMounts);
+
+        Closing += (_, _) => SaveFreeformNotesIfLoaded();
     }
 
     private async Task CheckForUpdateAsync(bool silent)
@@ -102,6 +110,8 @@ public partial class MainWindow : Window
 
     private void ProjectsList_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
+        SaveFreeformNotesIfLoaded();
+
         _activeProject = ProjectsList.SelectedItem as Project;
         if (_activeProject == null)
         {
@@ -113,6 +123,8 @@ public partial class MainWindow : Window
         HomePanel.IsVisible = false;
         ProjectPanel.IsVisible = true;
         RefreshProjectPanel();
+        LoadFreeformNotes(_activeProject);
+        UpdateNotesPanelVisibility();
     }
 
     private void RefreshProjectPanel()
@@ -134,16 +146,32 @@ public partial class MainWindow : Window
         ProjectsList.SelectedItem = project;
     }
 
-    private void AddGoal_Click(object? sender, RoutedEventArgs e)
+    private async void EditProject_Click(object? sender, RoutedEventArgs e)
     {
         if (_activeProject == null) return;
-        var name = NewGoalNameBox.Text?.Trim();
-        if (string.IsNullOrEmpty(name)) return;
 
-        _activeProject.Goals.Add(new Goal { Name = name, Weight = 100 });
-        NewGoalNameBox.Text = "";
+        var editor = new ProjectEditorWindow(_activeProject);
+        var saved = await editor.ShowDialog<bool>(this);
+        if (!saved) return;
+
         SaveProjects();
+        // Force the sidebar list and detail panel to pick up the (possibly renamed) project.
+        var project = _activeProject;
+        ProjectsList.ItemsSource = null;
+        ProjectsList.ItemsSource = _projects;
+        ProjectsList.SelectedItem = project;
         RefreshProjectPanel();
+    }
+
+    private void DeleteProject_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_activeProject == null) return;
+
+        _projects.Remove(_activeProject);
+        SaveProjects();
+        _activeProject = null;
+        HomePanel.IsVisible = true;
+        ProjectPanel.IsVisible = false;
     }
 
     private void GoalCheck_Click(object? sender, RoutedEventArgs e)
@@ -154,30 +182,74 @@ public partial class MainWindow : Window
 
     private void SaveProjects() => _projectStore.Save(_projects.ToList());
 
-    private void SessionButton_Click(object? sender, RoutedEventArgs e)
+    // ---------- Freeform notes ----------
+
+    private void UpdateNotesPanelVisibility()
     {
-        if (_sessionStart == null)
-            StartSession();
-        else
-            StopSession();
+        NotesPanel.IsVisible = _notesVisible;
+        NotesToggleButton.Content = _notesVisible ? "Hide Notes" : "Show Notes";
     }
 
-    private void StartSession()
+    private void NotesToggle_Click(object? sender, RoutedEventArgs e)
     {
+        if (_notesVisible) SaveFreeformNotesIfLoaded();
+        _notesVisible = !_notesVisible;
+        UpdateNotesPanelVisibility();
+    }
+
+    private void LoadFreeformNotes(Project project)
+    {
+        FreeformNotesBox.Text = project.NotesPlainText ?? "";
+        _notesLoadedFor = project;
+    }
+
+    private void SaveFreeformNotesIfLoaded()
+    {
+        if (_notesLoadedFor == null) return;
+        _notesLoadedFor.NotesPlainText = FreeformNotesBox.Text ?? "";
+        SaveProjects();
+    }
+
+    private async void SessionButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_sessionStart == null)
+            await StartSession();
+        else
+            await StopSession();
+    }
+
+    private async Task StartSession()
+    {
+        if (_activeProject == null) return;
+
+        var dlg = new StartSessionWindow(_activeProject);
+        var started = await dlg.ShowDialog<bool>(this);
+        if (!started) return;
+
+        _sessionGoal = dlg.SelectedGoal;
+        _sessionTargetMinutes = dlg.TargetMinutes;
+
         _sessionStart = DateTime.Now;
         SessionButton.Content = "Stop Session";
         SessionButton.Classes.Remove("accent");
+        SessionSubtitleText.Text = _sessionGoal != null ? $"// SESSION — {_sessionGoal.Name}" : "// SESSION";
 
         _tickTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _tickTimer.Tick += (_, _) =>
         {
             var elapsed = DateTime.Now - _sessionStart!.Value;
             ElapsedText.Text = elapsed.ToString(@"hh\:mm\:ss");
+            if (_sessionTargetMinutes is int budget)
+            {
+                var remaining = budget - (int)elapsed.TotalMinutes;
+                SessionSubtitleText.Text = (_sessionGoal != null ? $"// SESSION — {_sessionGoal.Name} — " : "// SESSION — ")
+                    + (remaining >= 0 ? $"{remaining}m left of {budget}m" : $"{-remaining}m over {budget}m budget");
+            }
         };
         _tickTimer.Start();
     }
 
-    private void StopSession()
+    private async Task StopSession()
     {
         if (_sessionStart == null || _activeProject == null) return;
 
@@ -186,7 +258,9 @@ public partial class MainWindow : Window
         var end = DateTime.Now;
         var activeSeconds = (int)(end - start).TotalSeconds;
 
-        var note = SessionNoteBox.Text?.Trim();
+        var finishDlg = new FinishNoteWindow();
+        await finishDlg.ShowDialog<bool>(this);
+        var note = finishDlg.Note;
 
         _sessionLogService.InsertSession(new SessionRecord
         {
@@ -197,7 +271,9 @@ public partial class MainWindow : Window
             IdleSeconds = 0,
             ProjectId = _activeProject.Id,
             ProjectName = _activeProject.Name,
-            Note = string.IsNullOrEmpty(note) ? null : note
+            GoalId = _sessionGoal?.Id,
+            GoalName = _sessionGoal?.Name,
+            Note = note
         });
 
         if (!string.IsNullOrEmpty(note))
@@ -206,10 +282,12 @@ public partial class MainWindow : Window
             SaveProjects();
         }
 
-        SessionNoteBox.Text = "";
         _sessionStart = null;
-        SessionButton.Content = "Start Session";
+        _sessionGoal = null;
+        _sessionTargetMinutes = null;
+        SessionButton.Content = "▶ Start Session";
         SessionButton.Classes.Add("accent");
+        SessionSubtitleText.Text = "// SESSION";
         ElapsedText.Text = "00:00:00";
 
         RefreshProjectPanel();
@@ -262,6 +340,7 @@ public partial class MainWindow : Window
         _projects = new ObservableCollection<Project>(_projectStore.Load());
         ProjectsList.ItemsSource = _projects;
         _activeProject = null;
+        _notesLoadedFor = null;
         HomePanel.IsVisible = true;
         ProjectPanel.IsVisible = false;
 

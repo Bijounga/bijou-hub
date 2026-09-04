@@ -12,6 +12,11 @@ public class Project
     public int? DefaultTargetMinutes { get; set; }
     public string? FreeformNotesXaml { get; set; }
 
+    // Plain-text mirror of the freeform notes, kept in sync by both apps so notes carry over
+    // across platforms. Windows keeps its own rich FreeformNotesXaml for in-app formatting;
+    // Mac has no rich text editor, so it reads/writes this field directly.
+    public string? NotesPlainText { get; set; }
+
     public double Completion
     {
         get
@@ -61,6 +66,7 @@ public class Project
             LinkedModeId = LinkedModeId,
             DefaultTargetMinutes = DefaultTargetMinutes,
             FreeformNotesXaml = FreeformNotesXaml,
+            NotesPlainText = NotesPlainText,
             Notes = new List<ProjectNote>(Notes)
         };
         foreach (var goal in Goals)

@@ -538,7 +538,17 @@ public partial class MainWindow : Window
     private void LoadFreeformNotes(Project project)
     {
         NotesRichBox.Document = new FlowDocument();
-        if (string.IsNullOrEmpty(project.FreeformNotesXaml)) return;
+        if (string.IsNullOrEmpty(project.FreeformNotesXaml))
+        {
+            // No rich content saved from Windows yet — if the Mac app wrote plain-text notes,
+            // show those instead of an empty box, so notes written on Mac aren't invisible here.
+            if (!string.IsNullOrEmpty(project.NotesPlainText))
+            {
+                foreach (var line in project.NotesPlainText.Split('\n'))
+                    NotesRichBox.Document.Blocks.Add(new Paragraph(new Run(line.TrimEnd('\r'))));
+            }
+            return;
+        }
 
         var range = new TextRange(NotesRichBox.Document.ContentStart, NotesRichBox.Document.ContentEnd);
         try
@@ -593,7 +603,6 @@ public partial class MainWindow : Window
             using var ms = new MemoryStream();
             range.Save(ms, DataFormats.XamlPackage);
             _detailProject.FreeformNotesXaml = Convert.ToBase64String(ms.ToArray());
-            _projectStore.Save(_projects);
         }
         finally
         {
@@ -603,6 +612,31 @@ public partial class MainWindow : Window
                 para.Inlines.Remove(sentinel);
             }
         }
+
+        // Mac has no rich text editor, so it reads/writes notes as plain text. Mirror the
+        // rich content into that shared field (checklist markers become literal "[ ]"/"[x]")
+        // so notes written on Windows are still readable there, and vice versa.
+        _detailProject.NotesPlainText = ExtractPlainTextWithChecklist();
+        _projectStore.Save(_projects);
+    }
+
+    private string ExtractPlainTextWithChecklist()
+    {
+        var lines = new List<string>();
+        foreach (var block in NotesRichBox.Document.Blocks)
+        {
+            if (block is not Paragraph para) continue;
+            var sb = new System.Text.StringBuilder();
+            foreach (var inline in para.Inlines)
+            {
+                if (inline is Run run)
+                    sb.Append(run.Text);
+                else if (inline is InlineUIContainer { Child: Border { Uid: "checklist-marker" } marker })
+                    sb.Append(marker.Child is System.Windows.Shapes.Path ? "[x] " : "[ ] ");
+            }
+            lines.Add(sb.ToString());
+        }
+        return string.Join(Environment.NewLine, lines);
     }
 
     private void ReplaceSentinelsWithMarkers()
