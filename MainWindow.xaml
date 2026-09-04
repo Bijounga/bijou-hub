@@ -317,6 +317,8 @@
 
                         <WrapPanel Margin="0,0,0,12">
                             <Button Content="▶  Start Session" Style="{StaticResource AccentButton}" Padding="20,9" Click="StartProjectSession_Click" Margin="0,0,8,8"/>
+                            <Button Content="Log Time..." Padding="16,9" Click="LogTime_Click" Margin="0,0,8,8"
+                                    ToolTip="Add a session you worked without the timer running"/>
                             <Button Content="Edit" Padding="16,9" Click="EditProject_Click" Margin="0,0,8,8"/>
                             <Button Content="Delete" Padding="16,9" Click="DeleteProject_Click" Margin="0,0,8,8"/>
                             <Button x:Name="ProjectNotesToggleButton" Content="Hide Notes" Padding="16,9" Click="NotesToggle_Click" Margin="0,0,8,8"/>

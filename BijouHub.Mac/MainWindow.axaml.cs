@@ -163,6 +163,39 @@ public partial class MainWindow : Window
         RefreshProjectPanel();
     }
 
+    private async void LogTime_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_activeProject == null) return;
+
+        var dlg = new LogTimeWindow();
+        var logged = await dlg.ShowDialog<bool>(this);
+        if (!logged) return;
+
+        var end = DateTime.Now;
+        var start = end.AddMinutes(-dlg.TotalMinutes);
+
+        _sessionLogService.InsertSession(new SessionRecord
+        {
+            ModeName = "Manual",
+            StartTime = start,
+            EndTime = end,
+            ActiveSeconds = dlg.TotalMinutes * 60,
+            IdleSeconds = 0,
+            ProjectId = _activeProject.Id,
+            ProjectName = _activeProject.Name,
+            Note = dlg.Note
+        });
+
+        if (!string.IsNullOrEmpty(dlg.Note))
+        {
+            _activeProject.Notes.Add(new ProjectNote { Timestamp = end, Text = dlg.Note });
+            SaveProjects();
+        }
+
+        RefreshProjectPanel();
+        UpdateHomeStats();
+    }
+
     private void DeleteProject_Click(object? sender, RoutedEventArgs e)
     {
         if (_activeProject == null) return;

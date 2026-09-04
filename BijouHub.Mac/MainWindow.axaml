@@ -63,6 +63,8 @@
                     </Grid>
 
                     <WrapPanel Margin="0,4,0,0">
+                        <Button Content="Log Time..." Padding="14,7" Margin="0,0,8,8" Click="LogTime_Click"
+                                ToolTip.Tip="Add a session you worked without the timer running"/>
                         <Button Content="Edit" Padding="14,7" Margin="0,0,8,8" Click="EditProject_Click"/>
                         <Button Content="Delete" Padding="14,7" Margin="0,0,8,8" Click="DeleteProject_Click"/>
                         <Button Name="NotesToggleButton" Content="Hide Notes" Padding="14,7" Margin="0,0,8,8" Click="NotesToggle_Click"/>

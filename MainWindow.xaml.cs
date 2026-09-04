@@ -298,6 +298,37 @@ public partial class MainWindow : Window
         ProjectsList.SelectedItem = project;
     }
 
+    private void LogTime_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProjectsList.SelectedItem is not Project project) return;
+
+        var dlg = new LogTimeWindow { Owner = this };
+        if (dlg.ShowDialog() != true) return;
+
+        var end = DateTime.Now;
+        var start = end.AddMinutes(-dlg.TotalMinutes);
+
+        _logService.InsertSession(new SessionRecord
+        {
+            ModeName = "Manual",
+            StartTime = start,
+            EndTime = end,
+            ActiveSeconds = dlg.TotalMinutes * 60,
+            IdleSeconds = 0,
+            ProjectId = project.Id,
+            ProjectName = project.Name,
+            Note = dlg.Note
+        });
+
+        if (!string.IsNullOrEmpty(dlg.Note))
+        {
+            project.Notes.Add(new ProjectNote { Timestamp = end, Text = dlg.Note });
+            _projectStore.Save(_projects);
+        }
+
+        SelectProjectAndShowDetail(project);
+    }
+
     private void DeleteProject_Click(object sender, RoutedEventArgs e)
     {
         if (ProjectsList.SelectedItem is not Project project) return;

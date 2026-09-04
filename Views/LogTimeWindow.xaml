@@ -1,0 +1,37 @@
+<Window x:Class="BijouHub.Views.LogTimeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Log Time" Height="420" Width="420"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{StaticResource BgBrush}">
+    <Grid>
+        <Rectangle Fill="{StaticResource DotGridBrush}" IsHitTestVisible="False"/>
+        <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="// HOW LONG DID YOU WORK?" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,16">
+            <TextBox x:Name="HoursBox" Width="60" Text="0"/>
+            <TextBlock Text="hours" VerticalAlignment="Center" Margin="6,0,16,0" Foreground="{StaticResource MutedTextBrush}"/>
+            <TextBox x:Name="MinutesBox" Width="60" Text="0"/>
+            <TextBlock Text="minutes" VerticalAlignment="Center" Margin="6,0,0,0" Foreground="{StaticResource MutedTextBrush}"/>
+        </StackPanel>
+
+        <TextBlock Grid.Row="2" Text="// WHAT DID YOU DO IN THAT TIME?" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+        <TextBox x:Name="NoteBox" Grid.Row="3" AcceptsReturn="True" TextWrapping="Wrap"
+                 VerticalContentAlignment="Top" Margin="0,0,0,16"/>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Cancel" Width="90" Margin="0,0,8,0" Click="Cancel_Click"/>
+            <Button Content="Log Time" Width="100" Style="{StaticResource AccentButton}" Click="Save_Click"/>
+        </StackPanel>
+    </Grid>
+    </Grid>
+</Window>
