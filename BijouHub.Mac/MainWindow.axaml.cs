@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using BijouHub.Mac.Services;
 using BijouHub.Models;
 using BijouHub.Services;
 
@@ -20,6 +21,8 @@ public partial class MainWindow : Window
     private DateTime? _sessionStart;
     private DispatcherTimer? _tickTimer;
 
+    private MacUpdateInfo? _pendingUpdate;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -29,6 +32,63 @@ public partial class MainWindow : Window
 
         UpdateSyncFolderButtonLabel();
         UpdateHomeStats();
+
+        VersionButton.Content = $"v{MacUpdateService.GetCurrentVersion()}";
+        _ = CheckForUpdateAsync(silent: true);
+    }
+
+    private async Task CheckForUpdateAsync(bool silent)
+    {
+        if (!silent)
+        {
+            VersionButton.Content = "Checking...";
+            VersionButton.IsEnabled = false;
+        }
+
+        MacUpdateInfo? update = null;
+        try
+        {
+            update = await MacUpdateService.CheckForUpdateAsync();
+        }
+        catch
+        {
+            // No network, rate-limited, etc. — silently skip.
+        }
+
+        _pendingUpdate = update;
+        if (update != null)
+        {
+            UpdateButton.IsVisible = true;
+            UpdateButton.Content = $"⬆ Update to v{update.Version}";
+        }
+        else
+        {
+            UpdateButton.IsVisible = false;
+        }
+
+        if (!silent)
+            VersionButton.IsEnabled = true;
+        VersionButton.Content = $"v{MacUpdateService.GetCurrentVersion()}";
+    }
+
+    private void VersionButton_Click(object? sender, RoutedEventArgs e) => _ = CheckForUpdateAsync(silent: false);
+
+    private async void UpdateButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_pendingUpdate == null) return;
+
+        UpdateButton.IsEnabled = false;
+        UpdateButton.Content = "Downloading...";
+        try
+        {
+            await MacUpdateService.DownloadAndOpenAsync(_pendingUpdate.DownloadUrl);
+            UpdateButton.Content = "Opened DMG — drag to Applications";
+        }
+        catch
+        {
+            UpdateButton.IsEnabled = true;
+            UpdateButton.Content = "Update failed — retry?";
+        }
     }
 
     private void UpdateHomeStats()

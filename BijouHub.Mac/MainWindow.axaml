@@ -11,7 +11,7 @@
 
         <!-- Sidebar -->
         <Border Grid.Column="0" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrushColor}" BorderThickness="0,0,1,0">
-            <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" Margin="16">
+            <Grid RowDefinitions="Auto,Auto,*,Auto,Auto,Auto" Margin="16">
                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="2,4,0,24">
                     <Polygon Points="6,0 18,0 24,8 18,16 6,16 0,8" Fill="#EAF6FF" Width="24" Height="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
                     <TextBlock Text="BijouHub" Classes="heading" FontSize="19" VerticalAlignment="Center"/>
@@ -32,6 +32,13 @@
 
                 <Button Grid.Row="3" Classes="accent" Content="+ New Project" Margin="0,8,0,0" Click="NewProject_Click"/>
                 <Button Name="SyncFolderButton" Grid.Row="4" Content="Sync Folder..." Margin="0,8,0,0" Click="SyncFolder_Click"/>
+
+                <Grid Grid.Row="5" ColumnDefinitions="*,Auto" Margin="0,14,0,0">
+                    <Button Name="VersionButton" Grid.Column="0" Content="v" Click="VersionButton_Click"
+                            ToolTip.Tip="Check for updates"/>
+                    <Button Name="UpdateButton" Grid.Column="1" Classes="accent" Content="⬆ Update" IsVisible="False"
+                            Margin="8,0,0,0" Click="UpdateButton_Click"/>
+                </Grid>
             </Grid>
         </Border>
 
