@@ -19,4 +19,17 @@
     <Resource Include="Fonts\*.ttf"/>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="BijouHub.Core\BijouHub.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="BijouHub.Core\**" />
+    <Compile Remove="BijouHub.Mac\**" />
+    <EmbeddedResource Remove="BijouHub.Core\**" />
+    <EmbeddedResource Remove="BijouHub.Mac\**" />
+    <None Remove="BijouHub.Core\**" />
+    <None Remove="BijouHub.Mac\**" />
+  </ItemGroup>
+
 </Project>

@@ -1,0 +1,106 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:models="clr-namespace:BijouHub.Models;assembly=BijouHub.Core"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="780"
+        x:Class="BijouHub.Mac.MainWindow"
+        Title="BijouHub" Width="1200" Height="780" MinWidth="760" MinHeight="520"
+        Background="{StaticResource BgBrush}">
+    <Grid ColumnDefinitions="240,*">
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrushColor}" BorderThickness="0,0,1,0">
+            <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" Margin="16">
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="2,4,0,24">
+                    <Polygon Points="6,0 18,0 24,8 18,16 6,16 0,8" Fill="#EAF6FF" Width="24" Height="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="BijouHub" Classes="heading" FontSize="19" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <TextBlock Grid.Row="1" Text="// PROJECTS" Classes="muted" Margin="4,0,0,8"/>
+
+                <ListBox Name="ProjectsList" Grid.Row="2" SelectionChanged="ProjectsList_SelectionChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="models:Project">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}" FontSize="13"/>
+                                <TextBlock Text="{Binding NextGoalSummary}" Classes="muted" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <Button Grid.Row="3" Classes="accent" Content="+ New Project" Margin="0,8,0,0" Click="NewProject_Click"/>
+                <Button Name="SyncFolderButton" Grid.Row="4" Content="Sync Folder..." Margin="0,8,0,0" Click="SyncFolder_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- Main content -->
+        <Grid Grid.Column="1" Margin="28">
+            <!-- Home (no project selected) -->
+            <StackPanel Name="HomePanel" IsVisible="True">
+                <TextBlock Text="Welcome back" Classes="heading" FontSize="26"/>
+                <TextBlock Name="TodayTotalText" Text="Today: 0m" Classes="muted" Margin="0,8,0,0"/>
+                <TextBlock Text="Select a project on the left, or create one." Classes="muted" Margin="0,4,0,0"/>
+            </StackPanel>
+
+            <!-- Project detail -->
+            <ScrollViewer Name="ProjectPanel" IsVisible="False">
+                <StackPanel MaxWidth="720" HorizontalAlignment="Left">
+                    <TextBlock Name="ProjectNameText" Classes="heading" FontSize="24"/>
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,10,0,4">
+                        <ProgressBar Name="ProjectProgressBar" Grid.Column="0" Minimum="0" Maximum="1" VerticalAlignment="Center"/>
+                        <TextBlock Name="ProjectProgressText" Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Session timer -->
+                    <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrushColor}" BorderThickness="1" Padding="14" Margin="0,16,0,0">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="// SESSION" Classes="muted"/>
+                                <TextBlock Name="ElapsedText" Text="00:00:00" FontSize="22" Classes="heading" Margin="0,4,0,0"/>
+                            </StackPanel>
+                            <Button Name="SessionButton" Grid.Column="1" Classes="accent" Content="Start Session" VerticalAlignment="Center" Click="SessionButton_Click"/>
+                        </Grid>
+                    </Border>
+                    <TextBox Name="SessionNoteBox" Watermark="What did you work on? (saved when you stop)" Margin="0,8,0,0"
+                              AcceptsReturn="True" Height="60" TextWrapping="Wrap"/>
+
+                    <TextBlock Text="// GOALS" Classes="muted" Margin="0,20,0,8"/>
+                    <ItemsControl Name="GoalsList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="models:Goal">
+                                <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrushColor}" BorderThickness="1" Padding="10,8" Margin="0,0,0,6">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsComplete, Mode=TwoWay}" Click="GoalCheck_Click"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Weight, StringFormat={}{0}%}" Classes="muted" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,6,0,0">
+                        <TextBox Name="NewGoalNameBox" Grid.Column="0" Watermark="New goal name..."/>
+                        <Button Grid.Column="1" Content="+ Add Goal" Margin="8,0,0,0" Click="AddGoal_Click"/>
+                    </Grid>
+
+                    <TextBlock Text="// NOTES" Classes="muted" Margin="0,24,0,8"/>
+                    <ItemsControl Name="NotesList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="models:ProjectNote">
+                                <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrushColor}" BorderThickness="1" Padding="10,8" Margin="0,0,0,6">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:MMM d, h:mm tt}'}" Classes="muted"/>
+                                        <TextBlock Text="{Binding Text}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>
