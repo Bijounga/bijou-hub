@@ -59,6 +59,8 @@ public static class MacUpdateService
     // Applications themselves, same as any other unsigned Mac app update.
     public static async Task DownloadAndOpenAsync(string downloadUrl)
     {
+        EjectStaleMounts();
+
         var downloadsDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
         if (!Directory.Exists(downloadsDir))
             downloadsDir = Path.GetTempPath();
@@ -74,5 +76,38 @@ public static class MacUpdateService
             Arguments = $"\"{dmgPath}\"",
             UseShellExecute = false
         });
+    }
+
+    // Every `open some.dmg` mounts a fresh /Volumes/BijouHub. If a previous update's volume
+    // was never ejected (the user just drags the app out and closes the Finder window, not
+    // the mount), macOS starts numbering duplicates — "BijouHub 1", "BijouHub 2" — that pile
+    // up forever. Eject anything already mounted under that name before mounting a new one.
+    // Safe to call anytime, including at startup to clean up leftovers from before this existed.
+    public static void EjectStaleMounts()
+    {
+        const string volumesDir = "/Volumes";
+        if (!Directory.Exists(volumesDir)) return;
+
+        foreach (var dir in Directory.GetDirectories(volumesDir))
+        {
+            var name = Path.GetFileName(dir);
+            if (!name.StartsWith("BijouHub", StringComparison.OrdinalIgnoreCase)) continue;
+
+            try
+            {
+                using var p = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "hdiutil",
+                    Arguments = $"detach \"{dir}\" -quiet -force",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                });
+                p?.WaitForExit(5000);
+            }
+            catch
+            {
+                // Best-effort cleanup — a stuck mount shouldn't block the update.
+            }
+        }
     }
 }

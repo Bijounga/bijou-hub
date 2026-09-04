@@ -35,6 +35,7 @@ public partial class MainWindow : Window
 
         VersionButton.Content = $"v{MacUpdateService.GetCurrentVersion()}";
         _ = CheckForUpdateAsync(silent: true);
+        _ = Task.Run(MacUpdateService.EjectStaleMounts);
     }
 
     private async Task CheckForUpdateAsync(bool silent)
