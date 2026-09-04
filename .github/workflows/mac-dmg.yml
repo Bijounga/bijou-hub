@@ -41,6 +41,18 @@ jobs:
           cp BijouHub.Mac/Info.plist "$APP/Contents/Info.plist"
           chmod +x "$APP/Contents/MacOS/BijouHub.Mac"
 
+      - name: Ad-hoc code sign
+        # No paid Apple Developer certificate to sign with, but Apple Silicon refuses to run
+        # ANY unsigned binary at all (not just a Gatekeeper warning — a hard "is damaged and
+        # can't be opened" refusal), even for free/unsigned distribution. An ad-hoc signature
+        # (identity "-") satisfies that requirement without needing a certificate. Sign the
+        # nested native libraries first, then the outer bundle, so the bundle's seal covers
+        # already-signed content correctly.
+        run: |
+          find BijouHub.app/Contents/MacOS -type f \( -name "*.dylib" -o -perm +111 \) -exec codesign --force --sign - {} \;
+          codesign --force --deep --sign - BijouHub.app
+          codesign --verify --verbose BijouHub.app
+
       - name: Create DMG
         run: |
           mkdir -p dmg-root
