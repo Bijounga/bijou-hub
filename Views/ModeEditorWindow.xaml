@@ -94,11 +94,14 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="⠿" Foreground="#5A6A7A" Margin="0,0,8,0"
                                        VerticalAlignment="Center" Cursor="SizeAll" ToolTip="Drag to reorder"/>
                             <TextBlock Grid.Column="1" Text="{Binding ProcessName}" VerticalAlignment="Center"/>
-                            <Button Grid.Column="2" Content="Remove" Padding="6,2" Click="RemoveBlockItem_Click" Tag="{Binding}"/>
+                            <CheckBox Grid.Column="2" IsChecked="{Binding IsHardBlock}" Content="Hard block" Margin="0,0,8,0" VerticalAlignment="Center"
+                                      ToolTip="Kill it the instant it opens instead of just alerting — the only way past it is ending the session"/>
+                            <Button Grid.Column="3" Content="Remove" Padding="6,2" Click="RemoveBlockItem_Click" Tag="{Binding}"/>
                         </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>

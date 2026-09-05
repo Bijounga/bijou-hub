@@ -12,10 +12,13 @@ public class BlockWatcher
     private WorkMode? _mode;
 
     public event Action<string, int>? NewBlockedProcessDetected;
+    public event Action<string>? HardBlockedProcessClosed;
 
     public BlockWatcher()
     {
-        _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        // Polls fast enough that a hard-blocked app gets killed well within a second of
+        // launching, rather than sitting open for a couple seconds like the soft-block nag.
+        _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
         _timer.Tick += (_, _) => Poll();
     }
 
@@ -69,7 +72,9 @@ public class BlockWatcher
 
         foreach (var block in _mode.BlockItems)
         {
-            if (_allowedNames.Contains(block.ProcessName))
+            // Hard blocks ignore the temporary-allow list entirely — the only way past one
+            // is ending the session, per how this was asked for.
+            if (!block.IsHardBlock && _allowedNames.Contains(block.ProcessName))
                 continue;
 
             foreach (var proc in Process.GetProcessesByName(block.ProcessName))
@@ -78,7 +83,23 @@ public class BlockWatcher
                     continue;
 
                 _seenPids.Add(proc.Id);
-                NewBlockedProcessDetected?.Invoke(block.ProcessName, proc.Id);
+
+                if (block.IsHardBlock)
+                {
+                    try
+                    {
+                        proc.Kill();
+                        HardBlockedProcessClosed?.Invoke(block.ProcessName);
+                    }
+                    catch
+                    {
+                        // Already exited, access denied, etc. — nothing more to do.
+                    }
+                }
+                else
+                {
+                    NewBlockedProcessDetected?.Invoke(block.ProcessName, proc.Id);
+                }
             }
         }
     }

@@ -7,6 +7,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <conv:IndexToBrushConverter x:Key="IndexToBrushConverter"/>
+            <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
 
             <SolidColorBrush x:Key="BgBrush" Color="#030405"/>
             <SolidColorBrush x:Key="PanelBrush" Color="#08090B"/>

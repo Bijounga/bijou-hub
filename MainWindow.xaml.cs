@@ -73,6 +73,7 @@ public partial class MainWindow : Window
         ProjectsList.ItemsSource = _projects;
 
         _blockWatcher.NewBlockedProcessDetected += OnNewBlockedProcessDetected;
+        _blockWatcher.HardBlockedProcessClosed += OnHardBlockedProcessClosed;
 
         _tickTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _tickTimer.Tick += TickTimer_Tick;
@@ -1031,6 +1032,26 @@ public partial class MainWindow : Window
 
         System.Media.SystemSounds.Exclamation.Play();
         _blockReminderTimer.Start();
+    }
+
+    private void OnHardBlockedProcessClosed(string processName)
+    {
+        var row = new DockPanel { LastChildFill = false, Margin = new Thickness(0, 0, 0, 6) };
+        row.Children.Add(new TextBlock
+        {
+            Text = $"{processName} was closed automatically — hard-blocked in this mode",
+            VerticalAlignment = VerticalAlignment.Center
+        });
+        BlockNotifications.Children.Add(row);
+        System.Media.SystemSounds.Asterisk.Play();
+
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            BlockNotifications.Children.Remove(row);
+        };
+        timer.Start();
     }
 
     private void AllowBlock(string processName)

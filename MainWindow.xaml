@@ -168,7 +168,12 @@
                         <DataTemplate>
                             <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource DangerBrush}"
                                     BorderThickness="1" CornerRadius="2" Padding="10,7" Margin="0,0,0,6">
-                                <TextBlock Text="{Binding ProcessName}"/>
+                                <DockPanel LastChildFill="False">
+                                    <TextBlock Text="{Binding ProcessName}"/>
+                                    <TextBlock Text="HARD BLOCK" FontSize="10" Foreground="{StaticResource DangerBrush}"
+                                               DockPanel.Dock="Right" VerticalAlignment="Center"
+                                               Visibility="{Binding IsHardBlock, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                </DockPanel>
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
