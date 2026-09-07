@@ -2,7 +2,9 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using BijouHub.Models;
 using BijouHub.Services;
 
@@ -34,6 +36,15 @@ public partial class ProjectEditorWindow : Window
 
         GoalsList.ItemsSource = _working.Goals;
         ListReorderBehavior.Enable(GoalsList, _working.Goals);
+    }
+
+    // WPF's ScrollViewer marks MouseWheel as handled even when its own scrolling is disabled
+    // (ScrollViewer.VerticalScrollBarVisibility="Disabled" on the nested ListBoxes above), so
+    // wheel input never reaches the outer scroll area on its own — forward it manually.
+    private void GoalsList_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        GoalsScrollViewer.ScrollToVerticalOffset(GoalsScrollViewer.VerticalOffset - e.Delta);
+        e.Handled = true;
     }
 
     private void SubGoalsList_Loaded(object sender, RoutedEventArgs e)
@@ -85,6 +96,73 @@ public partial class ProjectEditorWindow : Window
             }
         }
         RefreshGoals();
+    }
+
+    private void GoalNameBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        e.Handled = true;
+        if (sender is not TextBox { DataContext: Goal goal }) return;
+
+        var index = _working.Goals.IndexOf(goal);
+        if (index < 0) return;
+
+        var newGoal = new Goal { Name = "", Weight = 0 };
+        _working.Goals.Insert(index + 1, newGoal);
+        NormalizeAfterAdd(_working.Goals, newGoal);
+        RefreshGoals();
+        FocusGoalNameBox("GoalNameBox", newGoal);
+    }
+
+    private void SubGoalNameBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        e.Handled = true;
+        if (sender is not TextBox { DataContext: Goal subGoal }) return;
+
+        foreach (var goal in _working.Goals)
+        {
+            var index = goal.SubGoals.IndexOf(subGoal);
+            if (index < 0) continue;
+
+            var newSub = new Goal { Name = "", Weight = 0 };
+            goal.SubGoals.Insert(index + 1, newSub);
+            NormalizeAfterAdd(goal.SubGoals, newSub);
+            RefreshGoals();
+            FocusGoalNameBox("SubGoalNameBox", newSub);
+            return;
+        }
+    }
+
+    // Pressing Enter inserts a fresh (nameless) sibling right after the current goal/sub-goal
+    // and moves focus straight into its name field, so a run of goals can be typed out without
+    // reaching for the mouse. RefreshGoals() tears down and rebuilds the ListBox's containers,
+    // so the new TextBox doesn't exist yet when this is called — wait for layout, then walk the
+    // visual tree for the element (matched by name + bound Goal) and focus it.
+    private void FocusGoalNameBox(string elementName, Goal target)
+    {
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            var textBox = FindNamedElementForGoal<TextBox>(GoalsList, elementName, target);
+            if (textBox == null) return;
+            textBox.Focus();
+            Keyboard.Focus(textBox);
+        }), DispatcherPriority.Loaded);
+    }
+
+    private static T? FindNamedElementForGoal<T>(DependencyObject root, string elementName, Goal target) where T : FrameworkElement
+    {
+        var count = VisualTreeHelper.GetChildrenCount(root);
+        for (var i = 0; i < count; i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is T { } element && element.Name == elementName && element.DataContext == target)
+                return element;
+
+            var found = FindNamedElementForGoal<T>(child, elementName, target);
+            if (found != null) return found;
+        }
+        return null;
     }
 
     private void WeightBox_LostFocus(object sender, RoutedEventArgs e)

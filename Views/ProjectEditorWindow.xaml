@@ -40,8 +40,10 @@
             <Button Content="+ Goal" DockPanel.Dock="Right" Click="AddGoal_Click"/>
         </DockPanel>
 
-        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
-            <ListBox x:Name="GoalsList" BorderThickness="0" Background="Transparent">
+        <ScrollViewer x:Name="GoalsScrollViewer" Grid.Row="3" VerticalScrollBarVisibility="Auto">
+            <ListBox x:Name="GoalsList" BorderThickness="0" Background="Transparent"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     PreviewMouseWheel="GoalsList_PreviewMouseWheel">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush}"
@@ -70,7 +72,8 @@
                                             </Style>
                                         </CheckBox.Style>
                                     </CheckBox>
-                                    <TextBox Grid.Column="2" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="2" x:Name="GoalNameBox" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" VerticalAlignment="Center"
+                                             KeyDown="GoalNameBox_KeyDown"/>
                                     <TextBox Grid.Column="3" Text="{Binding Weight, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Weight %" LostFocus="WeightBox_LostFocus"/>
                                     <Button Grid.Column="4" Content="+ Sub" Padding="6,2" Margin="0,0,4,0" Click="AddSubGoal_Click" Tag="{Binding}"/>
                                     <Button Grid.Column="5" Content="Remove" Padding="6,2" Click="RemoveGoal_Click" Tag="{Binding}"/>
@@ -78,6 +81,7 @@
 
                                 <ListBox x:Name="SubGoalsList" ItemsSource="{Binding SubGoals}" Margin="34,8,0,0"
                                          BorderThickness="0" Background="Transparent"
+                                         ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                          Loaded="SubGoalsList_Loaded" Tag="{Binding}">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
@@ -92,7 +96,8 @@
                                                 <TextBlock Grid.Column="0" Text="⠿" Foreground="#5A6A7A" Margin="0,0,8,0"
                                                            VerticalAlignment="Center" Cursor="SizeAll" ToolTip="Drag to reorder"/>
                                                 <CheckBox Grid.Column="1" IsChecked="{Binding IsComplete}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                                <TextBox Grid.Column="2" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                <TextBox Grid.Column="2" x:Name="SubGoalNameBox" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" VerticalAlignment="Center"
+                                                         KeyDown="SubGoalNameBox_KeyDown"/>
                                                 <TextBox Grid.Column="3" Text="{Binding Weight, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Weight %" LostFocus="WeightBox_LostFocus"/>
                                                 <Button Grid.Column="4" Content="Remove" Padding="6,2" Click="RemoveSubGoal_Click" Tag="{Binding}"/>
                                             </Grid>
