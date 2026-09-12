@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -38,6 +39,7 @@ public partial class MainWindow : Window
     private Project? _activeProject;
     private Goal? _activeGoal;
     private int? _targetMinutes;
+    private bool _countDownMode;
     private bool _budgetAlertShown;
     private BudgetAlertWindow? _budgetAlertWindow;
     private DateTime _sessionStart;
@@ -60,7 +62,12 @@ public partial class MainWindow : Window
             var currentSettings = _settingsStore.Load();
             currentSettings.ZoomLevel = AppScaleTransform.ScaleX;
             _settingsStore.Save(currentSettings);
+
+            if (IsSessionActive)
+                FinalizeSessionSilently();
         };
+
+        RecoverInterruptedSessionIfAny();
 
         var settings = _settingsStore.Load();
         AppScaleTransform.ScaleX = settings.ZoomLevel;
@@ -93,6 +100,7 @@ public partial class MainWindow : Window
         SetupAnimatedProgressFill();
         RefreshQuickLaunchPanel();
         UpdateSyncFolderButtonLabel();
+        UpdateStartupButtonLabel();
         ShowHome();
         _ = CheckForUpdateAsync();
     }
@@ -885,10 +893,10 @@ public partial class MainWindow : Window
         var dlg = new StartSessionWindow(project, _modes) { Owner = this };
         if (dlg.ShowDialog() != true) return;
 
-        await BeginSession(dlg.SelectedMode, project, dlg.SelectedGoal, dlg.TargetMinutes);
+        await BeginSession(dlg.SelectedMode, project, dlg.SelectedGoal, dlg.TargetMinutes, dlg.CountDown);
     }
 
-    private async Task BeginSession(WorkMode? mode, Project? project, Goal? goal, int? targetMinutes)
+    private async Task BeginSession(WorkMode? mode, Project? project, Goal? goal, int? targetMinutes, bool countDown = false)
     {
         if (mode != null)
         {
@@ -905,6 +913,7 @@ public partial class MainWindow : Window
         _activeProject = project;
         _activeGoal = goal;
         _targetMinutes = targetMinutes;
+        _countDownMode = countDown && targetMinutes != null;
         _budgetAlertShown = false;
         _sessionStart = DateTime.Now;
         _activeSeconds = 0;
@@ -920,12 +929,14 @@ public partial class MainWindow : Window
         var contextParts = new List<string>();
         if (project != null && mode != null) contextParts.Add($"via {mode.Name}");
         if (goal != null) contextParts.Add($"working on: {goal.Name}");
-        if (targetMinutes is int tm) contextParts.Add($"budget: {tm} min");
+        if (targetMinutes is int tm) contextParts.Add(_countDownMode ? $"counting down from {tm} min" : $"budget: {tm} min");
         ActiveContextText.Text = string.Join("  •  ", contextParts);
         ActiveContextText.Visibility = contextParts.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         ActiveStatus.Text = "Active";
-        TimerDisplay.Text = "00:00:00";
+        TimerDisplay.Text = _countDownMode && targetMinutes is int initialTarget
+            ? TimeSpan.FromMinutes(initialTarget).ToString(@"hh\:mm\:ss")
+            : "00:00:00";
 
         ShowActiveSessionPanel();
 
@@ -957,7 +968,15 @@ public partial class MainWindow : Window
             }
         }
 
-        TimerDisplay.Text = TimeSpan.FromSeconds(_activeSeconds).ToString(@"hh\:mm\:ss");
+        if (_countDownMode && _targetMinutes is int countDownTarget)
+        {
+            var remainingSeconds = Math.Max(0, countDownTarget * 60 - _activeSeconds);
+            TimerDisplay.Text = TimeSpan.FromSeconds(remainingSeconds).ToString(@"hh\:mm\:ss");
+        }
+        else
+        {
+            TimerDisplay.Text = TimeSpan.FromSeconds(_activeSeconds).ToString(@"hh\:mm\:ss");
+        }
 
         if (ActiveSessionBanner.Visibility == Visibility.Visible)
             ActiveSessionBannerText.Text = TimerDisplay.Text;
@@ -968,6 +987,107 @@ public partial class MainWindow : Window
         {
             _budgetAlertShown = true;
             ShowBudgetAlert(target);
+        }
+
+        // Checkpoint every 10s so a crash or force-kill loses at most a few seconds of
+        // tracked time instead of the whole session — recovered on the next launch.
+        if ((_activeSeconds + _idleSeconds) % 10 == 0)
+            WriteSessionCheckpoint();
+    }
+
+    private static string SessionCheckpointPath => Path.Combine(DataPaths.LocalDir, "active_session.json");
+
+    private void WriteSessionCheckpoint()
+    {
+        var checkpoint = new SessionCheckpoint
+        {
+            StartTime = _sessionStart,
+            ModeName = _activeMode?.Name ?? "",
+            ProjectId = _activeProject?.Id,
+            ProjectName = _activeProject?.Name,
+            GoalId = _activeGoal?.Id,
+            GoalName = _activeGoal?.Name,
+            ActiveSeconds = _activeSeconds,
+            IdleSeconds = _idleSeconds
+        };
+
+        try { AtomicFile.WriteAllText(SessionCheckpointPath, JsonSerializer.Serialize(checkpoint)); }
+        catch { /* best effort — a missed checkpoint just means slightly more to lose on a crash */ }
+    }
+
+    private static void ClearSessionCheckpoint()
+    {
+        try { File.Delete(SessionCheckpointPath); }
+        catch { /* nothing to clean up */ }
+    }
+
+    // Session ended by closing the app rather than clicking Finish Session — save the time
+    // tracked so far without the finish-note prompt (a modal dialog during shutdown could
+    // hang the close), then clear the checkpoint since it's now properly recorded.
+    private void FinalizeSessionSilently()
+    {
+        _tickTimer.Stop();
+
+        if (_activeSeconds > 0)
+        {
+            _logService.InsertSession(new SessionRecord
+            {
+                ModeName = _activeMode?.Name ?? "",
+                StartTime = _sessionStart,
+                EndTime = DateTime.Now,
+                ActiveSeconds = _activeSeconds,
+                IdleSeconds = _idleSeconds,
+                ProjectId = _activeProject?.Id,
+                ProjectName = _activeProject?.Name,
+                GoalId = _activeGoal?.Id,
+                GoalName = _activeGoal?.Name,
+                Note = null
+            });
+        }
+
+        ClearSessionCheckpoint();
+    }
+
+    // Runs at startup. A leftover checkpoint means the app didn't reach the Closing handler
+    // last time (crash, task-kill, power loss) — recover what was tracked up to the last
+    // checkpoint instead of silently losing it.
+    private void RecoverInterruptedSessionIfAny()
+    {
+        if (!File.Exists(SessionCheckpointPath)) return;
+
+        try
+        {
+            var checkpoint = JsonSerializer.Deserialize<SessionCheckpoint>(File.ReadAllText(SessionCheckpointPath));
+            if (checkpoint != null && checkpoint.ActiveSeconds > 0)
+            {
+                _logService.InsertSession(new SessionRecord
+                {
+                    ModeName = checkpoint.ModeName,
+                    StartTime = checkpoint.StartTime,
+                    EndTime = checkpoint.StartTime.AddSeconds(checkpoint.ActiveSeconds + checkpoint.IdleSeconds),
+                    ActiveSeconds = checkpoint.ActiveSeconds,
+                    IdleSeconds = checkpoint.IdleSeconds,
+                    ProjectId = checkpoint.ProjectId,
+                    ProjectName = checkpoint.ProjectName,
+                    GoalId = checkpoint.GoalId,
+                    GoalName = checkpoint.GoalName,
+                    Note = "Recovered after BijouHub closed unexpectedly"
+                });
+
+                var minutes = Math.Max(1, checkpoint.ActiveSeconds / 60);
+                var suffix = checkpoint.ProjectName != null ? $" on \"{checkpoint.ProjectName}\"." : ".";
+                MessageBox.Show(
+                    $"BijouHub didn't close normally last time — recovered {minutes} minute{(minutes == 1 ? "" : "s")} of tracked time{suffix}",
+                    "Session Recovered", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        catch
+        {
+            // Corrupt checkpoint — nothing usable to recover.
+        }
+        finally
+        {
+            ClearSessionCheckpoint();
         }
     }
 
@@ -1145,12 +1265,14 @@ public partial class MainWindow : Window
             GoalName = _activeGoal?.Name,
             Note = note
         });
+        ClearSessionCheckpoint();
 
         var finishedMode = _activeMode;
         _activeMode = null;
         _activeProject = null;
         _activeGoal = null;
         _targetMinutes = null;
+        _countDownMode = false;
 
         if (finishedProject != null)
         {
@@ -1176,6 +1298,17 @@ public partial class MainWindow : Window
     }
 
     // ---------- Sync folder ----------
+
+    private void UpdateStartupButtonLabel()
+    {
+        StartupToggleButton.Content = StartupService.IsEnabled ? "✓ Starts with Windows" : "Start on Startup";
+    }
+
+    private void StartupToggle_Click(object sender, RoutedEventArgs e)
+    {
+        StartupService.SetEnabled(!StartupService.IsEnabled);
+        UpdateStartupButtonLabel();
+    }
 
     private void UpdateSyncFolderButtonLabel()
     {

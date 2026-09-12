@@ -32,6 +32,6 @@ public class QuickLaunchStore
     public void Save(List<QuickLaunchApp> apps)
     {
         var json = JsonSerializer.Serialize(apps, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(_filePath, json);
+        AtomicFile.WriteAllText(_filePath, json);
     }
 }

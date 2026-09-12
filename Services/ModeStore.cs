@@ -32,6 +32,6 @@ public class ModeStore
     public void Save(List<WorkMode> modes)
     {
         var json = JsonSerializer.Serialize(modes, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(_filePath, json);
+        AtomicFile.WriteAllText(_filePath, json);
     }
 }

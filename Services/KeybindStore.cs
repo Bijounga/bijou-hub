@@ -52,7 +52,7 @@ public class KeybindStore
 
     public void Save()
     {
-        File.WriteAllText(_filePath, JsonSerializer.Serialize(_binds, new JsonSerializerOptions { WriteIndented = true }));
+        AtomicFile.WriteAllText(_filePath, JsonSerializer.Serialize(_binds, new JsonSerializerOptions { WriteIndented = true }));
     }
 
     public string Get(string action) => _binds.TryGetValue(action, out var gesture) ? gesture : Defaults[action];

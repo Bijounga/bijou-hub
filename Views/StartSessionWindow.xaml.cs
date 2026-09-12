@@ -18,6 +18,7 @@ public partial class StartSessionWindow : Window
 {
     public Goal? SelectedGoal { get; private set; }
     public int? TargetMinutes { get; private set; }
+    public bool CountDown { get; private set; }
     public WorkMode? SelectedMode { get; private set; }
 
     public StartSessionWindow(Project project, List<WorkMode> modes)
@@ -59,6 +60,8 @@ public partial class StartSessionWindow : Window
         {
             BudgetCombo.SelectedIndex = 0;
         }
+
+        UpdateCountDownAvailability();
     }
 
     private void AddGoalOptions(Goal goal, int depth)
@@ -74,6 +77,14 @@ public partial class StartSessionWindow : Window
         CustomBudgetBox.Visibility = BudgetCombo.SelectedItem as string == "Custom..."
             ? Visibility.Visible
             : Visibility.Collapsed;
+        UpdateCountDownAvailability();
+    }
+
+    private void UpdateCountDownAvailability()
+    {
+        var hasBudget = BudgetCombo.SelectedItem as string != "No budget";
+        CountDownCheckBox.IsEnabled = hasBudget;
+        if (!hasBudget) CountDownCheckBox.IsChecked = false;
     }
 
     private void Start_Click(object sender, RoutedEventArgs e)
@@ -89,6 +100,7 @@ public partial class StartSessionWindow : Window
             "Custom..." => int.TryParse(CustomBudgetBox.Text.Trim(), out var custom) && custom > 0 ? custom : null,
             _ => null
         };
+        CountDown = TargetMinutes != null && CountDownCheckBox.IsChecked == true;
 
         DialogResult = true;
         Close();

@@ -81,7 +81,7 @@ public class SessionLogService
     private void Save(List<SessionRecord> records)
     {
         var json = JsonSerializer.Serialize(records, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(_filePath, json);
+        AtomicFile.WriteAllText(_filePath, json);
     }
 
     public void InsertSession(SessionRecord record)

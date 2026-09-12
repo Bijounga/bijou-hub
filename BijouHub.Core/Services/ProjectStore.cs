@@ -28,6 +28,6 @@ public class ProjectStore
     public void Save(List<Project> projects)
     {
         var json = JsonSerializer.Serialize(projects, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(_filePath, json);
+        AtomicFile.WriteAllText(_filePath, json);
     }
 }
