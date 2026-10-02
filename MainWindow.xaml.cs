@@ -55,6 +55,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DarkTitleBar.Apply(this);
+        RefreshThemeChrome();
         Closing += (_, _) =>
         {
             if (NotesPanel.Visibility == Visibility.Visible) SaveFreeformNotes();
@@ -1546,6 +1547,42 @@ public partial class MainWindow : Window
     {
         var win = new ThemeWindow(_settingsStore) { Owner = this };
         win.ShowDialog();
+    }
+
+    // Toggles the hand-built decorations that only the NERV Classic theme uses (corner
+    // brackets, ambient header glow, the pulsing timer glow, the hazard-stripe progress
+    // fill) — these live outside any control template, so ThemeService can't swap them the
+    // way it swaps colors/templates. Called once at startup and again whenever the active
+    // theme changes (see ThemeWindow.ThemesList_SelectionChanged).
+    public void RefreshThemeChrome()
+    {
+        var isClassic = ThemeService.IsClassicChrome(ThemeService.CurrentThemeName);
+
+        AmbientGlow.Visibility = isClassic ? Visibility.Visible : Visibility.Collapsed;
+        HeaderBrackets.Visibility = isClassic ? Visibility.Visible : Visibility.Collapsed;
+
+        var accent = (System.Windows.Media.Color)Application.Current.Resources["AccentColor"];
+
+        ActiveSessionBanner.Effect = isClassic
+            ? new System.Windows.Media.Effects.DropShadowEffect { Color = accent, BlurRadius = 10, ShadowDepth = 0, Opacity = 0.5 }
+            : null;
+
+        if (isClassic)
+        {
+            var glow = new System.Windows.Media.Effects.DropShadowEffect { Color = accent, BlurRadius = 24, ShadowDepth = 0, Opacity = 0.35 };
+            TimerDisplay.Effect = glow;
+            var pulse = new DoubleAnimation(0.35, 0.8, TimeSpan.FromSeconds(1.6))
+                { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever };
+            glow.BeginAnimation(System.Windows.Media.Effects.DropShadowEffect.OpacityProperty, pulse);
+        }
+        else
+        {
+            TimerDisplay.Effect = null;
+        }
+
+        ProjectProgressFill.Background = isClassic
+            ? (System.Windows.Media.Brush)FindResource("HazardHatchBrush")
+            : (System.Windows.Media.Brush)FindResource("AccentBrush");
     }
 
     private void ApplyNoteKeybinds()

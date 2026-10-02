@@ -25,6 +25,7 @@ public partial class ThemeWindow : Window
         ("AeroDark", "Aero Dark", "#4CC2FF"),
         ("Vaporwave", "Vaporwave", "#E0359B"),
         ("Y2kChrome", "Y2K Chrome", "#A85206"),
+        ("NervClassic", "NERV Classic", "#33E1FF"),
     };
 
     private readonly AppSettingsStore _settingsStore;
@@ -53,6 +54,7 @@ public partial class ThemeWindow : Window
         ThemeService.Apply(option.Name);
         DarkTitleBar.Apply(this);
         if (Owner != null) DarkTitleBar.Apply(Owner);
+        if (Owner is MainWindow mainWindow) mainWindow.RefreshThemeChrome();
 
         var settings = _settingsStore.Load();
         settings.ThemeName = option.Name;

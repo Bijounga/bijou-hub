@@ -22,6 +22,14 @@
         <!-- Sidebar -->
         <Border Grid.Column="0" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0" ClipToBounds="True">
             <Grid>
+            <!-- NERV Classic only — restored/toggled by MainWindow.RefreshThemeChrome(). -->
+            <Ellipse x:Name="AmbientGlow" Width="220" Height="220" Fill="{DynamicResource AccentGradientBrush}" Opacity="0.10"
+                     HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-90,-110,0,0" IsHitTestVisible="False"
+                     Visibility="Collapsed">
+                <Ellipse.Effect>
+                    <BlurEffect Radius="60"/>
+                </Ellipse.Effect>
+            </Ellipse>
             <Grid Margin="16">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -46,6 +54,12 @@
                                  Width="24" Height="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
                         <TextBlock Text="BijouHub" Style="{StaticResource HeadingText}" FontSize="19" VerticalAlignment="Center"/>
                     </StackPanel>
+                    <Grid x:Name="HeaderBrackets" Visibility="Collapsed">
+                        <Line X1="0" Y1="0" X2="10" Y2="0" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        <Line X1="0" Y1="0" X2="0" Y2="10" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        <Line X1="0" Y1="0" X2="10" Y2="0" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+                        <Line X1="0" Y1="0" X2="0" Y2="10" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+                    </Grid>
                 </Grid>
 
                 <TextBlock Grid.Row="1" Text="// MODES" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="4,0,0,8"/>

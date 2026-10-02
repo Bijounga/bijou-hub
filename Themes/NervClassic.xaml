@@ -1,0 +1,46 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- NERV Classic — BijouHub's original look, restored as a selectable variant rather
+         than the default. Same colors as the Dark theme (this *is* where Dark's palette
+         came from), paired with Styles/ControlsNerv.xaml for the glow/bracket templates
+         and MainWindow's own classic-chrome decorations (see
+         Services/ThemeService.IsClassicChrome and MainWindow.RefreshThemeChrome). -->
+
+    <Color x:Key="BgColor">#030405</Color>
+    <Color x:Key="PanelColor">#08090B</Color>
+    <Color x:Key="CardColor">#0C0F10</Color>
+    <Color x:Key="CardHoverColor">#121819</Color>
+    <Color x:Key="TextColor">#E8F6FA</Color>
+    <Color x:Key="MutedTextColor">#5C7A80</Color>
+    <Color x:Key="FaintTextColor">#3A4C4F</Color>
+    <Color x:Key="BorderColor">#2E3B3D</Color>
+    <Color x:Key="SoftBorderColor">#1B2224</Color>
+    <Color x:Key="AccentColor">#33E1FF</Color>
+    <Color x:Key="HazardColor">#FF9A2E</Color>
+    <Color x:Key="PinkColor">#FF4FA3</Color>
+    <Color x:Key="DangerColor">#FF3B30</Color>
+    <Color x:Key="SuccessColor">#4ADE80</Color>
+
+    <SolidColorBrush x:Key="BgBrush" Color="{DynamicResource BgColor}"/>
+    <SolidColorBrush x:Key="PanelBrush" Color="{DynamicResource PanelColor}"/>
+    <SolidColorBrush x:Key="CardBrush" Color="{DynamicResource CardColor}"/>
+    <SolidColorBrush x:Key="CardHoverBrush" Color="{DynamicResource CardHoverColor}"/>
+    <SolidColorBrush x:Key="TextBrush" Color="{DynamicResource TextColor}"/>
+    <SolidColorBrush x:Key="MutedTextBrush" Color="{DynamicResource MutedTextColor}"/>
+    <SolidColorBrush x:Key="FaintTextBrush" Color="{DynamicResource FaintTextColor}"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="{DynamicResource BorderColor}"/>
+    <SolidColorBrush x:Key="SoftBorderBrush" Color="{DynamicResource SoftBorderColor}"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="{DynamicResource AccentColor}"/>
+    <SolidColorBrush x:Key="HazardBrush" Color="{DynamicResource HazardColor}"/>
+    <SolidColorBrush x:Key="PinkBrush" Color="{DynamicResource PinkColor}"/>
+    <SolidColorBrush x:Key="DangerBrush" Color="{DynamicResource DangerColor}"/>
+    <SolidColorBrush x:Key="SuccessBrush" Color="{DynamicResource SuccessColor}"/>
+
+    <!-- The original bundled display/mono pairing — restored only for this theme; every
+         other theme uses Segoe UI (see Themes/Dark.xaml and friends). -->
+    <FontFamily x:Key="HeadingFont">./Fonts/#Rajdhani SemiBold</FontFamily>
+    <FontFamily x:Key="BodyFont">./Fonts/#IBM Plex Mono</FontFamily>
+
+    <CornerRadius x:Key="CornerRadiusBase">2</CornerRadius>
+</ResourceDictionary>

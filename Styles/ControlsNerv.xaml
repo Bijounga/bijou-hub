@@ -1,42 +1,64 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- The "calm" interactive-control template set — one of two swappable template layers
-         (see Styles/ControlsNerv.xaml for the other). A theme (Themes/*.xaml) supplies only
-         color/font/radius tokens via DynamicResource; ThemeService picks which template set
-         a given theme pairs with. This one replaces the old per-control glow/corner-bracket
-         chrome with a hairline-bordered, single-accent language (Apple's restraint + Linear's
-         surface-ladder elevation). Window/TextBlock/HeadingText live in Styles/Base.xaml,
-         always loaded regardless of which control-template set is active. -->
+    <!-- The "classic" interactive-control template set — BijouHub's original NERV/Evangelion
+         HUD look (glowing accent borders, corner tick-marks, scale+glow hover animations),
+         restored as a selectable alternative to Styles/Controls.xaml's calmer templates.
+         Paired with the "NervClassic" theme only (see Services/ThemeService), but still
+         entirely DynamicResource-driven so it reflects that theme's own tokens rather than
+         hardcoding colors a second time. -->
 
-    <!-- Buttons: flat card surface, hairline border, soft radius. Hover lifts the surface
-         one step (CardBrush -> CardHoverBrush) and warms the border toward the accent —
-         no glow, no corner brackets, no scale animation. -->
     <Style x:Key="BaseButtonStyle" TargetType="Button">
         <Setter Property="FontFamily" Value="{DynamicResource BodyFont}"/>
-        <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+        <Setter Property="Background" Value="#1A33E1FF"/>
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="14,8"/>
+        <Setter Property="Padding" Value="10,5"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="{DynamicResource CornerRadiusBase}"
-                            Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
+                    <Grid RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <ScaleTransform x:Name="BdScale" ScaleX="1" ScaleY="1"/>
+                        </Grid.RenderTransform>
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <Border.Effect>
+                                <DropShadowEffect x:Name="BdGlow" Color="{DynamicResource AccentColor}" BlurRadius="5" ShadowDepth="0" Opacity="0.45"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <Line X1="0" Y1="0" X2="7" Y2="0" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-1"/>
+                        <Line X1="0" Y1="0" X2="0" Y2="7" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-1"/>
+                        <Line X1="0" Y1="0" X2="7" Y2="0" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="-1"/>
+                        <Line X1="0" Y1="0" X2="0" Y2="7" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="-1"/>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource CardHoverBrush}"/>
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BorderBrush}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleX" To="1.03" Duration="0:0:0.12"/>
+                                        <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleY" To="1.03" Duration="0:0:0.12"/>
+                                        <DoubleAnimation Storyboard.TargetName="BdGlow" Storyboard.TargetProperty="BlurRadius" To="16" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="BdGlow" Storyboard.TargetProperty="Opacity" To="0.95" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.12"/>
+                                        <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.12"/>
+                                        <DoubleAnimation Storyboard.TargetName="BdGlow" Storyboard.TargetProperty="BlurRadius" To="5" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="BdGlow" Storyboard.TargetProperty="Opacity" To="0.45" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4"/>
@@ -48,37 +70,10 @@
     </Style>
     <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}"/>
 
-    <!-- Primary action: solid accent fill, matching Apple/Linear's one primary-CTA language. -->
     <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource BgBrush}"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="{DynamicResource CornerRadiusBase}"
-                            Padding="{TemplateBinding Padding}"
-                            Opacity="1">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Opacity" Value="0.7"/>
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.4"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
+        <Setter Property="Background" Value="#332FE0FF"/>
+        <Setter Property="Foreground" Value="#F5FAFF"/>
+        <Setter Property="FontWeight" Value="Bold"/>
     </Style>
 
     <Style x:Key="QuickLaunchTileStyle" TargetType="Button">
@@ -89,18 +84,46 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="{DynamicResource CardBrush}"
-                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                            CornerRadius="{DynamicResource CornerRadiusBase}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
+                    <Grid RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <ScaleTransform x:Name="BdScale" ScaleX="1" ScaleY="1"/>
+                        </Grid.RenderTransform>
+                        <Border x:Name="Bd" Background="#140F1A22" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1">
+                            <Border.Effect>
+                                <DropShadowEffect x:Name="BdGlow" Color="{DynamicResource AccentColor}" BlurRadius="6" ShadowDepth="0" Opacity="0.4"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <Line X1="0" Y1="0" X2="9" Y2="0" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-1"/>
+                        <Line X1="0" Y1="0" X2="0" Y2="9" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-1"/>
+                        <Line X1="0" Y1="0" X2="9" Y2="0" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="-1"/>
+                        <Line X1="0" Y1="0" X2="0" Y2="9" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="-1"/>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource CardHoverBrush}"/>
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleX" To="1.06" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleY" To="1.06" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="BdGlow" Storyboard.TargetProperty="BlurRadius" To="20" Duration="0:0:0.18"/>
+                                        <DoubleAnimation Storyboard.TargetName="BdGlow" Storyboard.TargetProperty="Opacity" To="0.95" Duration="0:0:0.18"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="BdScale" Storyboard.TargetProperty="ScaleY" To="1" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="BdGlow" Storyboard.TargetProperty="BlurRadius" To="6" Duration="0:0:0.18"/>
+                                        <DoubleAnimation Storyboard.TargetName="BdGlow" Storyboard.TargetProperty="Opacity" To="0.4" Duration="0:0:0.18"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BorderBrush}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="#2A33E1FF"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -110,25 +133,33 @@
 
     <Style TargetType="TextBox">
         <Setter Property="FontFamily" Value="{DynamicResource BodyFont}"/>
-        <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+        <Setter Property="Background" Value="#1A33E1FF"/>
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="10,7"/>
+        <Setter Property="Padding" Value="6,4"/>
         <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
-                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="{DynamicResource CornerRadiusBase}">
+                    <Grid>
+                        <Border x:Name="Glow" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <Border.Effect>
+                                <DropShadowEffect Color="{DynamicResource AccentColor}" BlurRadius="5" ShadowDepth="0" Opacity="0.3"/>
+                            </Border.Effect>
+                        </Border>
                         <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
                                       VerticalAlignment="Center"/>
-                    </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsFocused" Value="True">
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            <Setter TargetName="Glow" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="{DynamicResource AccentColor}" BlurRadius="12" ShadowDepth="0" Opacity="0.8"/>
+                                </Setter.Value>
+                            </Setter>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -138,7 +169,7 @@
 
     <Style TargetType="ComboBoxItem">
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        <Setter Property="Padding" Value="10,7"/>
+        <Setter Property="Padding" Value="8,6"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBoxItem">
@@ -160,26 +191,29 @@
 
     <Style TargetType="ComboBox">
         <Setter Property="FontFamily" Value="{DynamicResource BodyFont}"/>
-        <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+        <Setter Property="Background" Value="#1A33E1FF"/>
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="10,7"/>
+        <Setter Property="Padding" Value="8,6"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBox">
                     <Grid>
                         <Border x:Name="Chrome" Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="{DynamicResource CornerRadiusBase}"/>
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <Border.Effect>
+                                <DropShadowEffect Color="{DynamicResource AccentColor}" BlurRadius="5" ShadowDepth="0" Opacity="0.3"/>
+                            </Border.Effect>
+                        </Border>
                         <ToggleButton x:Name="Toggle"
                                       IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
                                       ClickMode="Press" Focusable="False" Background="Transparent" BorderThickness="0">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
                                     <Grid Background="Transparent">
-                                        <Path Data="M0,0 L5,5 L10,0" Stroke="{DynamicResource MutedTextBrush}"
+                                        <Path Data="M0,0 L5,5 L10,0" Stroke="{DynamicResource AccentBrush}"
                                               StrokeThickness="1.5" StrokeLineJoin="Round"
                                               HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0"/>
                                     </Grid>
@@ -192,11 +226,11 @@
                                           HorizontalAlignment="Left" VerticalAlignment="Center"/>
                         <Popup x:Name="Popup" IsOpen="{TemplateBinding IsDropDownOpen}"
                                Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
-                            <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                                    BorderThickness="1" CornerRadius="{DynamicResource CornerRadiusBase}" MaxHeight="220"
+                            <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource AccentBrush}"
+                                    BorderThickness="1" CornerRadius="2" MaxHeight="220"
                                     MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ComboBox}}">
                                 <Border.Effect>
-                                    <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="4" Opacity="0.35"/>
+                                    <DropShadowEffect Color="{DynamicResource AccentColor}" BlurRadius="14" ShadowDepth="0" Opacity="0.6"/>
                                 </Border.Effect>
                                 <ScrollViewer Margin="2" SnapsToDevicePixels="True">
                                     <ItemsPresenter/>
@@ -206,7 +240,11 @@
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsDropDownOpen" Value="True">
-                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            <Setter TargetName="Chrome" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="{DynamicResource AccentColor}" BlurRadius="12" ShadowDepth="0" Opacity="0.8"/>
+                                </Setter.Value>
+                            </Setter>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -225,10 +263,17 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Border x:Name="Box" Width="19" Height="19"
-                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1.5" CornerRadius="4" VerticalAlignment="Center">
-                            <Path x:Name="Check" Data="M2,7 L7,12 L15,2" Stroke="{DynamicResource BgBrush}" StrokeThickness="2.5"
+                        <Border x:Name="Box" Width="21" Height="21"
+                                Background="#1A33E1FF" BorderBrush="{DynamicResource AccentBrush}"
+                                BorderThickness="1.5" VerticalAlignment="Center"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform/>
+                            </Border.RenderTransform>
+                            <Border.Effect>
+                                <DropShadowEffect Color="{DynamicResource AccentColor}" BlurRadius="7" ShadowDepth="0" Opacity="0.65"/>
+                            </Border.Effect>
+                            <Path x:Name="Check" Data="M2,7 L7,12 L15,2" Stroke="{DynamicResource AccentBrush}" StrokeThickness="2.5"
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
                                   Visibility="Collapsed"/>
                         </Border>
@@ -236,8 +281,7 @@
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Box" Property="Background" Value="{DynamicResource AccentBrush}"/>
-                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            <Setter TargetName="Box" Property="Background" Value="#5533E1FF"/>
                             <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -263,7 +307,7 @@
                 <ControlTemplate TargetType="ListBoxItem">
                     <Border x:Name="Bd" Background="{DynamicResource CardBrush}"
                             BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                            CornerRadius="{DynamicResource CornerRadiusBase}" Padding="10,8">
+                            CornerRadius="2" Padding="10,8">
                         <ContentPresenter/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -280,16 +324,19 @@
         </Setter>
     </Style>
 
-    <!-- Plain bar thumb — replaces the old holo-segment-textured thumb. -->
     <Style x:Key="ScrollThumbStyle" TargetType="Thumb">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Thumb">
-                    <Border x:Name="ThumbBorder" Background="{DynamicResource MutedTextBrush}"
-                            CornerRadius="5" Margin="3" Opacity="0.4"/>
+                    <Border x:Name="ThumbBorder" Background="{DynamicResource AccentBrush}"
+                            BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1" Margin="2" Opacity="0.55">
+                        <Border.Effect>
+                            <DropShadowEffect Color="{DynamicResource AccentColor}" BlurRadius="4" ShadowDepth="0" Opacity="0.5"/>
+                        </Border.Effect>
+                    </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="ThumbBorder" Property="Opacity" Value="0.8"/>
+                            <Setter TargetName="ThumbBorder" Property="Opacity" Value="0.95"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
