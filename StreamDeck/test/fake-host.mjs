@@ -39,6 +39,18 @@ writeFileSync(join(dataDir, "modes.json"), JSON.stringify([
 	{ Id: "m-write", Name: "Writing", LaunchItems: [], BlockItems: [] }
 ]));
 writeFileSync(join(dataDir, "projects.json"), JSON.stringify([{ Id: "p-film", Name: "Short Film", Goals: [], Notes: [] }]));
+const today = new Date();
+const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+writeFileSync(join(dataDir, "daily.json"), JSON.stringify([{
+	Date: todayKey,
+	Goals: [
+		{ Id: "g-intro", Text: "Edit the intro", Starred: true, Done: false },
+		{ Id: "g-sponsor", Text: "Reply to sponsor email", Starred: false, Done: false },
+		{ Id: "g-thumbs", Text: "Export thumbnails", Starred: false, Done: false }
+	],
+	Notes: null,
+	CarryOverHandled: true
+}]));
 // What a previous BijouHub run would have left behind — lets the plugin launch it.
 writeFileSync(join(dataDir, "bridge.json"), JSON.stringify({ port: HUB_PORT, exePath: HUB_EXE }));
 
@@ -97,25 +109,25 @@ if (!registered) {
 
 const keys = {};
 let row = 0;
-function send(event, context, payload = {}) {
-	plugin.send(JSON.stringify({ action: ACTION, event, context, device: DEVICE, payload }));
+function send(event, context, payload = {}, action = ACTION) {
+	plugin.send(JSON.stringify({ action, event, context, device: DEVICE, payload }));
 }
-function appear(name, settings) {
-	keys[name] = { context: `ctx-${name}`, settings, coordinates: { column: row++, row: 0 } };
-	send("willAppear", keys[name].context, { settings, coordinates: keys[name].coordinates, controller: "Keypad", isInMultiAction: false, state: 0 });
+function appear(name, settings, action = ACTION) {
+	keys[name] = { context: `ctx-${name}`, settings, coordinates: { column: row++, row: 0 }, action };
+	send("willAppear", keys[name].context, { settings, coordinates: keys[name].coordinates, controller: "Keypad", isInMultiAction: false, state: 0 }, action);
 }
 function keyPayload(name) {
 	return { settings: keys[name].settings, coordinates: keys[name].coordinates, isInMultiAction: false, state: 0 };
 }
 async function tap(name) {
-	send("keyDown", keys[name].context, keyPayload(name));
+	send("keyDown", keys[name].context, keyPayload(name), keys[name].action);
 	await sleep(80);
-	send("keyUp", keys[name].context, keyPayload(name));
+	send("keyUp", keys[name].context, keyPayload(name), keys[name].action);
 }
 async function hold(name) {
-	send("keyDown", keys[name].context, keyPayload(name));
+	send("keyDown", keys[name].context, keyPayload(name), keys[name].action);
 	await sleep(900);
-	send("keyUp", keys[name].context, keyPayload(name));
+	send("keyUp", keys[name].context, keyPayload(name), keys[name].action);
 }
 const svgOf = (name) => images.get(keys[name].context) ?? "";
 const textOf = (name) => [...svgOf(name).matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map((m) => m[1]);
@@ -147,6 +159,9 @@ try {
 	appear("C", {});
 	appear("D", { keyId: "key-d", modeId: "m-edit", modeName: "Editing", duration: "abc" });
 	appear("E", { keyId: "key-a", modeId: "m-edit", modeName: "Editing", duration: "45" }); // duplicated key
+	appear("S", {}, "com.bijounga.bijouhub.session");
+	appear("G", {}, "com.bijounga.bijouhub.goal");
+	appear("X", { minutes: "5" }, "com.bijounga.bijouhub.extend");
 	await waitFor(() => Object.keys(keys).every((k) => images.has(keys[k].context)), 3000, "first images");
 	snapshot("appeared");
 	check(textOf("A").includes("1m"), "A shows its 1m preset");
@@ -156,6 +171,9 @@ try {
 	const dupe = settingsWrites("ctx-E").at(-1);
 	check(dupe && dupe.payload.keyId && dupe.payload.keyId !== "key-a", "duplicated key gets its own keyId");
 	check(settingsWrites("ctx-C").length === 1, "unconfigured key is given a keyId");
+	check(textOf("S").includes("OFFLINE"), "Current Session shows BijouHub is off");
+	check(textOf("G").includes("Open BijouHub"), "Next Goal asks for BijouHub while it's off");
+	check(svgOf("X").includes('opacity="0.42"') && textOf("X").includes("+5"), "Add Time is dimmed with no session");
 
 	// ---------- Settings panel while BijouHub is closed ----------
 	send("propertyInspectorDidAppear", keys.A.context);
@@ -218,6 +236,44 @@ try {
 	snapshot("after flash");
 	check(svgOf("B").includes("M66 37"), "B returns to its ready state");
 
+	// ---------- Current Session, Next Goal, Add Time ----------
+	check(textOf("S").includes("TODAY"), "Current Session shows today's total when idle");
+	check(textOf("G").includes("★ 1 / 3") && textOf("G").join(" ").includes("Edit the"), "Next Goal shows the starred goal first");
+	await tap("G");
+	await waitFor(() => textOf("G").includes("2 / 3"), 2000, "next goal");
+	snapshot("goal cycled");
+	check(textOf("G").includes("2 / 3"), "tapping Next Goal moves to the next goal");
+	await hold("G");
+	await waitFor(() => textOf("G").includes("DONE"), 3000, "goal done flash");
+	check(textOf("G").includes("DONE"), "holding Next Goal checks it off");
+	await sleep(1700);
+	snapshot("after goal done");
+	const daily = JSON.parse(readFileSync(join(dataDir, "daily.json"), "utf8"));
+	const sponsor = daily.find((d) => d.Date === todayKey).Goals.find((g) => g.Id === "g-sponsor");
+	check(sponsor?.Done === true, "the completed goal is saved as done in BijouHub");
+	check(textOf("G").includes("2 / 2") && textOf("G").join(" ").includes("Export"), "Next Goal lands on the goal after it");
+
+	await tap("A");
+	await waitFor(() => textOf("S").some((t) => /^0:5\d$/.test(t)), 8000, "session mirror");
+	snapshot("S mirrors A");
+	check(textOf("S").some((t) => /^0:5\d$/.test(t)) && textOf("S").includes("Editing"), "Current Session mirrors a timer started elsewhere");
+	check(!svgOf("X").includes('opacity="0.42"'), "Add Time lights up while a session runs");
+	await tap("X");
+	await waitFor(() => textOf("S").some((t) => /^[56]:\d\d$/.test(t)), 3000, "extended");
+	snapshot("extended");
+	check(textOf("S").some((t) => /^[56]:\d\d$/.test(t)), "Add Time extends the countdown by its minutes");
+	await tap("S");
+	await waitFor(() => textOf("S").includes("PAUSED"), 3000, "session paused");
+	check(textOf("S").includes("PAUSED") && textOf("A").includes("PAUSED"), "tapping Current Session pauses (and the Timer key agrees)");
+	await tap("S");
+	await waitFor(() => !textOf("S").includes("PAUSED"), 3000, "session resumed");
+	await hold("S");
+	await waitFor(() => textOf("S").includes("LOGGED"), 3000, "session logged");
+	check(textOf("S").includes("LOGGED"), "holding Current Session finishes and logs it");
+	await sleep(2000);
+	snapshot("session idle again");
+	check(textOf("S").includes("TODAY"), "Current Session returns to today's total");
+
 	// ---------- Countdown into overtime ----------
 	if (RUN_OVERTIME) {
 		await tap("A");
@@ -257,10 +313,10 @@ ${tiles.map((f) => `<div style="display:inline-block;margin:4px;text-align:cente
 		sessions = JSON.parse(readFileSync(join(dataDir, "sessions.json"), "utf8"));
 	} catch {}
 	console.log("logged sessions:", sessions.map((s) => `${s.ModeName} ${s.ActiveSeconds}s active/${s.IdleSeconds}s idle project=${s.ProjectName ?? "-"}`));
-	check(sessions.length === (RUN_OVERTIME ? 3 : 2), "every finished or replaced session was logged");
+	check(sessions.length === (RUN_OVERTIME ? 4 : 3), "every finished or replaced session was logged");
 	check(sessions.every((s) => !s.ProjectId), "deck sessions start unassigned");
 	check(sessions[0]?.IdleSeconds >= 2, "paused time is logged as idle, not worked");
-	if (RUN_OVERTIME) check(sessions[2]?.ActiveSeconds >= 60, "overtime session kept counting past the target");
+	if (RUN_OVERTIME) check(sessions[3]?.ActiveSeconds >= 60, "overtime session kept counting past the target");
 
 	if (hubPid) {
 		try {

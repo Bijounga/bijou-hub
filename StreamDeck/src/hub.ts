@@ -12,6 +12,15 @@ export type HubState = {
 	activeSeconds: number;
 	paused: boolean;
 	idle: boolean;
+	/** Time logged today, including the running session. */
+	todaySeconds: number;
+};
+
+/** Open goals across every tab, starred first (see MainWindow.DeckGoals). */
+export type HubGoals = {
+	open: number;
+	done: number;
+	items: { id: string; text: string; starred: boolean; label: string | null }[];
 };
 
 export type Catalog = {
@@ -40,6 +49,7 @@ export class HubClient {
 	#reconnectTimer: NodeJS.Timeout | null = null;
 
 	state: HubState | null = null;
+	goals: HubGoals | null = null;
 
 	get connected(): boolean {
 		return this.#connected;
@@ -103,6 +113,8 @@ export class HubClient {
 			this.#emit();
 			const reply = await this.request("state");
 			if (!reply.error) this.#applyState(reply);
+			const goals = await this.request("goals");
+			if (!goals.error) this.#applyGoals(goals);
 		});
 		socket.on("data", (chunk: string) => this.#receive(chunk));
 		socket.on("error", () => {
@@ -114,6 +126,7 @@ export class HubClient {
 			this.#connected = false;
 			this.#buffer = "";
 			this.state = null;
+			this.goals = null;
 			for (const [, pending] of this.#pending) {
 				clearTimeout(pending.timer);
 				pending.resolve({ error: "BijouHub closed" });
@@ -150,8 +163,11 @@ export class HubClient {
 				}
 				// pause/finish answer with the new state — apply it without waiting for the next tick.
 				if ("active" in message) this.#applyState(message);
+				if ("items" in message) this.#applyGoals(message);
 			} else if (message.type === "state") {
 				this.#applyState(message);
+			} else if (message.type === "goals") {
+				this.#applyGoals(message);
 			}
 		}
 	}
@@ -164,7 +180,25 @@ export class HubClient {
 			targetSeconds: typeof message.targetSeconds === "number" ? message.targetSeconds : null,
 			activeSeconds: typeof message.activeSeconds === "number" ? message.activeSeconds : 0,
 			paused: message.paused === true,
-			idle: message.idle === true
+			idle: message.idle === true,
+			todaySeconds: typeof message.todaySeconds === "number" ? message.todaySeconds : 0
+		};
+		this.#emit();
+	}
+
+	#applyGoals(message: Record<string, unknown>): void {
+		const items = Array.isArray(message.items) ? message.items : [];
+		this.goals = {
+			open: typeof message.open === "number" ? message.open : 0,
+			done: typeof message.done === "number" ? message.done : 0,
+			items: items
+				.filter((i): i is Record<string, unknown> => typeof i === "object" && i !== null && typeof i.id === "string")
+				.map((i) => ({
+					id: i.id as string,
+					text: typeof i.text === "string" ? i.text : "",
+					starred: i.starred === true,
+					label: typeof i.label === "string" ? i.label : null
+				}))
 		};
 		this.#emit();
 	}

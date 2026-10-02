@@ -80,6 +80,58 @@ def key_image():
 </svg>"""
 
 
+def session_icon():
+    path, _ = arc(256, 256, 200, 0.62)
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<circle cx="256" cy="256" r="200" fill="none" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="40"/>
+<path d="{path}" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round"/>
+<rect x="206" y="180" width="34" height="152" rx="10" fill="#FFFFFF"/><rect x="272" y="180" width="34" height="152" rx="10" fill="#FFFFFF"/>
+</svg>"""
+
+
+def goal_icon():
+    return """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect x="76" y="76" width="360" height="360" rx="70" fill="none" stroke="#FFFFFF" stroke-width="40"/>
+<path d="M170 262 L232 324 L346 196" fill="none" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>"""
+
+
+def extend_icon():
+    path, _ = arc(256, 256, 200, 0.75)
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<path d="{path}" fill="none" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="40" stroke-linecap="round"/>
+<path d="M256 170 V342 M170 256 H342" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round"/>
+</svg>"""
+
+
+def key_frame(inner):
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144">
+<defs><radialGradient id="glow" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="{CYAN}" stop-opacity="0.24"/>
+<stop offset="100%" stop-color="{CYAN}" stop-opacity="0"/></radialGradient></defs>
+<rect width="144" height="144" fill="#0B0D12"/><rect width="144" height="144" fill="url(#glow)"/>{inner}</svg>"""
+
+
+def text(value, y, size, fill="#F4F6FA", weight=600, opacity=1):
+    return (f'<text x="72" y="{y}" text-anchor="middle" font-family="Segoe UI" font-size="{size}" font-weight="{weight}" '
+            f'fill="{fill}" fill-opacity="{opacity}">{value}</text>')
+
+
+def session_key():
+    return key_frame(f'<circle cx="72" cy="72" r="60" fill="none" stroke="{CYAN}" stroke-opacity="0.2" stroke-width="7"/>'
+                     + text("TODAY", 52, 13, CYAN, 700) + text("2h 15m", 86, 28) + text("no session", 106, 14, opacity=0.72))
+
+
+def goal_key():
+    return key_frame(text("★ 1 / 3", 30, 12, "#FFB547", 700)
+                     + '<rect x="58" y="39" width="28" height="3" rx="1.5" fill="#FFB547" fill-opacity="0.7"/>'
+                     + text("Edit the", 82, 16) + text("intro", 102, 16))
+
+
+def extend_key():
+    return key_frame(f'<circle cx="72" cy="72" r="60" fill="none" stroke="{CYAN}" stroke-opacity="0.2" stroke-width="7"/>'
+                     + text("ADD TIME", 52, 13, CYAN, 700) + text("+15", 86, 36) + text("minutes", 106, 14, opacity=0.72))
+
+
 def render(svg, work):
     html = os.path.join(work, "icon.html")
     with open(html, "w", encoding="utf-8") as f:
@@ -100,6 +152,12 @@ def main():
         ("category", category_icon(), 28),
         ("action", action_icon(), 20),
         ("key", key_image(), 72),
+        ("session", session_icon(), 20),
+        ("goal", goal_icon(), 20),
+        ("extend", extend_icon(), 20),
+        ("session-key", session_key(), 72),
+        ("goal-key", goal_key(), 72),
+        ("extend-key", extend_key(), 72),
     ]
     with tempfile.TemporaryDirectory() as work:
         for name, svg, size in targets:

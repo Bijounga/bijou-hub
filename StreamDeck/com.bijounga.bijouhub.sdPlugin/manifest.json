@@ -2,9 +2,9 @@
 	"$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
 	"UUID": "com.bijounga.bijouhub",
 	"Name": "BijouHub",
-	"Version": "1.0.0.0",
+	"Version": "1.1.0.0",
 	"Author": "Bijou",
-	"Description": "Start BijouHub timers from a key and watch them count down on it.",
+	"Description": "BijouHub on your Stream Deck: start timers, watch the running session, work through today's goals and add time.",
 	"Icon": "imgs/plugin",
 	"Category": "BijouHub",
 	"CategoryIcon": "imgs/category",
@@ -38,6 +38,58 @@
 			"States": [
 				{
 					"Image": "imgs/key",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
+			"UUID": "com.bijounga.bijouhub.session",
+			"Name": "Current Session",
+			"Icon": "imgs/session",
+			"Tooltip": "Shows the running session from anywhere. Tap to pause, hold to finish. Idle: today's total; tap opens BijouHub.",
+			"Controllers": [
+				"Keypad"
+			],
+			"UserTitleEnabled": false,
+			"SupportedInMultiActions": false,
+			"States": [
+				{
+					"Image": "imgs/session-key",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
+			"UUID": "com.bijounga.bijouhub.goal",
+			"Name": "Next Goal",
+			"Icon": "imgs/goal",
+			"Tooltip": "Today's goals, starred first. Tap for the next one, hold to check it off.",
+			"Controllers": [
+				"Keypad"
+			],
+			"UserTitleEnabled": false,
+			"SupportedInMultiActions": false,
+			"States": [
+				{
+					"Image": "imgs/goal-key",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
+			"UUID": "com.bijounga.bijouhub.extend",
+			"Name": "Add Time",
+			"Icon": "imgs/extend",
+			"Tooltip": "Adds minutes to the running session's countdown.",
+			"PropertyInspectorPath": "ui/extend.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"UserTitleEnabled": false,
+			"SupportedInMultiActions": true,
+			"States": [
+				{
+					"Image": "imgs/extend-key",
 					"ShowTitle": false
 				}
 			]

@@ -355,6 +355,7 @@ public partial class MainWindow : Window
             ProjectName = project.Name,
             Note = dlg.Note
         });
+        InvalidateTodayLogged();
 
         if (!string.IsNullOrEmpty(dlg.Note))
         {
@@ -1118,12 +1119,7 @@ public partial class MainWindow : Window
         _blockReminderTimer.Stop();
 
         TypewriterReveal(ActiveModeName, project?.Name ?? mode?.Name ?? "Session");
-        var contextParts = new List<string>();
-        if (project != null && mode != null) contextParts.Add($"via {mode.Name}");
-        if (goal != null) contextParts.Add($"working on: {goal.Name}");
-        if (targetMinutes is int tm) contextParts.Add(_countDownMode ? $"counting down from {tm} min" : $"budget: {tm} min");
-        ActiveContextText.Text = string.Join("  •  ", contextParts);
-        ActiveContextText.Visibility = contextParts.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        UpdateSessionContextText();
 
         ActiveStatus.Text = "Active";
         TimerDisplay.Text = _countDownMode && targetMinutes is int initialTarget
@@ -1291,6 +1287,42 @@ public partial class MainWindow : Window
         }
     }
 
+    private void UpdateSessionContextText()
+    {
+        var contextParts = new List<string>();
+        if (_activeProject != null && _activeMode != null) contextParts.Add($"via {_activeMode.Name}");
+        if (_activeGoal != null) contextParts.Add($"working on: {_activeGoal.Name}");
+        if (_targetMinutes is int tm) contextParts.Add(_countDownMode ? $"counting down from {tm} min" : $"budget: {tm} min");
+        ActiveContextText.Text = string.Join("  •  ", contextParts);
+        ActiveContextText.Visibility = contextParts.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    // Adds time to the running session: more countdown (or budget), or — for a session that was
+    // counting up — a countdown of that length from now. Clears a "time's up" alert.
+    private bool ExtendSession(int minutes)
+    {
+        if (!IsSessionActive || minutes <= 0) return false;
+
+        if (_targetMinutes is int target)
+        {
+            // Past the end already: count the extension from now, not from the old target.
+            var elapsedMinutes = (int)Math.Ceiling(_activeSeconds / 60.0);
+            _targetMinutes = Math.Max(target, elapsedMinutes) + minutes;
+        }
+        else
+        {
+            _targetMinutes = (int)Math.Ceiling(_activeSeconds / 60.0) + minutes;
+            _countDownMode = true;
+        }
+
+        _budgetAlertShown = false;
+        _budgetAlertWindow?.Close();
+        _budgetAlertWindow = null;
+        UpdateSessionContextText();
+        BroadcastDeckState();
+        return true;
+    }
+
     private void ShowBudgetAlert(int targetMinutes)
     {
         System.Media.SystemSounds.Exclamation.Play();
@@ -1301,12 +1333,7 @@ public partial class MainWindow : Window
         alert.Left = workArea.Right - alert.Width - 16;
         alert.Top = workArea.Bottom - alert.Height - 16;
 
-        alert.Extended += () =>
-        {
-            _targetMinutes = (_targetMinutes ?? targetMinutes) + 15;
-            _budgetAlertShown = false;
-            alert.Close();
-        };
+        alert.Extended += () => ExtendSession(15);
         alert.FinishRequested += () =>
         {
             alert.Close();
@@ -1469,6 +1496,7 @@ public partial class MainWindow : Window
             GoalName = _activeGoal?.Name,
             Note = note
         });
+        InvalidateTodayLogged();
         ClearSessionCheckpoint();
 
         var finishedMode = _activeMode;
@@ -1579,6 +1607,7 @@ public partial class MainWindow : Window
         _today.Notes = string.IsNullOrWhiteSpace(DailyNotesBox.Text) ? null : DailyNotesBox.Text;
         _dailyStore.SaveDay(_today);
         UpdateDailyProgress();
+        BroadcastDeckGoals();
     }
 
     private void UpdateDailyProgress()
@@ -2034,10 +2063,60 @@ public partial class MainWindow : Window
         ["targetSeconds"] = _countDownMode && _targetMinutes is int target ? target * 60 : null,
         ["activeSeconds"] = _activeSeconds,
         ["paused"] = _paused,
-        ["idle"] = _isIdle && !_paused
+        ["idle"] = _isIdle && !_paused,
+        ["todaySeconds"] = TodayLoggedSeconds() + (IsSessionActive ? _activeSeconds : 0)
     };
 
     private void BroadcastDeckState() => _deckBridge.Broadcast(DeckState());
+
+    private DateTime _todayLoggedDay;
+    private int _todayLoggedSeconds;
+
+    // Time already logged today, read once per day and refreshed whenever a session is saved.
+    private int TodayLoggedSeconds()
+    {
+        if (_todayLoggedDay != DateTime.Today) InvalidateTodayLogged();
+        return _todayLoggedSeconds;
+    }
+
+    private void InvalidateTodayLogged()
+    {
+        _todayLoggedDay = DateTime.Today;
+        _todayLoggedSeconds = _logService.GetTodayTotalSeconds();
+    }
+
+    // Open goals for the deck's Next Goal key: every tab, starred first, in the user's order.
+    private JsonObject DeckGoals()
+    {
+        var open = _dailyGoals.Where(g => !g.Done).OrderBy(g => g.Starred ? 0 : 1).Take(30).ToList();
+        return new JsonObject
+        {
+            ["type"] = "goals",
+            ["open"] = _dailyGoals.Count(g => !g.Done),
+            ["done"] = _dailyGoals.Count(g => g.Done),
+            ["items"] = new JsonArray(open.Select(g => (JsonNode)new JsonObject
+            {
+                ["id"] = g.Id,
+                ["text"] = g.Text,
+                ["starred"] = g.Starred,
+                ["label"] = g.ChipText
+            }).ToArray())
+        };
+    }
+
+    private void BroadcastDeckGoals() => _deckBridge.Broadcast(DeckGoals());
+
+    // Brings BijouHub forward when a key asks (e.g. tapping Current Session with nothing running).
+    private void BringToFront()
+    {
+        if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+        Show();
+        Activate();
+        // Windows won't always let a background app take focus; a topmost flick still raises it.
+        Topmost = true;
+        Topmost = false;
+        Focus();
+    }
 
     // Runs on the UI thread (the bridge marshals every command here). The reply goes back to
     // the plugin that asked; state changes also reach every connected plugin via broadcast.
@@ -2065,6 +2144,24 @@ public partial class MainWindow : Window
             case "finish":
                 FinishSession(askForNote: false);
                 return DeckState();
+
+            case "extend":
+                var extendBy = request["minutes"] is JsonValue ev && ev.TryGetValue<int>(out var em) ? em : 15;
+                return ExtendSession(extendBy) ? DeckState() : new JsonObject { ["error"] = "No session is running" };
+
+            case "goals":
+                return DeckGoals();
+
+            case "completeGoal":
+                var goalId = (string?)request["goalId"]; // "id" is the request id the bridge replies with
+                var done = _dailyGoals.FirstOrDefault(g => g.Id == goalId);
+                if (done == null) return new JsonObject { ["error"] = "That goal is gone" };
+                done.Done = true; // saves, syncs to Google and re-broadcasts the list
+                return DeckGoals();
+
+            case "focus":
+                BringToFront();
+                return new JsonObject { ["ok"] = true };
 
             default:
                 return new JsonObject { ["error"] = "Unknown command" };

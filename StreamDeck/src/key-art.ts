@@ -25,6 +25,16 @@ export type KeyArt = {
 	dim?: boolean;
 	/** Shows a play glyph above the readout (an idle key that's ready to start). */
 	play?: boolean;
+	/** Draws a check mark in place of the readout (something just got done). */
+	check?: boolean;
+};
+
+/** A key that's mostly words: a small label on top and up to four wrapped lines. */
+export type TextArt = {
+	color: string;
+	label: string;
+	text: string;
+	dim?: boolean;
 };
 
 const SIZE = 144;
@@ -58,7 +68,11 @@ export function renderKey(art: KeyArt): string {
 		parts.push(text(art.label, 52, 13, art.labelColor ?? color, 700));
 	}
 
-	parts.push(text(art.big, 86, bigSize(art.big), INK, 600));
+	if (art.check) {
+		parts.push(`<path d="M50 74 L65 89 L94 58" fill="none" stroke="${INK}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>`);
+	} else {
+		parts.push(text(art.big, 86, bigSize(art.big), INK, 600));
+	}
 
 	if (art.caption) {
 		parts.push(text(truncate(art.caption, 11), 106, 14, INK, 400, 0.72));
@@ -67,6 +81,52 @@ export function renderKey(art: KeyArt): string {
 	const body = parts.join("");
 	const content = art.dim ? `<g opacity="0.42">${body}</g>` : body;
 	return `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">${content}</svg>`;
+}
+
+export function renderText(art: TextArt): string {
+	const { color } = art;
+	const lines = wrap(art.text, 13, 4);
+	const lineHeight = 20;
+	const top = 92 - ((lines.length - 1) * lineHeight) / 2;
+
+	const parts = [
+		`<defs><radialGradient id="glow" cx="50%" cy="35%" r="70%">` +
+			`<stop offset="0%" stop-color="${color}" stop-opacity="0.2"/>` +
+			`<stop offset="100%" stop-color="${color}" stop-opacity="0"/>` +
+			`</radialGradient></defs>`,
+		`<rect width="${SIZE}" height="${SIZE}" fill="#0B0D12"/>`,
+		`<rect width="${SIZE}" height="${SIZE}" fill="url(#glow)"/>`,
+		text(art.label, 30, 12, color, 700),
+		`<rect x="58" y="39" width="28" height="3" rx="1.5" fill="${color}" fill-opacity="0.7"/>`,
+		...lines.map((line, i) => text(line, top + i * lineHeight, 16, INK, 600))
+	];
+
+	const body = parts.join("");
+	const content = art.dim ? `<g opacity="0.42">${body}</g>` : body;
+	return `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">${content}</svg>`;
+}
+
+/** Greedy word wrap by character count; the last line gets an ellipsis if text is left over. */
+function wrap(value: string, perLine: number, maxLines: number): string[] {
+	const words = value.trim().split(/\s+/).filter(Boolean);
+	const lines: string[] = [];
+	let line = "";
+	for (const word of words) {
+		const chunk = word.length > perLine ? word.slice(0, perLine - 1) + "…" : word;
+		if (line.length === 0) line = chunk;
+		else if (line.length + 1 + chunk.length <= perLine) line += " " + chunk;
+		else {
+			lines.push(line);
+			line = chunk;
+		}
+	}
+	if (line) lines.push(line);
+	if (lines.length > maxLines) {
+		const kept = lines.slice(0, maxLines);
+		kept[maxLines - 1] = kept[maxLines - 1].slice(0, perLine - 1).trimEnd() + "…";
+		return kept;
+	}
+	return lines.length ? lines : [""];
 }
 
 export function toDataUrl(svg: string): string {

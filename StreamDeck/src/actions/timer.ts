@@ -12,7 +12,8 @@ import streamDeck, {
 } from "@elgato/streamdeck";
 import { formatClock, formatPreset, parseDuration } from "../duration.js";
 import type { HubClient } from "../hub.js";
-import { AWAY_COLOR, type KeyArt, OVER_COLOR, PAUSED_COLOR, renderKey, toDataUrl } from "../key-art.js";
+import { type KeyArt, OVER_COLOR, renderKey, toDataUrl } from "../key-art.js";
+import { liveSessionArt } from "../session-art.js";
 
 export type TimerSettings = {
 	/** Stable id for this key, so BijouHub can say which key owns the running session. */
@@ -246,37 +247,7 @@ export class TimerAction extends SingletonAction<TimerSettings> {
 		}
 
 		// This key's session is live.
-		const status = state.paused ? { color: PAUSED_COLOR, label: "PAUSED" } : state.idle ? { color: AWAY_COLOR, label: "AWAY" } : null;
-
-		if (state.targetSeconds === null) {
-			return {
-				color: status?.color ?? color,
-				fraction: (state.activeSeconds % 3600) / 3600,
-				label: status?.label ?? "ELAPSED",
-				labelColor: status ? undefined : color,
-				big: formatClock(state.activeSeconds),
-				caption: caption(settings)
-			};
-		}
-
-		const remaining = state.targetSeconds - state.activeSeconds;
-		if (remaining <= 0) {
-			return {
-				color: status?.color ?? OVER_COLOR,
-				fraction: 1,
-				label: status?.label ?? "OVER",
-				big: "+" + formatClock(-remaining),
-				caption: caption(settings)
-			};
-		}
-
-		return {
-			color: status?.color ?? color,
-			fraction: remaining / state.targetSeconds,
-			label: status?.label,
-			big: formatClock(remaining),
-			caption: caption(settings)
-		};
+		return liveSessionArt(state, color, caption(settings));
 	}
 }
 
