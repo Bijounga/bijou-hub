@@ -1,29 +1,102 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
-    <!-- Styles that never change regardless of which interactive-control template set
-         (Styles/Controls.xaml "calm" vs Styles/ControlsNerv.xaml "classic") is active —
-         always merged at a fixed slot, never swapped. Anything that differs between the
-         two template sets (heading weight, glows, chrome visibility...) is a resource the
-         template set defines and these styles/views read via DynamicResource. -->
+    <!-- Merged first, so it holds the defaults for every look-and-layout resource the views
+         read: App.xaml merges Base, then the active control-template set (Styles/Controls,
+         ControlsNerv or ControlsFx), then the active theme (Themes/*.xaml). Later dictionaries
+         win, so a template set only restates what it changes, and a theme only restates what
+         makes it different. The values here are the calm look (Dark, High Contrast, ...). -->
 
     <Style TargetType="Window">
         <Setter Property="Background" Value="{DynamicResource BgBrush}"/>
         <Setter Property="FontFamily" Value="{DynamicResource BodyFont}"/>
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <!-- Corbel, Candara, Constantia and friends default to old-style figures, which turn
+             a "0m" into "om"; lining figures keep numbers (timers, percentages) readable. -->
+        <Setter Property="Typography.NumeralStyle" Value="Lining"/>
     </Style>
 
     <Style TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{DynamicResource BodyFont}"/>
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="Typography.NumeralStyle" Value="Lining"/>
     </Style>
 
     <Style x:Key="HeadingText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontFamily" Value="{DynamicResource HeadingFont}"/>
         <Setter Property="FontWeight" Value="{DynamicResource HeadingFontWeight}"/>
     </Style>
+
+    <!-- ===== Per-look values (template sets / themes override) ===== -->
+    <Visibility x:Key="ClassicChromeVisibility">Collapsed</Visibility>
+    <FontWeight x:Key="HeadingFontWeight">SemiBold</FontWeight>
+    <SolidColorBrush x:Key="SectionLabelBrush" Color="{DynamicResource MutedTextColor}"/>
+    <SolidColorBrush x:Key="DragHandleBrush" Color="{DynamicResource FaintTextColor}"/>
+    <SolidColorBrush x:Key="ProgressFillBrush" Color="{DynamicResource AccentColor}"/>
+    <x:Null x:Key="GlowBanner"/>
+    <x:Null x:Key="GlowGoalBar"/>
+    <x:Null x:Key="GlowGreeting"/>
+    <x:Null x:Key="GlowPopoutText"/>
+    <DropShadowEffect x:Key="PopoutShadow" x:Shared="False" Color="#000000" BlurRadius="16" ShadowDepth="4" Opacity="0.4"/>
+
+    <!-- Main window shell: wallpaper, and whether the sidebar/content sit flush (calm) or
+         float on the wallpaper as separate panels (ControlsFx). -->
+    <SolidColorBrush x:Key="WallpaperBrush" Color="{DynamicResource BgColor}"/>
+    <Thickness x:Key="ShellPadding">0</Thickness>
+    <Thickness x:Key="SidebarMargin">0</Thickness>
+    <SolidColorBrush x:Key="SidebarBrush" Color="{DynamicResource PanelColor}"/>
+    <SolidColorBrush x:Key="SidebarEdgeBrush" Color="{DynamicResource BorderColor}"/>
+    <Thickness x:Key="SidebarBorderThickness">0,0,1,0</Thickness>
+    <SolidColorBrush x:Key="ContentBrush" Color="Transparent"/>
+    <SolidColorBrush x:Key="ContentEdgeBrush" Color="Transparent"/>
+    <Thickness x:Key="ContentBorderThickness">0</Thickness>
+    <CornerRadius x:Key="PanelRadius">0</CornerRadius>
+    <CornerRadius x:Key="PanelTopRadius">0</CornerRadius>
+    <Thickness x:Key="PanelInset">0</Thickness>
+    <x:Null x:Key="PanelShadow"/>
+    <SolidColorBrush x:Key="PanelTextureBrush" Color="Transparent"/>
+    <Visibility x:Key="PanelBevelVisibility">Collapsed</Visibility>
+    <SolidColorBrush x:Key="PanelBevelOuterLightBrush" Color="Transparent"/>
+    <SolidColorBrush x:Key="PanelBevelOuterDarkBrush" Color="Transparent"/>
+    <SolidColorBrush x:Key="PanelBevelInnerLightBrush" Color="Transparent"/>
+    <SolidColorBrush x:Key="PanelBevelInnerDarkBrush" Color="Transparent"/>
+    <Visibility x:Key="ScrewsVisibility">Collapsed</Visibility>
+    <x:Null x:Key="ScrewImage"/>
+
+    <!-- The sidebar's title strip (the logo). Calm: no strip, just the logo. -->
+    <SolidColorBrush x:Key="SidebarHeaderBrush" Color="Transparent"/>
+    <SolidColorBrush x:Key="SidebarHeaderTextureBrush" Color="Transparent"/>
+    <SolidColorBrush x:Key="SidebarHeaderEdgeBrush" Color="Transparent"/>
+    <Thickness x:Key="SidebarHeaderBorderThickness">0</Thickness>
+    <SolidColorBrush x:Key="SidebarHeaderInkBrush" Color="{DynamicResource TextColor}"/>
+    <Thickness x:Key="SidebarHeaderPadding">16,16,16,0</Thickness>
+    <Thickness x:Key="SidebarBodyMargin">16,24,16,16</Thickness>
+    <Thickness x:Key="ContentMargin">28</Thickness>
+    <Visibility x:Key="LogoStandardVisibility">Visible</Visibility>
+    <Visibility x:Key="LogoDoodleVisibility">Collapsed</Visibility>
+    <Visibility x:Key="TitleGlitchVisibility">Collapsed</Visibility>
+    <Thickness x:Key="LogoMargin">10,8</Thickness>
+    <sys:Double x:Key="LogoFontSize">19</sys:Double>
+
+    <!-- The session timer's "display": calm themes show bare digits; some themes mount them
+         on a screen (LCD, CRT, terminal...) with an overlay (dot matrix, scanlines) and a
+         glass reflection on top. -->
+    <SolidColorBrush x:Key="TimerScreenBrush" Color="Transparent"/>
+    <SolidColorBrush x:Key="TimerScreenEdgeBrush" Color="Transparent"/>
+    <Thickness x:Key="TimerScreenBorderThickness">0</Thickness>
+    <Thickness x:Key="TimerScreenPadding">0</Thickness>
+    <CornerRadius x:Key="TimerScreenRadius">0</CornerRadius>
+    <SolidColorBrush x:Key="TimerScreenOverlayBrush" Color="Transparent"/>
+    <SolidColorBrush x:Key="TimerScreenGlassBrush" Color="Transparent"/>
+    <SolidColorBrush x:Key="TimerTextBrush" Color="{DynamicResource AccentColor}"/>
+    <SolidColorBrush x:Key="TimerScreenInkBrush" Color="{DynamicResource MutedTextColor}"/>
+    <SolidColorBrush x:Key="PopoutScreenBrush" Color="{DynamicResource BgColor}"/>
+    <x:Null x:Key="TimerGlow"/>
+    <FontFamily x:Key="TimerFont">Segoe UI</FontFamily>
+    <FontWeight x:Key="TimerFontWeight">SemiBold</FontWeight>
 
     <!-- Decorative brushes only the classic template set makes visible (via
          ClassicChromeVisibility), defined here so they always resolve whichever set is active. -->

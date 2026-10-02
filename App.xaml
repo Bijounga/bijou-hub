@@ -6,22 +6,22 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- Index 0 is the active theme (colors/fonts/radius) — Services/ThemeService.Apply
-                     replaces this entry at runtime. Declared here as the default so design-time
-                     and a first-ever run (before any setting is read) still resolve every
-                     DynamicResource token. -->
-                <ResourceDictionary Source="Themes/Dark.xaml"/>
-                <!-- Index 1: Window/TextBlock/HeadingText — never swapped, shared by every
-                     theme and every control-template set below. -->
+                <!-- Later dictionaries win, so this order is most-general to most-specific:
+                     [0] Base — shared styles plus the default value of every look resource;
+                     never swapped.
+                     [1] the active control-template set (Styles/Controls, ControlsNerv or
+                     ControlsFx) — swapped by Services/ThemeService.Apply.
+                     [2] the active theme — swapped by ThemeService.Apply too, and last so its
+                     values override both. Declared with defaults so design-time and a
+                     first-ever run still resolve every DynamicResource. -->
                 <ResourceDictionary Source="Styles/Base.xaml"/>
-                <!-- Index 2: the active interactive-control template set — also swapped by
-                     ThemeService.Apply, paired with whichever theme is selected (the calm set
-                     by default; Styles/ControlsNerv.xaml for the "NervClassic" theme). -->
                 <ResourceDictionary Source="Styles/Controls.xaml"/>
+                <ResourceDictionary Source="Themes/Dark.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <conv:IndexToBrushConverter x:Key="IndexToBrushConverter"/>
             <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+            <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
 
             <!-- Brand mark (the sidebar "gem" logo) — a fixed identity color, not a theme
                  token, the same way a real logo doesn't recolor itself per app theme. -->

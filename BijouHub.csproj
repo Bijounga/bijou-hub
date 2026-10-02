@@ -17,6 +17,7 @@
   <ItemGroup>
     <Resource Include="Assets\app-icon.ico"/>
     <Resource Include="Fonts\*.ttf"/>
+    <Resource Include="Assets\Themes\*"/>
   </ItemGroup>
 
   <ItemGroup>

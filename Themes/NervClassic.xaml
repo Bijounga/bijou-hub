@@ -43,6 +43,8 @@
          folder (Themes/), not the app root where the font files live. -->
     <FontFamily x:Key="HeadingFont">pack://application:,,,/Fonts/#Rajdhani SemiBold</FontFamily>
     <FontFamily x:Key="BodyFont">pack://application:,,,/Fonts/#IBM Plex Mono</FontFamily>
+    <FontFamily x:Key="TimerFont">pack://application:,,,/Fonts/#Rajdhani SemiBold</FontFamily>
+    <FontWeight x:Key="TimerFontWeight">Bold</FontWeight>
 
     <CornerRadius x:Key="CornerRadiusBase">2</CornerRadius>
 </ResourceDictionary>

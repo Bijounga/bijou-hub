@@ -1623,7 +1623,7 @@ public partial class MainWindow : Window
 
         if (!ThemeService.IsClassicChrome(ThemeService.CurrentThemeName))
         {
-            TimerDisplay.Effect = null;
+            TimerDisplay.SetResourceReference(EffectProperty, "TimerGlow");
             ProjectProgressFill.SetResourceReference(Border.BackgroundProperty, "ProgressFillBrush");
             return;
         }

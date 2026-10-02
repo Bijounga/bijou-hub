@@ -1,27 +1,13 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- The "calm" interactive-control template set — one of two swappable template layers
-         (see Styles/ControlsNerv.xaml for the other). A theme (Themes/*.xaml) supplies only
-         color/font/radius tokens via DynamicResource; ThemeService picks which template set
-         a given theme pairs with. This one replaces the old per-control glow/corner-bracket
-         chrome with a hairline-bordered, single-accent language (Apple's restraint + Linear's
-         surface-ladder elevation). Window/TextBlock/HeadingText live in Styles/Base.xaml,
-         always loaded regardless of which control-template set is active. -->
-
-    <!-- Per-template-set values read by Styles/Base.xaml and the views. Every key here has
-         a counterpart in Styles/ControlsNerv.xaml — keep the two in sync. -->
-    <Visibility x:Key="ClassicChromeVisibility">Collapsed</Visibility>
-    <FontWeight x:Key="HeadingFontWeight">SemiBold</FontWeight>
-    <SolidColorBrush x:Key="SectionLabelBrush" Color="{DynamicResource MutedTextColor}"/>
-    <SolidColorBrush x:Key="DragHandleBrush" Color="{DynamicResource FaintTextColor}"/>
-    <SolidColorBrush x:Key="ProgressFillBrush" Color="{DynamicResource AccentColor}"/>
-    <x:Null x:Key="GlowBanner"/>
-    <x:Null x:Key="GlowGoalBar"/>
-    <x:Null x:Key="GlowGreeting"/>
-    <x:Null x:Key="GlowPopoutText"/>
-    <DropShadowEffect x:Key="PopoutShadow" x:Shared="False" Color="#000000" BlurRadius="16" ShadowDepth="4" Opacity="0.4"/>
-
+    <!-- The "calm" interactive-control template set — one of three swappable template layers
+         (Styles/ControlsNerv.xaml: NERV Classic's HUD; Styles/ControlsFx.xaml: the
+         wallpaper-and-floating-panel themes). A theme (Themes/*.xaml) supplies color/font/
+         radius tokens via DynamicResource; ThemeService picks which template set a theme pairs
+         with. This one is a hairline-bordered, single-accent language (Apple's restraint +
+         Linear's surface-ladder elevation). Its look-and-layout values are Styles/Base.xaml's
+         defaults, so it defines templates only. -->
     <!-- Buttons: flat card surface, hairline border, soft radius. Hover lifts the surface
          one step (CardBrush -> CardHoverBrush) and warms the border toward the accent —
          no glow, no corner brackets, no scale animation. -->

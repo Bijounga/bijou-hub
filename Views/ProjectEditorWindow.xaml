@@ -60,18 +60,8 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="⠿" Foreground="{DynamicResource DragHandleBrush}" Margin="0,0,8,0"
                                                VerticalAlignment="Center" Cursor="SizeAll" ToolTip="Drag to reorder"/>
-                                    <CheckBox Grid.Column="1" IsChecked="{Binding IsComplete}" Margin="0,0,8,0" VerticalAlignment="Center">
-                                        <CheckBox.Style>
-                                            <Style TargetType="CheckBox">
-                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding SubGoals.Count}" Value="0">
-                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </CheckBox.Style>
-                                    </CheckBox>
+                                    <CheckBox Grid.Column="1" IsChecked="{Binding IsComplete}" Margin="0,0,8,0" VerticalAlignment="Center"
+                                              Visibility="{Binding SubGoals.Count, Converter={StaticResource CountToVisibilityConverter}}"/>
                                     <TextBox Grid.Column="2" x:Name="GoalNameBox" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" VerticalAlignment="Center"
                                              KeyDown="GoalNameBox_KeyDown"/>
                                     <TextBox Grid.Column="3" Text="{Binding Weight, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0" VerticalAlignment="Center" ToolTip="Weight %" LostFocus="WeightBox_LostFocus"/>

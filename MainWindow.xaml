@@ -8,31 +8,103 @@
         Title="BijouHub" Height="820" Width="1280" MinHeight="520" MinWidth="760"
         WindowStartupLocation="CenterScreen"
         Icon="Assets/app-icon.ico"
-        Background="{DynamicResource BgBrush}"
+        Background="{DynamicResource WallpaperBrush}"
         PreviewKeyDown="Window_PreviewKeyDown">
     <Grid x:Name="RootGrid">
         <Grid.LayoutTransform>
             <ScaleTransform x:Name="AppScaleTransform" ScaleX="1" ScaleY="1"/>
         </Grid.LayoutTransform>
+        <Grid Margin="{DynamicResource ShellPadding}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="240"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Sidebar -->
-        <Border Grid.Column="0" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0" ClipToBounds="True">
-            <Grid>
-            <!-- Classic-chrome only: ClassicChromeVisibility comes from the active control-template set. -->
-            <Ellipse x:Name="AmbientGlow" Width="220" Height="220" Fill="{DynamicResource AccentGradientBrush}" Opacity="0.10"
-                     HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-90,-110,0,0" IsHitTestVisible="False"
-                     Visibility="{DynamicResource ClassicChromeVisibility}">
-                <Ellipse.Effect>
-                    <BlurEffect Radius="60"/>
-                </Ellipse.Effect>
-            </Ellipse>
-            <Grid Margin="16">
+        <!-- Sidebar panel. Calm themes: flush with a hairline edge. Fx themes: floats on the
+             wallpaper. The surface (which carries the panel's shadow) and the content are
+             siblings, not parent/child, so the content keeps ClearType; texture, bevel and
+             screws are optional layers in between. -->
+        <Grid Grid.Column="0" Margin="{DynamicResource SidebarMargin}">
+            <Border Background="{DynamicResource SidebarBrush}" BorderBrush="{DynamicResource SidebarEdgeBrush}"
+                    BorderThickness="{DynamicResource SidebarBorderThickness}" CornerRadius="{DynamicResource PanelRadius}"
+                    Effect="{DynamicResource PanelShadow}"/>
+            <Border Background="{DynamicResource PanelTextureBrush}" CornerRadius="{DynamicResource PanelRadius}" IsHitTestVisible="False"/>
+            <Grid Visibility="{DynamicResource PanelBevelVisibility}" IsHitTestVisible="False">
+                <Border BorderThickness="1,1,0,0" BorderBrush="{DynamicResource PanelBevelOuterLightBrush}"/>
+                <Border BorderThickness="0,0,1,1" BorderBrush="{DynamicResource PanelBevelOuterDarkBrush}"/>
+                <Border BorderThickness="1,1,0,0" Margin="1" BorderBrush="{DynamicResource PanelBevelInnerLightBrush}"/>
+                <Border BorderThickness="0,0,1,1" Margin="1" BorderBrush="{DynamicResource PanelBevelInnerDarkBrush}"/>
+            </Grid>
+            <Grid Visibility="{DynamicResource ScrewsVisibility}" IsHitTestVisible="False">
+                <Image Source="{DynamicResource ScrewImage}" Width="10" Height="10" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5"/>
+                <Image Source="{DynamicResource ScrewImage}" Width="10" Height="10" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="5"/>
+                <Image Source="{DynamicResource ScrewImage}" Width="10" Height="10" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="5"/>
+                <Image Source="{DynamicResource ScrewImage}" Width="10" Height="10" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="5"/>
+            </Grid>
+            <Grid ClipToBounds="True" IsHitTestVisible="False">
+                <!-- Classic-chrome only: ClassicChromeVisibility comes from the active control-template set. -->
+                <Ellipse x:Name="AmbientGlow" Width="220" Height="220" Fill="{DynamicResource AccentGradientBrush}" Opacity="0.10"
+                         HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-90,-110,0,0"
+                         Visibility="{DynamicResource ClassicChromeVisibility}">
+                    <Ellipse.Effect>
+                        <BlurEffect Radius="60"/>
+                    </Ellipse.Effect>
+                </Ellipse>
+            </Grid>
+            <Grid Margin="{DynamicResource PanelInset}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Title strip: a glass bar, a Win95 caption, a perforated metal plate... or nothing. -->
+                <Border Grid.Row="0" Background="{DynamicResource SidebarHeaderBrush}" CornerRadius="{DynamicResource PanelTopRadius}"
+                        BorderBrush="{DynamicResource SidebarHeaderEdgeBrush}" BorderThickness="{DynamicResource SidebarHeaderBorderThickness}">
+                    <Grid>
+                        <Border Background="{DynamicResource SidebarHeaderTextureBrush}" CornerRadius="{DynamicResource PanelTopRadius}" IsHitTestVisible="False"/>
+                        <Grid Margin="{DynamicResource SidebarHeaderPadding}" Cursor="Hand" Background="Transparent" MouseLeftButtonDown="HomeHeader_Click">
+                            <StackPanel Orientation="Horizontal" Margin="{DynamicResource LogoMargin}">
+                                <Polygon Points="6,0 18,0 24,8 18,16 6,16 0,8"
+                                         Fill="{StaticResource GemGradientBrush}"
+                                         Stroke="#071018" StrokeThickness="1.2" StrokeLineJoin="Round"
+                                         Width="24" Height="16" Margin="0,0,10,0" VerticalAlignment="Center"
+                                         Visibility="{DynamicResource LogoStandardVisibility}"/>
+                                <Grid VerticalAlignment="Center" Visibility="{DynamicResource LogoStandardVisibility}">
+                                    <!-- Vaporwave's chromatic split: cyan and pink ghosts either side of the title. -->
+                                    <TextBlock Text="BijouHub" Style="{StaticResource HeadingText}" FontSize="{DynamicResource LogoFontSize}"
+                                               Foreground="#B300E6FF" Margin="1.5,0,-1.5,0" Visibility="{DynamicResource TitleGlitchVisibility}"/>
+                                    <TextBlock Text="BijouHub" Style="{StaticResource HeadingText}" FontSize="{DynamicResource LogoFontSize}"
+                                               Foreground="#B3FF3CC8" Margin="-1.5,0,1.5,0" Visibility="{DynamicResource TitleGlitchVisibility}"/>
+                                    <TextBlock Text="BijouHub" Style="{StaticResource HeadingText}" FontSize="{DynamicResource LogoFontSize}"
+                                               Foreground="{DynamicResource SidebarHeaderInkBrush}"/>
+                                </Grid>
+                                <!-- Doodle Club: Bijou Doodle's star and felt-tip wordmark. -->
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Visibility="{DynamicResource LogoDoodleVisibility}">
+                                    <TextBlock Text="&#x2605;" Foreground="#F4B400" FontSize="19" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="B" Foreground="#1F5FBF" FontFamily="Comic Sans MS" FontWeight="Black" FontSize="20" RenderTransformOrigin="0.5,0.5"/>
+                                        <TextBlock Text="i" Foreground="#B92A65" FontFamily="Comic Sans MS" FontWeight="Black" FontSize="20" RenderTransformOrigin="0.5,0.5"><TextBlock.RenderTransform><RotateTransform Angle="-7"/></TextBlock.RenderTransform></TextBlock>
+                                        <TextBlock Text="j" Foreground="#258026" FontFamily="Comic Sans MS" FontWeight="Black" FontSize="20" RenderTransformOrigin="0.5,0.5"><TextBlock.RenderTransform><TranslateTransform Y="-2"/></TextBlock.RenderTransform></TextBlock>
+                                        <TextBlock Text="o" Foreground="#AA5100" FontFamily="Comic Sans MS" FontWeight="Black" FontSize="20" RenderTransformOrigin="0.5,0.5"><TextBlock.RenderTransform><RotateTransform Angle="6"/></TextBlock.RenderTransform></TextBlock>
+                                        <TextBlock Text="u" Foreground="#813CAA" FontFamily="Comic Sans MS" FontWeight="Black" FontSize="20" RenderTransformOrigin="0.5,0.5"/>
+                                        <TextBlock Text="H" Foreground="#1F5FBF" FontFamily="Comic Sans MS" FontWeight="Black" FontSize="20" RenderTransformOrigin="0.5,0.5"/>
+                                        <TextBlock Text="u" Foreground="#B92A65" FontFamily="Comic Sans MS" FontWeight="Black" FontSize="20" RenderTransformOrigin="0.5,0.5"><TextBlock.RenderTransform><RotateTransform Angle="-7"/></TextBlock.RenderTransform></TextBlock>
+                                        <TextBlock Text="b" Foreground="#258026" FontFamily="Comic Sans MS" FontWeight="Black" FontSize="20" RenderTransformOrigin="0.5,0.5"><TextBlock.RenderTransform><TranslateTransform Y="-2"/></TextBlock.RenderTransform></TextBlock>
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                            <Grid x:Name="HeaderBrackets" Visibility="{DynamicResource ClassicChromeVisibility}">
+                                <Line X1="0" Y1="0" X2="10" Y2="0" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                <Line X1="0" Y1="0" X2="0" Y2="10" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                <Line X1="0" Y1="0" X2="10" Y2="0" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+                                <Line X1="0" Y1="0" X2="0" Y2="10" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <Grid Grid.Row="1" Margin="{DynamicResource SidebarBodyMargin}">
+                <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="2*"/>
                     <RowDefinition Height="Auto"/>
@@ -45,26 +117,9 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="// MODES" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="4,0,0,8"/>
 
-                <Grid Grid.Row="0" Margin="0,0,0,24" Cursor="Hand" MouseLeftButtonDown="HomeHeader_Click">
-                    <StackPanel Orientation="Horizontal" Margin="10,8">
-                        <Polygon Points="6,0 18,0 24,8 18,16 6,16 0,8"
-                                 Fill="{StaticResource GemGradientBrush}"
-                                 Stroke="#071018" StrokeThickness="1.2" StrokeLineJoin="Round"
-                                 Width="24" Height="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="BijouHub" Style="{StaticResource HeadingText}" FontSize="19" VerticalAlignment="Center"/>
-                    </StackPanel>
-                    <Grid x:Name="HeaderBrackets" Visibility="{DynamicResource ClassicChromeVisibility}">
-                        <Line X1="0" Y1="0" X2="10" Y2="0" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                        <Line X1="0" Y1="0" X2="0" Y2="10" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                        <Line X1="0" Y1="0" X2="10" Y2="0" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
-                        <Line X1="0" Y1="0" X2="0" Y2="10" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
-                    </Grid>
-                </Grid>
-
-                <TextBlock Grid.Row="1" Text="// MODES" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="4,0,0,8"/>
-
-                <ListBox x:Name="ModesList" Grid.Row="2"
+                <ListBox x:Name="ModesList" Grid.Row="1"
                          AlternationCount="3"
                          SelectionChanged="ModesList_SelectionChanged">
                     <ListBox.ItemTemplate>
@@ -82,11 +137,11 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <Button Grid.Row="3" Content="+ New Mode" Style="{DynamicResource AccentButton}" Margin="0,8,8,0" Padding="10,8" Click="NewMode_Click"/>
+                <Button Grid.Row="2" Content="+ New Mode" Style="{DynamicResource AccentButton}" Margin="0,8,8,0" Padding="10,8" Click="NewMode_Click"/>
 
-                <TextBlock Grid.Row="4" Text="// PROJECTS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="4,16,0,8"/>
+                <TextBlock Grid.Row="3" Text="// PROJECTS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="4,16,0,8"/>
 
-                <ListBox x:Name="ProjectsList" Grid.Row="5"
+                <ListBox x:Name="ProjectsList" Grid.Row="4"
                          AlternationCount="3"
                          SelectionChanged="ProjectsList_SelectionChanged">
                     <ListBox.ItemTemplate>
@@ -104,24 +159,40 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <Button Grid.Row="6" Content="+ New Project" Style="{DynamicResource AccentButton}" Margin="0,8,0,0" Padding="10,8" Click="NewProject_Click"/>
-                <Button Grid.Row="7" Content="Session Log" Margin="0,8,0,0" Click="SessionLog_Click"/>
-                <Button x:Name="SyncFolderButton" Grid.Row="8" Content="Sync Folder..." Margin="0,8,0,0" Click="SyncFolder_Click"
+                <Button Grid.Row="5" Content="+ New Project" Style="{DynamicResource AccentButton}" Margin="0,8,0,0" Padding="10,8" Click="NewProject_Click"/>
+                <Button Grid.Row="6" Content="Session Log" Margin="0,8,0,0" Click="SessionLog_Click"/>
+                <Button x:Name="SyncFolderButton" Grid.Row="7" Content="Sync Folder..." Margin="0,8,0,0" Click="SyncFolder_Click"
                         ToolTip="Point Projects and session history at a folder you sync across devices"/>
-                <Button x:Name="StartupToggleButton" Grid.Row="9" Content="Start on Startup" Margin="0,8,0,0" Click="StartupToggle_Click"
+                <Button x:Name="StartupToggleButton" Grid.Row="8" Content="Start on Startup" Margin="0,8,0,0" Click="StartupToggle_Click"
                         ToolTip="Launch BijouHub automatically when you sign in to Windows"/>
-                <Button x:Name="ThemeButton" Grid.Row="10" Content="Theme..." Margin="0,8,0,0" Click="OpenTheme_Click"
+                <Button x:Name="ThemeButton" Grid.Row="9" Content="Theme..." Margin="0,8,0,0" Click="OpenTheme_Click"
                         ToolTip="Choose BijouHub's color theme"/>
-                <Button x:Name="UpdateButton" Grid.Row="11" Style="{DynamicResource AccentButton}" Margin="0,8,0,0" Padding="10,8"
+                <Button x:Name="UpdateButton" Grid.Row="10" Style="{DynamicResource AccentButton}" Margin="0,8,0,0" Padding="10,8"
                         Click="UpdateButton_Click" Visibility="Collapsed"/>
+                </Grid>
             </Grid>
-            </Grid>
-        </Border>
+        </Grid>
 
-        <!-- Main content -->
+        <!-- Content panel: same layering as the sidebar. -->
         <Grid Grid.Column="1">
+            <Border Background="{DynamicResource ContentBrush}" BorderBrush="{DynamicResource ContentEdgeBrush}"
+                    BorderThickness="{DynamicResource ContentBorderThickness}" CornerRadius="{DynamicResource PanelRadius}"
+                    Effect="{DynamicResource PanelShadow}"/>
+            <Border Background="{DynamicResource PanelTextureBrush}" CornerRadius="{DynamicResource PanelRadius}" IsHitTestVisible="False"/>
+            <Grid Visibility="{DynamicResource PanelBevelVisibility}" IsHitTestVisible="False">
+                <Border BorderThickness="1,1,0,0" BorderBrush="{DynamicResource PanelBevelOuterLightBrush}"/>
+                <Border BorderThickness="0,0,1,1" BorderBrush="{DynamicResource PanelBevelOuterDarkBrush}"/>
+                <Border BorderThickness="1,1,0,0" Margin="1" BorderBrush="{DynamicResource PanelBevelInnerLightBrush}"/>
+                <Border BorderThickness="0,0,1,1" Margin="1" BorderBrush="{DynamicResource PanelBevelInnerDarkBrush}"/>
+            </Grid>
+            <Grid Visibility="{DynamicResource ScrewsVisibility}" IsHitTestVisible="False">
+                <Image Source="{DynamicResource ScrewImage}" Width="10" Height="10" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5"/>
+                <Image Source="{DynamicResource ScrewImage}" Width="10" Height="10" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="5"/>
+                <Image Source="{DynamicResource ScrewImage}" Width="10" Height="10" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="5"/>
+                <Image Source="{DynamicResource ScrewImage}" Width="10" Height="10" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="5"/>
+            </Grid>
             <Rectangle Fill="{DynamicResource DotGridBrush}" Visibility="{DynamicResource ClassicChromeVisibility}" IsHitTestVisible="False"/>
-            <Grid Margin="28">
+            <Grid Margin="{DynamicResource ContentMargin}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -198,8 +269,20 @@
                 <TextBlock x:Name="ActiveContextText" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="0,0,0,4"/>
                 <TextBlock x:Name="ActiveStatus" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,24"/>
 
-                <TextBlock x:Name="TimerDisplay" Style="{StaticResource HeadingText}" Text="00:00:00" FontSize="52"
-                           Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,28"/>
+                <!-- The timer's display: bare digits in calm themes, an LCD/CRT/terminal in others,
+                     with an overlay (dot matrix, scanlines) and a glass reflection over the digits. -->
+                <Grid HorizontalAlignment="Left" Margin="0,0,0,28">
+                    <Border Background="{DynamicResource TimerScreenBrush}" BorderBrush="{DynamicResource TimerScreenEdgeBrush}"
+                            BorderThickness="{DynamicResource TimerScreenBorderThickness}" CornerRadius="{DynamicResource TimerScreenRadius}"/>
+                    <TextBlock x:Name="TimerDisplay" Style="{StaticResource HeadingText}" Text="00:00:00" FontSize="52"
+                               FontFamily="{DynamicResource TimerFont}" FontWeight="{DynamicResource TimerFontWeight}"
+                               Foreground="{DynamicResource TimerTextBrush}" Effect="{DynamicResource TimerGlow}"
+                               Margin="{DynamicResource TimerScreenPadding}"/>
+                    <Border Background="{DynamicResource TimerScreenOverlayBrush}" CornerRadius="{DynamicResource TimerScreenRadius}"
+                            Margin="{DynamicResource TimerScreenBorderThickness}" IsHitTestVisible="False"/>
+                    <Border Background="{DynamicResource TimerScreenGlassBrush}" CornerRadius="{DynamicResource TimerScreenRadius}"
+                            Margin="{DynamicResource TimerScreenBorderThickness}" IsHitTestVisible="False"/>
+                </Grid>
 
                 <TextBlock Text="// ACTIVITY" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
                 <StackPanel x:Name="BlockNotifications" Margin="0,0,0,28"/>
@@ -246,32 +329,12 @@
                                                     </Grid.ColumnDefinitions>
                                                     <CheckBox Grid.Column="0" IsChecked="{Binding IsComplete, Mode=OneWay}"
                                                               Margin="0,0,8,0" Tag="{Binding}"
-                                                              Checked="GoalCheckBox_Changed" Unchecked="GoalCheckBox_Changed">
-                                                        <CheckBox.Style>
-                                                            <Style TargetType="CheckBox">
-                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding SubGoals.Count}" Value="0">
-                                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </CheckBox.Style>
-                                                    </CheckBox>
+                                                              Visibility="{Binding SubGoals.Count, Converter={StaticResource CountToVisibilityConverter}}"
+                                                              Checked="GoalCheckBox_Changed" Unchecked="GoalCheckBox_Changed"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" FontWeight="Bold"/>
                                                     <TextBlock Grid.Column="2" Text="{Binding Completion, StringFormat={}{0:P0}}"
-                                                               Foreground="{DynamicResource HazardBrush}" Margin="0,0,8,0" VerticalAlignment="Center">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Setter Property="Visibility" Value="Visible"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding SubGoals.Count}" Value="0">
-                                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
+                                                               Foreground="{DynamicResource HazardBrush}" Margin="0,0,8,0" VerticalAlignment="Center"
+                                                               Visibility="{Binding SubGoals.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=NonZero}"/>
                                                     <TextBlock Grid.Column="3" Text="{Binding Weight, StringFormat={}{0}%}"
                                                                Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"/>
                                                 </Grid>
@@ -407,6 +470,7 @@
                              PreviewMouseLeftButtonDown="NotesRichBox_PreviewMouseLeftButtonDown"/>
             </StackPanel>
             </Grid>
+        </Grid>
         </Grid>
     </Grid>
 </Window>
