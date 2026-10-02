@@ -72,6 +72,7 @@ public partial class MainWindow : Window
             if (NotesPanel.Visibility == Visibility.Visible) SaveFreeformNotes();
             _timerPopout?.Close();
             _deckBridge.Dispose();
+            if (_notesSaveTimer?.IsEnabled == true) SaveDailyPlan(); // notes typed in the last second
             var currentSettings = _settingsStore.Load();
             currentSettings.ZoomLevel = AppScaleTransform.ScaleX;
             _settingsStore.Save(currentSettings);
@@ -1521,6 +1522,14 @@ public partial class MainWindow : Window
             SaveDailyPlan();
         };
 
+        // The dropdown's popup takes focus outside the bar; keep the picker shown, then hand typing back.
+        DailyGoalProjectCombo.DropDownOpened += (_, _) => UpdateAddGoalBar();
+        DailyGoalProjectCombo.DropDownClosed += (_, _) =>
+        {
+            DailyGoalInput.Focus();
+            UpdateAddGoalBar();
+        };
+
         _notesSaveTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _notesSaveTimer.Tick += (_, _) =>
         {
@@ -1572,7 +1581,6 @@ public partial class MainWindow : Window
         var total = _dailyGoals.Count;
         var done = _dailyGoals.Count(g => g.Done);
         DailyProgressText.Text = total == 0 ? "" : done == total ? $"All {total} done" : $"{done} of {total} done";
-        DailyEmptyText.Visibility = total == 0 ? Visibility.Visible : Visibility.Collapsed;
         DailyGoalsList.Visibility = total == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
@@ -1627,6 +1635,35 @@ public partial class MainWindow : Window
         var project = (DailyGoalProjectCombo.SelectedItem as ComboBoxItem)?.Tag as Project;
         AddDailyGoal(new DailyGoal { Text = text, ProjectId = project?.Id, ProjectName = project?.Name });
         DailyGoalInput.Clear();
+    }
+
+    // Clicking anywhere on the bar (the "+", the padding) puts the cursor in it.
+    private void AddGoalBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is DependencyObject source && IsInside<ComboBox>(source)) return;
+        DailyGoalInput.Focus();
+        e.Handled = true;
+    }
+
+    private static bool IsInside<T>(DependencyObject element) where T : DependencyObject
+    {
+        for (var current = element; current != null; current = System.Windows.Media.VisualTreeHelper.GetParent(current))
+            if (current is T) return true;
+        return false;
+    }
+
+    private void AddGoalBar_IsKeyboardFocusWithinChanged(object sender, DependencyPropertyChangedEventArgs e) => UpdateAddGoalBar();
+
+    private void DailyGoalProjectCombo_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateAddGoalBar();
+
+    // The project picker stays out of the way until the bar is in use, or a project is picked.
+    private void UpdateAddGoalBar()
+    {
+        var active = AddGoalBar.IsKeyboardFocusWithin || DailyGoalProjectCombo.IsDropDownOpen;
+        var projectPicked = (DailyGoalProjectCombo.SelectedItem as ComboBoxItem)?.Tag is Project;
+        DailyGoalProjectCombo.Visibility = active || projectPicked ? Visibility.Visible : Visibility.Collapsed;
+        AddGoalGlyph.Text = active ? "○" : "+";
+        AddGoalGlyph.FontSize = active ? 18 : 22;
     }
 
     private void DailyGoalInput_TextChanged(object sender, TextChangedEventArgs e)
