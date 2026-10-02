@@ -110,17 +110,17 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="2*"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="2*"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Text="// MODES" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="4,0,0,8"/>
+                <DockPanel Grid.Row="0" Margin="4,0,0,6">
+                    <Button DockPanel.Dock="Right" Style="{DynamicResource GhostIconButton}" Padding="6,4" Click="NewMode_Click"
+                            ToolTip="New mode" AutomationProperties.Name="New mode">
+                        <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE710;" FontSize="12"/>
+                    </Button>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Center"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="MODES"/></TextBlock>
+                </DockPanel>
 
                 <ListBox x:Name="ModesList" Grid.Row="1"
                          AlternationCount="3"
@@ -140,11 +140,15 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <Button Grid.Row="2" Content="+ New Mode" Style="{DynamicResource AccentButton}" Margin="0,8,8,0" Padding="10,8" Click="NewMode_Click"/>
+                <DockPanel Grid.Row="2" Margin="4,16,0,6">
+                    <Button DockPanel.Dock="Right" Style="{DynamicResource GhostIconButton}" Padding="6,4" Click="NewProject_Click"
+                            ToolTip="New project" AutomationProperties.Name="New project">
+                        <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE710;" FontSize="12"/>
+                    </Button>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Center"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="PROJECTS"/></TextBlock>
+                </DockPanel>
 
-                <TextBlock Grid.Row="3" Text="// PROJECTS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="4,16,0,8"/>
-
-                <ListBox x:Name="ProjectsList" Grid.Row="4"
+                <ListBox x:Name="ProjectsList" Grid.Row="3"
                          AlternationCount="3"
                          SelectionChanged="ProjectsList_SelectionChanged">
                     <ListBox.ItemTemplate>
@@ -162,17 +166,30 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <Button Grid.Row="5" Content="+ New Project" Style="{DynamicResource AccentButton}" Margin="0,8,0,0" Padding="10,8" Click="NewProject_Click"/>
-                <Button Grid.Row="6" Content="Session Log" Margin="0,8,0,0" Click="SessionLog_Click"/>
-                <Button x:Name="SyncFolderButton" Grid.Row="7" Content="Sync Folder..." Margin="0,8,0,0" Click="SyncFolder_Click"
-                        ToolTip="Point Projects and session history at a folder you sync across devices"/>
-                <Button x:Name="StartupToggleButton" Grid.Row="8" Content="Start on Startup" Margin="0,8,0,0" Click="StartupToggle_Click"
-                        ToolTip="Launch BijouHub automatically when you sign in to Windows"/>
-                <Button x:Name="ThemeButton" Grid.Row="9" Content="Theme..." Margin="0,8,0,0" Click="OpenTheme_Click"
-                        ToolTip="Choose BijouHub's color theme"/>
-                <Button x:Name="StreamDeckButton" Grid.Row="10" Content="Stream Deck..." Margin="0,8,0,0" Click="OpenStreamDeck_Click"
-                        ToolTip="Start and watch BijouHub timers from your Stream Deck"/>
-                <Button x:Name="UpdateButton" Grid.Row="11" Style="{DynamicResource AccentButton}" Margin="0,8,0,0" Padding="10,8"
+                <!-- Everything that isn't daily work lives in one quiet row of tools. -->
+                <UniformGrid Grid.Row="4" Rows="1" Margin="0,12,0,0">
+                    <Button Style="{DynamicResource GhostIconButton}" Click="SessionLog_Click" ToolTip="Session log"
+                            AutomationProperties.Name="Session Log">
+                        <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE81C;" FontSize="16"/>
+                    </Button>
+                    <Button x:Name="SyncFolderButton" Style="{DynamicResource GhostIconButton}" Click="SyncFolder_Click" ToolTip="Sync folder"
+                            AutomationProperties.Name="Sync Folder">
+                        <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8F7;" FontSize="16"/>
+                    </Button>
+                    <Button x:Name="StartupToggleButton" Style="{DynamicResource GhostIconButton}" Click="StartupToggle_Click" ToolTip="Start with Windows"
+                            AutomationProperties.Name="Start with Windows">
+                        <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE7E8;" FontSize="16"/>
+                    </Button>
+                    <Button x:Name="ThemeButton" Style="{DynamicResource GhostIconButton}" Click="OpenTheme_Click" ToolTip="Theme"
+                            AutomationProperties.Name="Theme">
+                        <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE790;" FontSize="16"/>
+                    </Button>
+                    <Button x:Name="StreamDeckButton" Style="{DynamicResource GhostIconButton}" Click="OpenStreamDeck_Click" ToolTip="Stream Deck"
+                            AutomationProperties.Name="Stream Deck">
+                        <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8A9;" FontSize="16"/>
+                    </Button>
+                </UniformGrid>
+                <Button x:Name="UpdateButton" Grid.Row="5" Style="{DynamicResource AccentButton}" Margin="0,10,0,0" Padding="10,8"
                         Click="UpdateButton_Click" Visibility="Collapsed"/>
                 </Grid>
             </Grid>
@@ -232,7 +249,7 @@
             <StackPanel x:Name="ModeDetailPanel" Visibility="Collapsed">
                 <TextBlock x:Name="ModeDetailName" Style="{StaticResource HeadingText}" FontSize="26" Margin="0,0,0,20"/>
 
-                <TextBlock Text="// LAUNCH ITEMS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="LAUNCH ITEMS"/></TextBlock>
                 <ItemsControl x:Name="ModeDetailLaunchItems" Margin="0,0,0,20">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -244,7 +261,7 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <TextBlock Text="// BLOCKED" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="BLOCKED"/></TextBlock>
                 <ItemsControl x:Name="ModeDetailBlockItems" Margin="0,0,0,28">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -262,24 +279,25 @@
                 </ItemsControl>
 
                 <!-- Countdown timers saved on this mode: one click launches the mode and counts down. -->
-                <TextBlock Text="// TIMERS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
+                <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="TIMERS"/></TextBlock>
                 <WrapPanel x:Name="ModeTimerTiles"/>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                     <TextBox x:Name="ModeTimerBox" Width="120" VerticalContentAlignment="Center"
                              TextChanged="ModeTimerBox_TextChanged" KeyDown="ModeTimerBox_KeyDown"
-                             ToolTip="How long: 45, 1:30, 2h"/>
-                    <Button x:Name="ModeTimerStartButton" Content="▶  Start" Margin="8,0,0,0" Padding="14,6"
-                            Click="ModeTimerStart_Click" IsEnabled="False"/>
-                    <Button x:Name="ModeTimerSaveButton" Content="+ Save Timer" Margin="8,0,0,0" Padding="14,6"
-                            Click="ModeTimerSave_Click" IsEnabled="False"/>
+                             ToolTip="How long: 45, 1:30, 2h. Right-click a saved timer to remove it."/>
+                    <Button x:Name="ModeTimerStartButton" Margin="8,0,0,0" Padding="14,6" AutomationProperties.Name="Start"
+                            Click="ModeTimerStart_Click" IsEnabled="False"><StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE768;" FontSize="13" Margin="0,0,8,0"/><TextBlock Text="Start" VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button x:Name="ModeTimerSaveButton" Margin="8,0,0,0" Padding="14,6" AutomationProperties.Name="Save timer"
+                            ToolTip="Save this length as a timer on the mode"
+                            Click="ModeTimerSave_Click" IsEnabled="False"><StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE710;" FontSize="13" Margin="0,0,8,0"/><TextBlock Text="Save" VerticalAlignment="Center"/></StackPanel></Button>
                 </StackPanel>
-                <TextBlock x:Name="ModeTimerHint" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,28"/>
+                <TextBlock x:Name="ModeTimerHint" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" Margin="0,4,0,0"/>
 
-                <StackPanel Orientation="Horizontal">
-                    <Button Content="▶  Launch" Style="{DynamicResource AccentButton}" Padding="20,9" Click="Launch_Click"
-                            ToolTip="Launch the mode and count up, with no time limit"/>
-                    <Button Content="Edit" Margin="8,0,0,0" Padding="16,9" Click="EditMode_Click"/>
-                    <Button Content="Delete" Margin="8,0,0,0" Padding="16,9" Click="DeleteMode_Click"/>
+                <StackPanel Orientation="Horizontal" Margin="0,24,0,0">
+                    <Button Style="{DynamicResource AccentButton}" Padding="20,9" Click="Launch_Click" AutomationProperties.Name="Launch"
+                            ToolTip="Launch the mode and count up, with no time limit"><StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE768;" FontSize="13" Margin="0,0,8,0"/><TextBlock Text="Launch" VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button Margin="8,0,0,0" Padding="11,9" Click="EditMode_Click" ToolTip="Edit mode" AutomationProperties.Name="Edit mode"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE70F;" FontSize="14"/></Button>
+                    <Button Margin="8,0,0,0" Padding="11,9" Click="DeleteMode_Click" ToolTip="Delete mode" AutomationProperties.Name="Delete mode"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE74D;" FontSize="14"/></Button>
                 </StackPanel>
             </StackPanel>
 
@@ -303,15 +321,13 @@
                     <Border Background="{DynamicResource TimerScreenGlassBrush}" CornerRadius="{DynamicResource TimerScreenRadius}"
                             Margin="{DynamicResource TimerScreenBorderThickness}" IsHitTestVisible="False"/>
                 </Grid>
-
-                <TextBlock Text="// ACTIVITY" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
                 <StackPanel x:Name="BlockNotifications" Margin="0,0,0,28"/>
 
                 <StackPanel Orientation="Horizontal">
-                    <Button Content="■  Finish Session" Padding="16,8" Click="FinishSession_Click"/>
-                    <Button x:Name="PauseToggleButton" Content="Pause" Margin="8,0,0,0" Padding="16,8" Click="PauseToggle_Click"/>
-                    <Button x:Name="NotesToggleButton" Content="Notes" Margin="8,0,0,0" Padding="16,8" Click="NotesToggle_Click"/>
-                    <Button x:Name="PopoutToggleButton" Content="Pop Out" Margin="8,0,0,0" Padding="16,8" Click="PopoutToggle_Click"/>
+                    <Button Padding="16,8" Click="FinishSession_Click" AutomationProperties.Name="Finish session" ToolTip="Finish and log this session"><StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE71A;" FontSize="13" Margin="0,0,8,0"/><TextBlock Text="Finish" VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button x:Name="PauseToggleButton" Margin="8,0,0,0" Padding="12,8" Click="PauseToggle_Click" ToolTip="Pause" AutomationProperties.Name="Pause"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE769;" FontSize="14"/></Button>
+                    <Button x:Name="NotesToggleButton" Margin="8,0,0,0" Padding="12,8" Click="NotesToggle_Click" ToolTip="Notes" AutomationProperties.Name="Notes"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE70B;" FontSize="14"/></Button>
+                    <Button x:Name="PopoutToggleButton" Margin="8,0,0,0" Padding="12,8" Click="PopoutToggle_Click" ToolTip="Pop out the timer" AutomationProperties.Name="Pop out"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8A7;" FontSize="14"/></Button>
                 </StackPanel>
             </StackPanel>
 
@@ -328,7 +344,7 @@
                         <TextBlock x:Name="ProjectProgressLabel" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="0,0,0,4"/>
                         <TextBlock x:Name="ProjectTimeSpentText" Foreground="{DynamicResource AccentBrush}" FontSize="12" Margin="0,0,0,20"/>
 
-                        <TextBlock Text="// GOALS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                        <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="GOALS"/></TextBlock>
                         <ItemsControl x:Name="ProjectGoalsDisplay" Margin="0,0,0,20">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -393,15 +409,14 @@
                         </ItemsControl>
 
                         <WrapPanel Margin="0,0,0,12">
-                            <Button Content="▶  Start Session" Style="{DynamicResource AccentButton}" Padding="20,9" Click="StartProjectSession_Click" Margin="0,0,8,8"/>
-                            <Button Content="Log Time..." Padding="16,9" Click="LogTime_Click" Margin="0,0,8,8"
-                                    ToolTip="Add a session you worked without the timer running"/>
-                            <Button Content="Edit" Padding="16,9" Click="EditProject_Click" Margin="0,0,8,8"/>
-                            <Button Content="Delete" Padding="16,9" Click="DeleteProject_Click" Margin="0,0,8,8"/>
-                            <Button x:Name="ProjectNotesToggleButton" Content="Hide Notes" Padding="16,9" Click="NotesToggle_Click" Margin="0,0,8,8"/>
+                            <Button Style="{DynamicResource AccentButton}" Padding="20,9" Click="StartProjectSession_Click" Margin="0,0,8,8" AutomationProperties.Name="Start session"><StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE768;" FontSize="13" Margin="0,0,8,0"/><TextBlock Text="Start Session" VerticalAlignment="Center"/></StackPanel></Button>
+                            <Button Padding="11,9" Click="LogTime_Click" Margin="0,0,8,8" ToolTip="Log time you worked away from BijouHub" AutomationProperties.Name="Log time"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE823;" FontSize="14"/></Button>
+                            <Button Padding="11,9" Click="EditProject_Click" Margin="0,0,8,8" ToolTip="Edit project" AutomationProperties.Name="Edit project"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE70F;" FontSize="14"/></Button>
+                            <Button Padding="11,9" Click="DeleteProject_Click" Margin="0,0,8,8" ToolTip="Delete project" AutomationProperties.Name="Delete project"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE74D;" FontSize="14"/></Button>
+                            <Button x:Name="ProjectNotesToggleButton" Padding="11,9" Click="NotesToggle_Click" Margin="0,0,8,8" ToolTip="Hide notes" AutomationProperties.Name="Notes"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE70B;" FontSize="14"/></Button>
                         </WrapPanel>
 
-                        <TextBlock Text="// SESSION LOG" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                        <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="SESSION NOTES"/></TextBlock>
                         <ItemsControl x:Name="ProjectNotesDisplay">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -416,7 +431,7 @@
             <!-- Home dashboard -->
             <ScrollViewer x:Name="HomePanel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
                 <StackPanel>
-                    <TextBlock x:Name="HomeWelcomeText" Style="{StaticResource HeadingText}" Text="Welcome back" FontSize="28" Margin="0,0,0,4"/>
+                    <TextBlock x:Name="HomeWelcomeText" Style="{StaticResource HeadingText}" FontSize="28" Margin="0,0,0,4"/>
                     <TextBlock x:Name="HomeGreetingText" FontSize="16" Margin="0,0,0,24" TextWrapping="Wrap" Effect="{DynamicResource GlowGreeting}"
                                Foreground="{DynamicResource AccentBrush}"/>
 
@@ -430,7 +445,7 @@
 
                         <StackPanel Grid.Column="0">
                             <DockPanel Margin="0,0,0,8" LastChildFill="False">
-                                <TextBlock Text="// TODAY'S GOALS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Bottom"/>
+                                <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Bottom"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="TODAY'S GOALS"/></TextBlock>
                                 <TextBlock x:Name="DailyProgressText" DockPanel.Dock="Right" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="12" VerticalAlignment="Bottom"/>
                                 <Button x:Name="GoogleSyncButton" DockPanel.Dock="Right" Margin="0,0,14,0" Click="GoogleSync_Click"
@@ -442,7 +457,10 @@
                                             </Border>
                                         </ControlTemplate>
                                     </Button.Template>
-                                    <TextBlock x:Name="GoogleSyncText" FontSize="12"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock x:Name="GoogleSyncGlyph" Style="{StaticResource IconGlyph}" FontSize="13"/>
+                                        <TextBlock x:Name="GoogleSyncText" FontSize="12" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
                                 </Button>
                             </DockPanel>
                             <!-- One tab per Google Tasks list group (EDITING, STUDY, LIFE…), plus All. -->
@@ -630,7 +648,7 @@
                         </StackPanel>
 
                         <StackPanel Grid.Column="2">
-                            <TextBlock Text="// TODAY" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
+                            <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="TODAY"/></TextBlock>
                             <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                     CornerRadius="{DynamicResource CornerRadiusBase}" Padding="16,14">
                                 <StackPanel>
@@ -651,9 +669,10 @@
 
                     <!-- Project board (formerly the separate BijouBoard app). -->
                     <DockPanel Margin="0,0,0,10" LastChildFill="False">
-                        <TextBlock Text="// PROJECTS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Center"/>
-                        <Button DockPanel.Dock="Right" Content="Refresh" Padding="12,4" Click="RefreshBoard_Click"
-                                ToolTip="Re-read BijouDocs and BijouMusic"/>
+                        <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Center"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="PROJECTS"/></TextBlock>
+                        <Button DockPanel.Dock="Right" Style="{DynamicResource GhostIconButton}" HorizontalAlignment="Right" Padding="7,5" Click="RefreshBoard_Click"
+                                ToolTip="Refresh — script progress comes from BijouDocs and tracks from BijouMusic, matched by project name"
+                                AutomationProperties.Name="Refresh projects"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE72C;" FontSize="13"/></Button>
                     </DockPanel>
                     <WrapPanel x:Name="BoardSummary" Margin="0,0,0,12"/>
                     <ItemsControl x:Name="BoardCards">
@@ -744,11 +763,10 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                     <TextBlock x:Name="BoardEmptyText" Visibility="Collapsed" Foreground="{DynamicResource MutedTextBrush}" FontSize="12"
-                               Text="No projects yet — add one with + New Project."/>
-                    <TextBlock Foreground="{DynamicResource FaintTextBrush}" FontSize="11" Margin="0,2,0,28" TextWrapping="Wrap"
-                               Text="Script progress comes from BijouDocs and tracks from BijouMusic, matched by project name. Click a card to open the project."/>
+                               Text="No projects yet — add one with the + next to Projects."/>
+                    <Border Height="14"/>
 
-                    <TextBlock Text="// QUICK LAUNCH" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="QUICK LAUNCH"/></TextBlock>
                     <WrapPanel x:Name="QuickLaunchPanel" Margin="0,0,0,24"/>
                 </StackPanel>
             </ScrollViewer>
@@ -757,15 +775,16 @@
             <!-- Shared notes panel: toggleable, shown alongside Project Detail or Active Session -->
             <StackPanel x:Name="NotesPanel" Grid.Column="1" Width="420" Margin="24,0,0,0" Visibility="Collapsed">
                 <DockPanel LastChildFill="False" Margin="0,0,0,8">
-                    <TextBlock Text="// MY NOTES" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Center"/>
-                    <Button Content="Keybinds" DockPanel.Dock="Right" Padding="8,3" Click="OpenKeybinds_Click"/>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Center"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="MY NOTES"/></TextBlock>
+                    <Button DockPanel.Dock="Right" Style="{DynamicResource GhostIconButton}" HorizontalAlignment="Right" Padding="7,4" Click="OpenKeybinds_Click"
+                            ToolTip="Keyboard shortcuts" AutomationProperties.Name="Keyboard shortcuts"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE765;" FontSize="14"/></Button>
                 </DockPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                    <Button Content="B" FontWeight="Bold" Padding="12,4" Click="NotesBold_Click" ToolTip="Bold"/>
-                    <Button Content="I" FontStyle="Italic" Padding="12,4" Margin="4,0,0,0" Click="NotesItalic_Click" ToolTip="Italic"/>
-                    <Button Content="H" Padding="12,4" Margin="4,0,0,0" Click="NotesHeading_Click" ToolTip="Heading"/>
-                    <Button Content="•—" Padding="12,4" Margin="4,0,0,0" Click="NotesBullet_Click" ToolTip="Bullet list"/>
-                    <Button Content="☑" Padding="12,4" Margin="4,0,0,0" Click="NotesChecklist_Click" ToolTip="Checklist"/>
+                    <Button Padding="9,6" Click="NotesBold_Click" ToolTip="Bold" AutomationProperties.Name="Bold"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8DD;" FontSize="12"/></Button>
+                    <Button Padding="9,6" Margin="4,0,0,0" Click="NotesItalic_Click" ToolTip="Italic" AutomationProperties.Name="Italic"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8DB;" FontSize="12"/></Button>
+                    <Button Padding="9,6" Margin="4,0,0,0" Click="NotesHeading_Click" ToolTip="Heading" AutomationProperties.Name="Heading"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8E9;" FontSize="12"/></Button>
+                    <Button Padding="9,6" Margin="4,0,0,0" Click="NotesBullet_Click" ToolTip="Bullet list" AutomationProperties.Name="Bullet list"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8FD;" FontSize="12"/></Button>
+                    <Button Padding="9,6" Margin="4,0,0,0" Click="NotesChecklist_Click" ToolTip="Checklist" AutomationProperties.Name="Checklist"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE9D5;" FontSize="12"/></Button>
                     <ComboBox x:Name="NotesFontSizeCombo" Width="56" Margin="8,0,0,0" SelectionChanged="NotesFontSizeCombo_SelectionChanged" ToolTip="Font size"/>
                     <StackPanel Margin="2,0,0,0" VerticalAlignment="Stretch">
                         <Button Content="▲" FontSize="8" Padding="4,1" Height="15" Click="NotesFontSizeUp_Click"/>

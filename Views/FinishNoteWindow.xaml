@@ -16,11 +16,11 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="// WHAT DID YOU DO?" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+        <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="WHAT DID YOU DO?"/></TextBlock>
         <TextBox x:Name="DidBox" Grid.Row="1" AcceptsReturn="True" TextWrapping="Wrap"
                  VerticalContentAlignment="Top" Margin="0,0,0,16"/>
 
-        <TextBlock Grid.Row="2" Text="// WHAT'S NEXT?" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+        <TextBlock Grid.Row="2" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="WHAT'S NEXT?"/></TextBlock>
         <TextBox x:Name="NextBox" Grid.Row="3" AcceptsReturn="True" TextWrapping="Wrap"
                  VerticalContentAlignment="Top" Margin="0,0,0,16"/>
 

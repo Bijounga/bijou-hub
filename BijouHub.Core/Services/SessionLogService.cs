@@ -68,20 +68,46 @@ public class SessionLogService
         return result;
     }
 
+    // Parsed once and reused until the file changes on disk (size or write time) — Home asks for
+    // several totals per visit, and the log only grows. A change synced in from another machine
+    // still shows up, because its write stamp differs.
+    private readonly object _gate = new();
+    private List<SessionRecord>? _cache;
+    private (DateTime Written, long Length) _cacheKey;
+
     private List<SessionRecord> LoadAll()
     {
-        if (!File.Exists(_filePath)) return new List<SessionRecord>();
+        lock (_gate)
+        {
+            var info = new FileInfo(_filePath);
+            if (!info.Exists)
+            {
+                _cache = null;
+                return new List<SessionRecord>();
+            }
 
-        var json = File.ReadAllText(_filePath);
-        if (string.IsNullOrWhiteSpace(json)) return new List<SessionRecord>();
+            var key = (info.LastWriteTimeUtc, info.Length);
+            if (_cache != null && key == _cacheKey) return _cache;
 
-        return JsonSerializer.Deserialize<List<SessionRecord>>(json) ?? new List<SessionRecord>();
+            var json = File.ReadAllText(_filePath);
+            _cache = string.IsNullOrWhiteSpace(json)
+                ? new List<SessionRecord>()
+                : JsonSerializer.Deserialize<List<SessionRecord>>(json) ?? new List<SessionRecord>();
+            _cacheKey = key;
+            return _cache;
+        }
     }
 
     private void Save(List<SessionRecord> records)
     {
         var json = JsonSerializer.Serialize(records, new JsonSerializerOptions { WriteIndented = true });
-        AtomicFile.WriteAllText(_filePath, json);
+        lock (_gate)
+        {
+            AtomicFile.WriteAllText(_filePath, json);
+            var info = new FileInfo(_filePath);
+            _cache = records;
+            _cacheKey = (info.LastWriteTimeUtc, info.Length);
+        }
     }
 
     public void InsertSession(SessionRecord record)

@@ -74,6 +74,7 @@ public partial class MainWindow : Window
             _timerPopout?.Close();
             _deckBridge.Dispose();
             if (_notesSaveTimer?.IsEnabled == true) SaveDailyPlan(); // notes typed in the last second
+            _dailyStore.Flush(); // goal saves are written in the background
             var currentSettings = _settingsStore.Load();
             currentSettings.ZoomLevel = AppScaleTransform.ScaleX;
             _settingsStore.Save(currentSettings);
@@ -381,6 +382,7 @@ public partial class MainWindow : Window
 
     private void PersistAndRefreshProjectList()
     {
+        _boardBuiltAt = DateTime.MinValue;
         _projectStore.Save(_projects);
         ProjectsList.ItemsSource = null;
         ProjectsList.ItemsSource = _projects;
@@ -416,9 +418,9 @@ public partial class MainWindow : Window
         var show = _notesVisible && _detailProject != null;
         NotesPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
 
-        var label = _notesVisible ? "Hide Notes" : "Notes";
-        if (NotesToggleButton != null) NotesToggleButton.Content = label;
-        if (ProjectNotesToggleButton != null) ProjectNotesToggleButton.Content = label;
+        var label = _notesVisible ? "Hide notes" : "Show notes";
+        if (NotesToggleButton != null) NotesToggleButton.ToolTip = label;
+        if (ProjectNotesToggleButton != null) ProjectNotesToggleButton.ToolTip = label;
     }
 
     private void NotesToggle_Click(object sender, RoutedEventArgs e)
@@ -451,11 +453,11 @@ public partial class MainWindow : Window
         popout.Closed += (_, _) =>
         {
             _timerPopout = null;
-            PopoutToggleButton.Content = "Pop Out";
+            SetIconButton(PopoutToggleButton, "\uE8A7", "Pop out the timer");
         };
 
         _timerPopout = popout;
-        PopoutToggleButton.Content = "Dock";
+        SetIconButton(PopoutToggleButton, "\uE73F", "Dock the timer");
         popout.Show();
     }
 
@@ -798,7 +800,7 @@ public partial class MainWindow : Window
         UpdateNotesPanelVisibility();
 
         var greeting = Greetings.Random();
-        TypewriterReveal(HomeWelcomeText, "Welcome back", msPerChar: 8);
+        TypewriterReveal(HomeWelcomeText, DateTime.Today.ToString("dddd, MMMM d"), msPerChar: 8);
         TypewriterReveal(HomeGreetingText, greeting, msPerChar: 8);
 
         var todaySeconds = _logService.GetTodayTotalSeconds();
@@ -864,8 +866,18 @@ public partial class MainWindow : Window
 
     private ProjectBoardService.Board? _board;
 
-    private async Task RefreshBoardAsync()
+    private DateTime _boardBuiltAt;
+
+    // Home is visited often; BijouDocs/BijouMusic don't change that fast. Reuse a board built in
+    // the last 30 seconds unless asked (the Refresh button) to re-read.
+    private async Task RefreshBoardAsync(bool force = false)
     {
+        if (!force && _board != null && DateTime.Now - _boardBuiltAt < TimeSpan.FromSeconds(30))
+        {
+            ShowBoard();
+            return;
+        }
+        _boardBuiltAt = DateTime.Now;
         var projects = _projects.ToList();
         var sessions = _logService.GetAll();
         _board = await Task.Run(() => ProjectBoardService.Build(projects, sessions));
@@ -912,7 +924,7 @@ public partial class MainWindow : Window
         return pill;
     }
 
-    private async void RefreshBoard_Click(object sender, RoutedEventArgs e) => await RefreshBoardAsync();
+    private async void RefreshBoard_Click(object sender, RoutedEventArgs e) => await RefreshBoardAsync(force: true);
 
     private void BoardCard_Click(object sender, MouseButtonEventArgs e)
     {
@@ -1111,7 +1123,7 @@ public partial class MainWindow : Window
         _isIdle = false;
         _paused = false;
         _deckKeyId = deckKeyId;
-        PauseToggleButton.Content = "Pause";
+        SetIconButton(PauseToggleButton, "\uE769", "Pause");
 
         BlockNotifications.Children.Clear();
         _pendingBlockRows.Clear();
@@ -1285,6 +1297,14 @@ public partial class MainWindow : Window
         {
             ClearSessionCheckpoint();
         }
+    }
+
+    // Icon-only buttons swap glyph and tooltip (and their accessible name) to show state.
+    private static void SetIconButton(Button button, string glyph, string label)
+    {
+        if (button.Content is TextBlock icon) icon.Text = glyph;
+        button.ToolTip = label;
+        System.Windows.Automation.AutomationProperties.SetName(button, label);
     }
 
     private void UpdateSessionContextText()
@@ -1943,7 +1963,8 @@ public partial class MainWindow : Window
     {
         var stack = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
 
-        var play = new TextBlock { Text = "▶", FontSize = 11, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 6) };
+        var play = new TextBlock { Text = "", FontSize = 11, Margin = new Thickness(0, 0, 0, 6) };
+        play.SetResourceReference(StyleProperty, "IconGlyph");
         play.SetResourceReference(TextBlock.ForegroundProperty, "AccentBrush");
         stack.Children.Add(play);
 
@@ -1954,14 +1975,10 @@ public partial class MainWindow : Window
         length.SetResourceReference(TextBlock.FontWeightProperty, "TimerFontWeight");
         stack.Children.Add(length);
 
-        var caption = new TextBlock { Text = "count down", FontSize = 10, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 4, 0, 0) };
-        caption.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
-        stack.Children.Add(caption);
-
         var button = new Button
         {
             Content = stack,
-            Height = 84,
+            Height = 72,
             ToolTip = $"Launch {mode.Name} and count down from {DurationText.Format(minutes)}"
         };
         System.Windows.Automation.AutomationProperties.SetName(button, $"{DurationText.Format(minutes)} timer");
@@ -2018,13 +2035,12 @@ public partial class MainWindow : Window
 
         ModeTimerStartButton.IsEnabled = minutes != null;
         ModeTimerSaveButton.IsEnabled = minutes != null && !alreadySaved;
-        ModeTimerSaveButton.Content = alreadySaved ? "Saved" : "+ Save Timer";
+        ModeTimerSaveButton.ToolTip = alreadySaved ? "Already saved on this mode" : "Save this length as a timer on the mode";
 
         string hint;
         string brush = "MutedTextBrush";
         if (string.IsNullOrWhiteSpace(text))
-            hint = "Type a length — 45, 1:30, 2h — then start it once or save it to this mode." +
-                   (ModeTimerTiles.Children.Count > 0 ? " Right-click a timer to remove it." : "");
+            hint = "";
         else if (minutes is int valid)
             hint = $"Counts down from {DurationText.Format(valid)}.";
         else
@@ -2033,6 +2049,7 @@ public partial class MainWindow : Window
             brush = "DangerBrush";
         }
         ModeTimerHint.Text = hint;
+        ModeTimerHint.Visibility = hint.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         ModeTimerHint.SetResourceReference(TextBlock.ForegroundProperty, brush);
     }
 
@@ -2047,7 +2064,7 @@ public partial class MainWindow : Window
         _paused = !_paused;
         _isIdle = false;
         ActiveStatus.Text = _paused ? "Paused" : "Active";
-        PauseToggleButton.Content = _paused ? "Resume" : "Pause";
+        SetIconButton(PauseToggleButton, _paused ? "\uE768" : "\uE769", _paused ? "Resume" : "Pause");
         _timerPopout?.UpdateDisplay(_activeProject?.Name ?? _activeMode?.Name ?? "Session", TimerDisplay.Text, ActiveStatus.Text);
         BroadcastDeckState();
     }
@@ -2081,6 +2098,7 @@ public partial class MainWindow : Window
 
     private void InvalidateTodayLogged()
     {
+        _boardBuiltAt = DateTime.MinValue; // time per project changed too
         _todayLoggedDay = DateTime.Today;
         _todayLoggedSeconds = _logService.GetTodayTotalSeconds();
     }
@@ -2220,6 +2238,7 @@ public partial class MainWindow : Window
 
         // Time moved onto a project changes its "time spent" and the home totals.
         if (!win.AssignmentsChanged) return;
+        _boardBuiltAt = DateTime.MinValue;
         if (ProjectDetailPanel.Visibility == Visibility.Visible && _detailProject != null)
             ShowProjectDetail(_detailProject);
         else if (HomePanel.Visibility == Visibility.Visible)
@@ -2230,7 +2249,16 @@ public partial class MainWindow : Window
 
     private void UpdateStartupButtonLabel()
     {
-        StartupToggleButton.Content = StartupService.IsEnabled ? "✓ Starts with Windows" : "Start on Startup";
+        var on = StartupService.IsEnabled;
+        StartupToggleButton.ToolTip = on ? "Starts with Windows — click to turn off" : "Start with Windows";
+        SetToolActive(StartupToggleButton, on);
+    }
+
+    // A sidebar tool that's switched on shows in the accent color.
+    private static void SetToolActive(Button tool, bool active)
+    {
+        if (active) tool.SetResourceReference(ForegroundProperty, "AccentBrush");
+        else tool.ClearValue(ForegroundProperty);
     }
 
     private void StartupToggle_Click(object sender, RoutedEventArgs e)
@@ -2242,16 +2270,11 @@ public partial class MainWindow : Window
     private void UpdateSyncFolderButtonLabel()
     {
         var settings = _settingsStore.Load();
-        if (string.IsNullOrEmpty(settings.DataFolderPath))
-        {
-            SyncFolderButton.Content = "Sync Folder...";
-            SyncFolderButton.ToolTip = "Point Projects and session history at a folder you sync across devices";
-        }
-        else
-        {
-            SyncFolderButton.Content = "🔗 Synced";
-            SyncFolderButton.ToolTip = $"Syncing via: {settings.DataFolderPath}\nClick to change";
-        }
+        var synced = !string.IsNullOrEmpty(settings.DataFolderPath);
+        SyncFolderButton.ToolTip = synced
+            ? $"Syncing projects and history via {settings.DataFolderPath} — click to change"
+            : "Sync folder: keep projects and history in a folder you sync across devices";
+        SetToolActive(SyncFolderButton, synced);
     }
 
     private void SyncFolder_Click(object sender, RoutedEventArgs e)

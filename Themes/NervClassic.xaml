@@ -1,11 +1,15 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- NERV Classic — BijouHub's original look, restored as a selectable variant rather
          than the default. Same colors as the Dark theme (this *is* where Dark's palette
          came from), paired with Styles/ControlsNerv.xaml for the glow/bracket templates
          and MainWindow's own classic-chrome decorations (see
          Services/ThemeService.IsClassicChrome and MainWindow.RefreshThemeChrome). -->
+
+    <!-- The original's terminal-style section labels. -->
+    <sys:String x:Key="SectionPrefix" xml:space="preserve">// </sys:String>
 
     <Color x:Key="BgColor">#030405</Color>
     <Color x:Key="PanelColor">#08090B</Color>

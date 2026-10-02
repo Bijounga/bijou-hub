@@ -53,6 +53,53 @@
     <SolidColorBrush x:Key="ContentBrush" Color="Transparent"/>
     <SolidColorBrush x:Key="ContentEdgeBrush" Color="Transparent"/>
     <Thickness x:Key="ContentBorderThickness">0</Thickness>
+    <!-- Section labels: plain in every theme, "// " in NERV Classic (its own terminal voice). -->
+    <x:Static x:Key="SectionPrefix" Member="sys:String.Empty"/>
+
+    <!-- Icons: Windows' own icon font (Segoe Fluent Icons on 11, MDL2 Assets on 10). -->
+    <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+    <!-- No BasedOn: the implicit TextBlock style pins TextBrush, and icons take their button's color. -->
+    <Style x:Key="IconGlyph" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource IconFont}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="Typography.NumeralStyle" Value="Normal"/>
+    </Style>
+
+    <Style x:Key="GhostIconButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+        <Setter Property="Padding" Value="8"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" Background="Transparent" BorderBrush="Transparent" BorderThickness="1"
+                            CornerRadius="6" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.75"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <CornerRadius x:Key="PanelRadius">0</CornerRadius>
     <CornerRadius x:Key="PanelTopRadius">0</CornerRadius>
     <Thickness x:Key="PanelInset">0</Thickness>

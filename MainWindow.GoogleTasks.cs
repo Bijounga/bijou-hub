@@ -58,15 +58,18 @@ public partial class MainWindow
 
     private void SetSyncState(SyncState state, string? detail = null)
     {
-        var (text, brush, tip) = state switch
+        var (glyph, text, brush, tip) = state switch
         {
-            SyncState.Syncing => ("Syncing…", "MutedTextBrush", "Talking to Google Tasks"),
-            SyncState.Synced => ("✓ Google Tasks", "MutedTextBrush", $"Synced with Google Tasks at {DateTime.Now:t}. Click to manage."),
-            SyncState.Failed => ("⚠ Not synced", "HazardBrush", (detail ?? "Couldn't reach Google Tasks") + " — changes will be sent when it's back. Click for details."),
-            SyncState.SignInNeeded => ("⚠ Sign in to Google", "HazardBrush", "Google needs you to sign in again. Click to reconnect."),
-            _ => ("Sync with Google Tasks", "FaintTextBrush", "Keep these goals in Google Tasks — on your phone, the web and other computers.")
+            SyncState.Syncing => ("\uE895", "", "MutedTextBrush", "Syncing with Google Tasks…"),
+            SyncState.Synced => ("\uE753", "", "MutedTextBrush", $"Synced with Google Tasks at {DateTime.Now:t}. Click to manage."),
+            SyncState.Failed => ("\uE7BA", "Not synced", "HazardBrush", (detail ?? "Couldn't reach Google Tasks") + " — changes will be sent when it's back. Click for details."),
+            SyncState.SignInNeeded => ("\uE7BA", "Sign in", "HazardBrush", "Google needs you to sign in again. Click to reconnect."),
+            _ => ("\uE753", "Sync", "FaintTextBrush", "Sync these goals with Google Tasks — on your phone, the web and other computers.")
         };
+        GoogleSyncGlyph.Text = glyph;
         GoogleSyncText.Text = text;
+        GoogleSyncText.Visibility = text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+        GoogleSyncButton.SetResourceReference(ForegroundProperty, brush);
         GoogleSyncText.SetResourceReference(TextBlock.ForegroundProperty, brush);
         GoogleSyncButton.ToolTip = tip;
     }

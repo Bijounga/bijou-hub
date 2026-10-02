@@ -16,7 +16,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="// MODE NAME" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"/>
+        <TextBlock Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="MODE NAME"/></TextBlock>
         <TextBox x:Name="NameBox" Grid.Row="1" Margin="0,0,0,16" FontSize="16"/>
 
         <Grid Grid.Row="2">
@@ -25,7 +25,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <DockPanel LastChildFill="False" Margin="0,0,0,6">
-                <TextBlock Text="// LAUNCH ITEMS" Foreground="{DynamicResource SectionLabelBrush}" VerticalAlignment="Center"/>
+                <TextBlock Foreground="{DynamicResource SectionLabelBrush}" VerticalAlignment="Center"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="LAUNCH ITEMS"/></TextBlock>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
                     <Button Content="+ App" Margin="4,0,0,0" Click="AddApp_Click"/>
                     <Button Content="+ Folder" Margin="4,0,0,0" Click="AddFolder_Click"/>
@@ -79,7 +79,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <DockPanel LastChildFill="False" Margin="0,0,0,6">
-                <TextBlock Text="// BLOCKED WHILE THIS MODE IS ACTIVE" Foreground="{DynamicResource SectionLabelBrush}" VerticalAlignment="Center"/>
+                <TextBlock Foreground="{DynamicResource SectionLabelBrush}" VerticalAlignment="Center"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="BLOCKED WHILE THIS MODE IS ACTIVE"/></TextBlock>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
                     <Button Content="Browse..." Margin="0,0,4,0" Click="BrowseBlock_Click"/>
                     <TextBox x:Name="BlockNameBox" Width="110" Margin="0,0,4,0" KeyDown="BlockNameBox_KeyDown"/>

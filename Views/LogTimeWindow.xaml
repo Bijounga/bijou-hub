@@ -16,7 +16,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="// HOW LONG DID YOU WORK?" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+        <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="HOW LONG DID YOU WORK?"/></TextBlock>
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,16">
             <TextBox x:Name="HoursBox" Width="60" Text="0"/>
             <TextBlock Text="hours" VerticalAlignment="Center" Margin="6,0,16,0" Foreground="{DynamicResource MutedTextBrush}"/>
@@ -24,7 +24,7 @@
             <TextBlock Text="minutes" VerticalAlignment="Center" Margin="6,0,0,0" Foreground="{DynamicResource MutedTextBrush}"/>
         </StackPanel>
 
-        <TextBlock Grid.Row="2" Text="// WHAT DID YOU DO IN THAT TIME?" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+        <TextBlock Grid.Row="2" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="WHAT DID YOU DO IN THAT TIME?"/></TextBlock>
         <TextBox x:Name="NoteBox" Grid.Row="3" AcceptsReturn="True" TextWrapping="Wrap"
                  VerticalContentAlignment="Top" Margin="0,0,0,16"/>
 

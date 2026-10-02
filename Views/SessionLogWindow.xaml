@@ -12,7 +12,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <TextBlock Text="// SESSION LOG" Style="{StaticResource HeadingText}" FontSize="16" Margin="0,0,0,8"/>
+        <TextBlock Style="{StaticResource HeadingText}" FontSize="16" Margin="0,0,0,8"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="Session Log"/></TextBlock>
 
         <!-- Untracked-to-project time, e.g. timers started from the Stream Deck. -->
         <DockPanel Grid.Row="1" Margin="0,0,0,12" LastChildFill="False">
@@ -22,9 +22,30 @@
                       VerticalAlignment="Center" Checked="UnassignedOnly_Changed" Unchecked="UnassignedOnly_Changed"/>
         </DockPanel>
 
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
-            <ItemsControl x:Name="LogItems"/>
-        </ScrollViewer>
+        <!-- A ListBox (not a bare ItemsControl) so virtualized rows stay reachable by screen readers;
+             selection visuals are off — rows are content, not choices. -->
+        <ListBox x:Name="LogItems" Grid.Row="2" Background="Transparent" BorderThickness="0" Padding="0"
+                 VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.ScrollUnit="Pixel"
+                 ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Focusable" Value="False"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <ContentPresenter/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel/>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+        </ListBox>
     </Grid>
     </Grid>
 </Window>

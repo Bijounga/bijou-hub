@@ -38,30 +38,12 @@ public partial class SessionLogWindow : Window
 
         foreach (var day in byDay)
         {
-            var dayPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 18) };
-
-            var totalActive = TimeSpan.FromSeconds(day.Sum(s => s.ActiveSeconds));
-            dayPanel.Children.Add(new TextBlock
-            {
-                Text = $"{day.Key:dddd, MMM d}   —   {FormatSpan(totalActive)} total",
-                FontWeight = FontWeights.Bold,
-                Foreground = (Brush)Application.Current.Resources["AccentBrush"],
-                Margin = new Thickness(0, 0, 0, 6)
-            });
-
-            var byMode = day.GroupBy(s => s.ModeName)
-                .Select(g => $"{(g.Key.Length > 0 ? g.Key : "No mode")}: {FormatSpan(TimeSpan.FromSeconds(g.Sum(s => s.ActiveSeconds)))}");
-            dayPanel.Children.Add(new TextBlock
-            {
-                Text = string.Join("   •   ", byMode),
-                Foreground = (Brush)Application.Current.Resources["MutedTextBrush"],
-                Margin = new Thickness(0, 0, 0, 8)
-            });
-
-            foreach (var s in day.OrderByDescending(s => s.StartTime))
-                dayPanel.Children.Add(BuildSessionRow(s));
-
-            LogItems.Items.Add(dayPanel);
+            // Each day is a placeholder until it scrolls into view; the list is virtualized, so a
+            // long history only builds the days on screen.
+            var dayItems = day.ToList();
+            var holder = new ContentControl();
+            holder.Loaded += (_, _) => holder.Content ??= BuildDay(dayItems);
+            LogItems.Items.Add(holder);
         }
 
         if (visible.Count == 0)
@@ -74,6 +56,35 @@ public partial class SessionLogWindow : Window
                 Foreground = (Brush)Application.Current.Resources["MutedTextBrush"]
             });
         }
+    }
+
+    private StackPanel BuildDay(List<SessionRecord> day)
+    {
+        var date = day[0].StartTime.Date;
+        var dayPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 18) };
+
+        var totalActive = TimeSpan.FromSeconds(day.Sum(s => s.ActiveSeconds));
+        dayPanel.Children.Add(new TextBlock
+        {
+            Text = $"{date:dddd, MMM d}   —   {FormatSpan(totalActive)} total",
+            FontWeight = FontWeights.Bold,
+            Foreground = (Brush)Application.Current.Resources["AccentBrush"],
+            Margin = new Thickness(0, 0, 0, 6)
+        });
+
+        var byMode = day.GroupBy(s => s.ModeName)
+            .Select(g => $"{(g.Key.Length > 0 ? g.Key : "No mode")}: {FormatSpan(TimeSpan.FromSeconds(g.Sum(s => s.ActiveSeconds)))}");
+        dayPanel.Children.Add(new TextBlock
+        {
+            Text = string.Join("   •   ", byMode),
+            Foreground = (Brush)Application.Current.Resources["MutedTextBrush"],
+            Margin = new Thickness(0, 0, 0, 8)
+        });
+
+        foreach (var s in day.OrderByDescending(s => s.StartTime))
+            dayPanel.Children.Add(BuildSessionRow(s));
+
+        return dayPanel;
     }
 
     private Grid BuildSessionRow(SessionRecord session)
@@ -97,27 +108,41 @@ public partial class SessionLogWindow : Window
         return row;
     }
 
+    // Each row starts with only its current choice; the full project list is filled in the first
+    // time that row's dropdown opens. A long history then opens instantly instead of building a
+    // project list per session up front.
     private ComboBox BuildProjectPicker(SessionRecord session)
     {
         var picker = new ComboBox { Padding = new Thickness(8, 3, 8, 3), ToolTip = "Assign this time to a project" };
         var none = new ComboBoxItem { Content = "— No project —" };
-        picker.Items.Add(none);
-        foreach (var project in _projects)
-            picker.Items.Add(new ComboBoxItem { Content = project.Name, Tag = project });
 
+        var currentProject = session.ProjectId == null ? null : _projects.FirstOrDefault(p => p.Id == session.ProjectId);
         var current = session.ProjectId == null
             ? none
-            : picker.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (i.Tag as Project)?.Id == session.ProjectId);
-        if (current == null)
-        {
-            // A project deleted since keeps its name on the record — show it rather than "none".
-            current = new ComboBoxItem { Content = $"{session.ProjectName ?? "Project"} (deleted)" };
-            picker.Items.Add(current);
-        }
+            : currentProject != null
+                ? new ComboBoxItem { Content = currentProject.Name, Tag = currentProject }
+                // A project deleted since keeps its name on the record — show it rather than "none".
+                : new ComboBoxItem { Content = $"{session.ProjectName ?? "Project"} (deleted)" };
+        picker.Items.Add(current);
         picker.SelectedItem = current;
+
+        var filled = false;
+        picker.DropDownOpened += (_, _) =>
+        {
+            if (filled) return;
+            filled = true;
+            var selected = picker.SelectedItem;
+            picker.Items.Clear();
+            picker.Items.Add(none);
+            foreach (var project in _projects)
+                picker.Items.Add(currentProject == project ? selected : new ComboBoxItem { Content = project.Name, Tag = project });
+            if (selected != none && currentProject == null) picker.Items.Add(selected);
+            picker.SelectedItem = selected;
+        };
 
         picker.SelectionChanged += (_, _) =>
         {
+            if (!filled) return; // only the fill above changes selection before the list opens
             if (picker.SelectedItem == none)
                 Assign(session, null, null);
             else if (picker.SelectedItem is ComboBoxItem { Tag: Project project })

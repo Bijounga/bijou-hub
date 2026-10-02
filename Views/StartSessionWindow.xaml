@@ -22,13 +22,13 @@
 
         <TextBlock x:Name="ProjectNameText" Style="{StaticResource HeadingText}" FontSize="18" Margin="0,0,0,16"/>
 
-        <TextBlock Grid.Row="1" Text="// MODE FOR THIS SESSION" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"/>
+        <TextBlock Grid.Row="1" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="MODE FOR THIS SESSION"/></TextBlock>
         <ComboBox Grid.Row="2" x:Name="ModeCombo" Margin="0,0,0,16"/>
 
-        <TextBlock Grid.Row="3" Text="// WORKING ON" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"/>
+        <TextBlock Grid.Row="3" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="WORKING ON"/></TextBlock>
         <ComboBox Grid.Row="4" x:Name="GoalCombo" Margin="0,0,0,16" DisplayMemberPath="Label"/>
 
-        <TextBlock Grid.Row="5" Text="// TIME BUDGET" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"/>
+        <TextBlock Grid.Row="5" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="TIME BUDGET"/></TextBlock>
         <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,0,0,8">
             <ComboBox x:Name="BudgetCombo" Width="140" SelectionChanged="BudgetCombo_SelectionChanged"/>
             <TextBox x:Name="CustomBudgetBox" Width="80" Margin="8,0,0,0" Visibility="Collapsed"/>

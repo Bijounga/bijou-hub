@@ -21,22 +21,22 @@
                 <ColumnDefinition Width="200"/>
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                <TextBlock Text="// PROJECT NAME" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"/>
+                <TextBlock Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="PROJECT NAME"/></TextBlock>
                 <TextBox x:Name="NameBox" FontSize="16"/>
             </StackPanel>
             <StackPanel Grid.Column="1">
-                <TextBlock Text="// LINKED MODE" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"/>
+                <TextBlock Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="LINKED MODE"/></TextBlock>
                 <ComboBox x:Name="ModeCombo" DisplayMemberPath="Name"/>
             </StackPanel>
         </Grid>
 
         <StackPanel Grid.Row="1" Margin="0,0,0,16">
-            <TextBlock Text="// DEFAULT SESSION BUDGET (MINUTES, OPTIONAL)" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"/>
+            <TextBlock Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="DEFAULT SESSION BUDGET (MINUTES, OPTIONAL)"/></TextBlock>
             <TextBox x:Name="BudgetBox" Width="120" HorizontalAlignment="Left"/>
         </StackPanel>
 
         <DockPanel Grid.Row="2" LastChildFill="False" Margin="0,0,0,6">
-            <TextBlock Text="// GOALS" Foreground="{DynamicResource SectionLabelBrush}" VerticalAlignment="Center"/>
+            <TextBlock Foreground="{DynamicResource SectionLabelBrush}" VerticalAlignment="Center"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="GOALS"/></TextBlock>
             <Button Content="+ Goal" DockPanel.Dock="Right" Click="AddGoal_Click"/>
         </DockPanel>
 
