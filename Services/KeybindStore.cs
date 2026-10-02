@@ -20,10 +20,7 @@ public class KeybindStore
 
     public KeybindStore()
     {
-        var dir = System.IO.Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "BijouHub");
-        Directory.CreateDirectory(dir);
+        var dir = DataPaths.LocalDir;
         _filePath = System.IO.Path.Combine(dir, "keybinds.json");
         _binds = Load();
     }

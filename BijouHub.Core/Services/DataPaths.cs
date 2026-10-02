@@ -11,8 +11,12 @@ namespace BijouHub.Services;
 // machine without BijouHub needing its own sync backend.
 public static class DataPaths
 {
+    // BIJOUHUB_DATA_DIR relocates everything (settings included, so the sync folder too) —
+    // lets a test instance run against a scratch folder without touching real data.
     public static string LocalDir { get; } = EnsureDir(
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BijouHub"));
+        Environment.GetEnvironmentVariable("BIJOUHUB_DATA_DIR") is { Length: > 0 } overrideDir
+            ? overrideDir
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BijouHub"));
 
     public static string SyncDir
     {

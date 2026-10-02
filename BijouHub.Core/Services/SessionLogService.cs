@@ -92,6 +92,19 @@ public class SessionLogService
         Save(all);
     }
 
+    // Sessions started without a project (e.g. from a Stream Deck key) get allocated later.
+    // Null projectId clears the assignment.
+    public void AssignProject(int sessionId, string? projectId, string? projectName)
+    {
+        var all = LoadAll();
+        var record = all.FirstOrDefault(r => r.Id == sessionId);
+        if (record == null) return;
+
+        record.ProjectId = projectId;
+        record.ProjectName = projectName;
+        Save(all);
+    }
+
     public List<SessionRecord> GetAll()
     {
         return LoadAll().OrderByDescending(r => r.StartTime).ToList();

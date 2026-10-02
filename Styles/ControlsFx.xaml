@@ -371,7 +371,9 @@
                                 </ControlTemplate>
                             </ToggleButton.Template>
                         </ToggleButton>
-                        <ContentPresenter IsHitTestVisible="False" Content="{TemplateBinding SelectedItem}"
+                        <ContentPresenter IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
                                           Margin="{TemplateBinding Padding}" HorizontalAlignment="Left" VerticalAlignment="Center">
                             <ContentPresenter.Resources>
                                 <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">

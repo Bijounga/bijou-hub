@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Assets\app-icon.ico</ApplicationIcon>
-    <Version>1.10.0</Version>
+    <Version>1.11.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +20,12 @@
     <Resource Include="Assets\Themes\*"/>
   </ItemGroup>
 
+  <!-- The packed Stream Deck plugin (built by StreamDeck/build.ps1) rides inside the exe so the
+       Stream Deck window can install it in one click. -->
+  <ItemGroup Condition="Exists('StreamDeck\dist\com.bijounga.bijouhub.streamDeckPlugin')">
+    <EmbeddedResource Include="StreamDeck\dist\com.bijounga.bijouhub.streamDeckPlugin" LogicalName="BijouHub.StreamDeckPlugin"/>
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="BijouHub.Core\BijouHub.Core.csproj" />
   </ItemGroup>
@@ -27,10 +33,12 @@
   <ItemGroup>
     <Compile Remove="BijouHub.Core\**" />
     <Compile Remove="BijouHub.Mac\**" />
+    <Compile Remove="StreamDeck\**" />
     <EmbeddedResource Remove="BijouHub.Core\**" />
     <EmbeddedResource Remove="BijouHub.Mac\**" />
     <None Remove="BijouHub.Core\**" />
     <None Remove="BijouHub.Mac\**" />
+    <None Remove="StreamDeck\**" />
   </ItemGroup>
 
 </Project>

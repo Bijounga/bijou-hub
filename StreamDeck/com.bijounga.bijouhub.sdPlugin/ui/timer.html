@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>BijouHub Timer</title>
+<style>
+	:root {
+		--bg: #2d2d2d;
+		--field: #3d3d3d;
+		--field-hover: #454545;
+		--line: #4a4a4a;
+		--ink: #d8d8d8;
+		--muted: #969696;
+		--accent: #33e1ff;
+		--warn: #ffb547;
+		--bad: #ff5c6c;
+	}
+	* { box-sizing: border-box; }
+	html, body {
+		margin: 0;
+		background: var(--bg);
+		color: var(--ink);
+		font: 9pt "Segoe UI", system-ui, sans-serif;
+		-webkit-user-select: none;
+		user-select: none;
+	}
+	body { padding: 8px 12px 14px 0; }
+
+	.row {
+		display: grid;
+		grid-template-columns: 96px 1fr;
+		align-items: start;
+		gap: 0 10px;
+		margin: 0 0 8px;
+	}
+	.row > label {
+		text-align: right;
+		color: var(--muted);
+		padding-top: 5px;
+	}
+	select, input[type="text"] {
+		width: 100%;
+		height: 26px;
+		padding: 0 8px;
+		background: var(--field);
+		color: var(--ink);
+		border: 1px solid transparent;
+		border-radius: 3px;
+		font: inherit;
+		outline: none;
+	}
+	select:hover, input[type="text"]:hover { background: var(--field-hover); }
+	select:focus, input[type="text"]:focus { border-color: var(--accent); }
+	input.invalid { border-color: var(--bad); }
+
+	.hint { color: var(--muted); font-size: 8pt; margin-top: 4px; min-height: 1em; }
+	.hint.bad { color: var(--bad); }
+
+	.chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+	.chip {
+		padding: 3px 8px;
+		background: var(--field);
+		color: var(--ink);
+		border: 1px solid transparent;
+		border-radius: 10px;
+		font: inherit;
+		font-size: 8pt;
+		cursor: pointer;
+	}
+	.chip:hover { background: var(--field-hover); }
+	.chip.on { border-color: var(--accent); color: #fff; }
+
+	.swatches { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 3px; }
+	.swatch {
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		border: 2px solid transparent;
+		cursor: pointer;
+		padding: 0;
+		box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+	}
+	.swatch.on { border-color: #fff; }
+
+	.banner {
+		margin: 0 0 10px 106px;
+		padding: 8px 10px;
+		border-radius: 4px;
+		background: rgba(255, 181, 71, 0.12);
+		border: 1px solid rgba(255, 181, 71, 0.35);
+		color: var(--ink);
+		line-height: 1.4;
+	}
+	.banner button {
+		margin-top: 6px;
+		padding: 3px 10px;
+		background: var(--field);
+		color: var(--ink);
+		border: 1px solid var(--line);
+		border-radius: 3px;
+		font: inherit;
+		cursor: pointer;
+	}
+	.banner button:hover { background: var(--field-hover); }
+	[hidden] { display: none !important; }
+
+	.howto {
+		margin: 14px 0 0 106px;
+		color: var(--muted);
+		line-height: 1.5;
+	}
+	.howto b { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+	<div class="banner" id="offline" hidden>
+		BijouHub isn't running, so your modes can't load yet.<br>
+		<button type="button" id="launch">Open BijouHub</button>
+	</div>
+
+	<div class="row">
+		<label for="mode">Mode</label>
+		<div>
+			<select id="mode"></select>
+			<div class="hint" id="modeHint">Launches the mode's apps and blocks, like starting it in BijouHub.</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<label for="duration">Duration</label>
+		<div>
+			<input type="text" id="duration" placeholder="45, 1:30, 2h" spellcheck="false" autocomplete="off">
+			<div class="chips" id="chips"></div>
+			<div class="hint" id="durationHint"></div>
+		</div>
+	</div>
+
+	<div class="row">
+		<label for="project">Project</label>
+		<div>
+			<select id="project"></select>
+			<div class="hint">Optional. You can assign the time later from BijouHub's Session Log.</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<label>Color</label>
+		<div class="swatches" id="swatches"></div>
+	</div>
+
+	<div class="howto">
+		<b>Tap</b> to start · <b>tap</b> again to pause<br>
+		<b>Hold</b> to finish and log the time
+	</div>
+
+<script>
+	const PRESETS = [
+		["25m", "25"], ["45m", "45"], ["1h", "1h"], ["1:30", "1:30"], ["2h", "2h"], ["Count up", ""]
+	];
+	const COLORS = ["#33E1FF", "#60A5FA", "#A78BFA", "#F472B6", "#F87171", "#FBBF24", "#4ADE80", "#E5E7EB"];
+
+	let socket = null;
+	let contextId = null;
+	let actionId = null;
+	let settings = {};
+	let catalog = { connected: false, modes: [], projects: [] };
+	let catalogReceived = false;
+
+	const $ = (id) => document.getElementById(id);
+
+	// Stream Deck calls this when the panel opens.
+	window.connectElgatoStreamDeckSocket = (port, uuid, registerEvent, info, actionInfo) => {
+		contextId = uuid;
+		const action = JSON.parse(actionInfo);
+		actionId = action.action;
+		settings = action.payload?.settings ?? {};
+
+		socket = new WebSocket(`ws://127.0.0.1:${port}`);
+		socket.onopen = () => {
+			socket.send(JSON.stringify({ event: registerEvent, uuid }));
+			requestCatalog(3);
+		};
+		socket.onmessage = (e) => {
+			const message = JSON.parse(e.data);
+			if (message.event === "sendToPropertyInspector" && message.payload?.event === "catalog") {
+				catalog = message.payload;
+				catalogReceived = true;
+				render();
+			} else if (message.event === "didReceiveSettings") {
+				settings = message.payload.settings ?? {};
+				render();
+			}
+		};
+		render();
+	};
+
+	// The plugin can only answer once Stream Deck has told it this panel is open, which may land
+	// just after our first request — so ask again until an answer arrives.
+	function requestCatalog(attempts) {
+		sendToPlugin({ event: "getCatalog" });
+		if (attempts > 1) setTimeout(() => { if (!catalogReceived) requestCatalog(attempts - 1); }, 1200);
+	}
+
+	function sendToPlugin(payload) {
+		socket?.send(JSON.stringify({ event: "sendToPlugin", action: actionId, context: contextId, payload }));
+	}
+
+	function save() {
+		socket?.send(JSON.stringify({ event: "setSettings", context: contextId, payload: settings }));
+	}
+
+	// Same rules as the plugin's parseDuration (src/duration.ts) — keep them in sync.
+	function parseDuration(text) {
+		const value = (text ?? "").trim().toLowerCase();
+		if (value === "") return null;
+		const clock = /^(\d{1,2}):(\d{1,2})$/.exec(value);
+		if (clock) return positive(Number(clock[1]) * 60 + Number(clock[2]));
+		if (/^\d+(\.\d+)?$/.test(value)) return positive(Math.round(Number(value)));
+		const parts = /^(?:(\d+(?:\.\d+)?)\s*h(?:ours?|rs?)?)?\s*(?:(\d+)\s*(?:m|mins?|minutes?)?)?$/.exec(value);
+		if (parts && (parts[1] || parts[2])) {
+			return positive(Math.round((parts[1] ? Number(parts[1]) : 0) * 60 + (parts[2] ? Number(parts[2]) : 0)));
+		}
+		return undefined;
+	}
+	function positive(minutes) {
+		return minutes > 0 && minutes <= 24 * 60 ? minutes : undefined;
+	}
+	function describe(minutes) {
+		const h = Math.floor(minutes / 60), m = minutes % 60;
+		const parts = [];
+		if (h) parts.push(`${h} hour${h === 1 ? "" : "s"}`);
+		if (m) parts.push(`${m} minute${m === 1 ? "" : "s"}`);
+		return parts.join(" ");
+	}
+
+	function fillSelect(select, options, selected) {
+		select.replaceChildren(...options.map(([value, label]) => {
+			const option = document.createElement("option");
+			option.value = value;
+			option.textContent = label;
+			return option;
+		}));
+		select.value = selected;
+	}
+
+	function render() {
+		$("offline").hidden = !catalogReceived || catalog.connected;
+
+		// Modes — keep the saved one listed even when BijouHub is closed or it was renamed.
+		const modes = catalog.modes.map((m) => [m.id, m.name]);
+		if (settings.modeId && !modes.some(([id]) => id === settings.modeId)) {
+			modes.unshift([settings.modeId, settings.modeName ?? "Saved mode"]);
+		}
+		fillSelect($("mode"), [["", modes.length ? "Choose a mode…" : "No modes yet"], ...modes], settings.modeId ?? "");
+
+		const projects = catalog.projects.map((p) => [p.id, p.name]);
+		if (settings.projectId && !projects.some(([id]) => id === settings.projectId)) {
+			projects.unshift([settings.projectId, settings.projectName ?? "Saved project"]);
+		}
+		fillSelect($("project"), [["", "Assign later"], ...projects], settings.projectId ?? "");
+
+		const input = $("duration");
+		if (document.activeElement !== input) input.value = settings.duration ?? "";
+		renderDurationHint();
+
+		$("swatches").replaceChildren(...COLORS.map((color) => {
+			const swatch = document.createElement("button");
+			swatch.type = "button";
+			swatch.className = "swatch" + ((settings.color ?? COLORS[0]).toUpperCase() === color ? " on" : "");
+			swatch.style.background = color;
+			swatch.title = color;
+			swatch.onclick = () => {
+				settings.color = color;
+				save();
+				render();
+			};
+			return swatch;
+		}));
+	}
+
+	function renderDurationHint() {
+		const text = $("duration").value;
+		const minutes = parseDuration(text);
+		const hint = $("durationHint");
+		$("duration").classList.toggle("invalid", minutes === undefined);
+		hint.classList.toggle("bad", minutes === undefined);
+		hint.textContent = minutes === undefined
+			? "Can't read that — try 45, 1:30 or 2h."
+			: minutes === null ? "No limit — the key counts up." : `Counts down from ${describe(minutes)}.`;
+
+		for (const chip of $("chips").children) {
+			chip.classList.toggle("on", parseDuration(chip.dataset.value) === minutes && (minutes !== null || text.trim() === ""));
+		}
+	}
+
+	$("chips").replaceChildren(...PRESETS.map(([label, value]) => {
+		const chip = document.createElement("button");
+		chip.type = "button";
+		chip.className = "chip";
+		chip.textContent = label;
+		chip.dataset.value = value;
+		chip.onclick = () => {
+			settings.duration = value;
+			$("duration").value = value;
+			save();
+			renderDurationHint();
+		};
+		return chip;
+	}));
+
+	$("duration").addEventListener("input", () => {
+		settings.duration = $("duration").value;
+		renderDurationHint();
+		if (parseDuration(settings.duration) !== undefined) save();
+	});
+
+	$("mode").addEventListener("change", () => {
+		const id = $("mode").value;
+		const option = $("mode").selectedOptions[0];
+		settings.modeId = id || undefined;
+		settings.modeName = id ? option.textContent : undefined;
+		save();
+	});
+
+	$("project").addEventListener("change", () => {
+		const id = $("project").value;
+		const option = $("project").selectedOptions[0];
+		settings.projectId = id || undefined;
+		settings.projectName = id ? option.textContent : undefined;
+		save();
+	});
+
+	$("launch").addEventListener("click", () => {
+		$("launch").textContent = "Opening…";
+		sendToPlugin({ event: "launchHub" });
+	});
+</script>
+</body>
+</html>

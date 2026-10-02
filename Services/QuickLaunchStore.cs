@@ -10,10 +10,7 @@ public class QuickLaunchStore
 
     public QuickLaunchStore()
     {
-        var dir = System.IO.Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "BijouHub");
-        Directory.CreateDirectory(dir);
+        var dir = DataPaths.LocalDir;
         _filePath = System.IO.Path.Combine(dir, "quicklaunch.json");
     }
 

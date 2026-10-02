@@ -1,0 +1,46 @@
+{
+	"$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+	"UUID": "com.bijounga.bijouhub",
+	"Name": "BijouHub",
+	"Version": "1.0.0.0",
+	"Author": "Bijou",
+	"Description": "Start BijouHub timers from a key and watch them count down on it.",
+	"Icon": "imgs/plugin",
+	"Category": "BijouHub",
+	"CategoryIcon": "imgs/category",
+	"CodePath": "bin/plugin.js",
+	"SDKVersion": 2,
+	"Software": {
+		"MinimumVersion": "7.1"
+	},
+	"OS": [
+		{
+			"Platform": "windows",
+			"MinimumVersion": "10"
+		}
+	],
+	"Nodejs": {
+		"Version": "20",
+		"Debug": "disabled"
+	},
+	"Actions": [
+		{
+			"UUID": "com.bijounga.bijouhub.timer",
+			"Name": "Timer",
+			"Icon": "imgs/action",
+			"Tooltip": "Starts a BijouHub timer in a mode. Tap to pause, hold to finish.",
+			"PropertyInspectorPath": "ui/timer.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"UserTitleEnabled": false,
+			"SupportedInMultiActions": false,
+			"States": [
+				{
+					"Image": "imgs/key",
+					"ShowTitle": false
+				}
+			]
+		}
+	]
+}

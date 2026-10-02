@@ -1,0 +1,5 @@
+node_modules/
+dist/
+com.bijounga.bijouhub.sdPlugin/bin/
+com.bijounga.bijouhub.sdPlugin/logs/
+test/out/

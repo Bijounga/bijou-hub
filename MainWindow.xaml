@@ -116,6 +116,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Text="// MODES" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="4,0,0,8"/>
 
@@ -167,7 +168,9 @@
                         ToolTip="Launch BijouHub automatically when you sign in to Windows"/>
                 <Button x:Name="ThemeButton" Grid.Row="9" Content="Theme..." Margin="0,8,0,0" Click="OpenTheme_Click"
                         ToolTip="Choose BijouHub's color theme"/>
-                <Button x:Name="UpdateButton" Grid.Row="10" Style="{DynamicResource AccentButton}" Margin="0,8,0,0" Padding="10,8"
+                <Button x:Name="StreamDeckButton" Grid.Row="10" Content="Stream Deck..." Margin="0,8,0,0" Click="OpenStreamDeck_Click"
+                        ToolTip="Start and watch BijouHub timers from your Stream Deck"/>
+                <Button x:Name="UpdateButton" Grid.Row="11" Style="{DynamicResource AccentButton}" Margin="0,8,0,0" Padding="10,8"
                         Click="UpdateButton_Click" Visibility="Collapsed"/>
                 </Grid>
             </Grid>
@@ -289,6 +292,7 @@
 
                 <StackPanel Orientation="Horizontal">
                     <Button Content="■  Finish Session" Padding="16,8" Click="FinishSession_Click"/>
+                    <Button x:Name="PauseToggleButton" Content="Pause" Margin="8,0,0,0" Padding="16,8" Click="PauseToggle_Click"/>
                     <Button x:Name="NotesToggleButton" Content="Notes" Margin="8,0,0,0" Padding="16,8" Click="NotesToggle_Click"/>
                     <Button x:Name="PopoutToggleButton" Content="Pop Out" Margin="8,0,0,0" Padding="16,8" Click="PopoutToggle_Click"/>
                 </StackPanel>

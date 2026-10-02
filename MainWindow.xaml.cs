@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -16,7 +17,9 @@ namespace BijouHub;
 
 public partial class MainWindow : Window
 {
-    private static readonly TimeSpan IdleThreshold = TimeSpan.FromMinutes(3);
+    // BIJOUHUB_IDLE_MINUTES lets automated tests run without someone at the keyboard.
+    private static readonly TimeSpan IdleThreshold = TimeSpan.FromMinutes(
+        double.TryParse(Environment.GetEnvironmentVariable("BIJOUHUB_IDLE_MINUTES"), out var idleMinutes) ? idleMinutes : 3);
     private static readonly TimeSpan BlockReminderInterval = TimeSpan.FromSeconds(20);
 
     private readonly ModeStore _modeStore = new();
@@ -48,6 +51,13 @@ public partial class MainWindow : Window
     private bool _isIdle;
     private bool _notesVisible = true;
     private TimerPopoutWindow? _timerPopout;
+    private bool _paused;
+    private bool _sessionStarting;
+
+    // Stream Deck key (the plugin's per-key id) that started the running session, if any —
+    // tells the deck which key should draw the live countdown.
+    private string? _deckKeyId;
+    private readonly StreamDeckBridge _deckBridge;
 
     private bool IsSessionActive => _activeMode != null || _activeProject != null;
 
@@ -56,10 +66,12 @@ public partial class MainWindow : Window
         InitializeComponent();
         DarkTitleBar.Apply(this);
         RefreshThemeChrome();
+        _deckBridge = new StreamDeckBridge(Dispatcher, HandleDeckCommand);
         Closing += (_, _) =>
         {
             if (NotesPanel.Visibility == Visibility.Visible) SaveFreeformNotes();
             _timerPopout?.Close();
+            _deckBridge.Dispose();
             var currentSettings = _settingsStore.Load();
             currentSettings.ZoomLevel = AppScaleTransform.ScaleX;
             _settingsStore.Save(currentSettings);
@@ -92,6 +104,8 @@ public partial class MainWindow : Window
             if (_pendingBlockRows.Count > 0)
                 System.Media.SystemSounds.Exclamation.Play();
         };
+
+        _deckBridge.Start();
 
         _quickLaunchApps = _quickLaunchStore.Load();
         foreach (var app in _quickLaunchApps)
@@ -951,7 +965,8 @@ public partial class MainWindow : Window
         await BeginSession(dlg.SelectedMode, project, dlg.SelectedGoal, dlg.TargetMinutes, dlg.CountDown);
     }
 
-    private async Task BeginSession(WorkMode? mode, Project? project, Goal? goal, int? targetMinutes, bool countDown = false)
+    private async Task BeginSession(WorkMode? mode, Project? project, Goal? goal, int? targetMinutes, bool countDown = false,
+        string? deckKeyId = null)
     {
         if (mode != null)
         {
@@ -974,6 +989,9 @@ public partial class MainWindow : Window
         _activeSeconds = 0;
         _idleSeconds = 0;
         _isIdle = false;
+        _paused = false;
+        _deckKeyId = deckKeyId;
+        PauseToggleButton.Content = "Pause";
 
         BlockNotifications.Children.Clear();
         _pendingBlockRows.Clear();
@@ -998,13 +1016,19 @@ public partial class MainWindow : Window
         if (mode != null)
             _blockWatcher.Start(mode);
         _tickTimer.Start();
+        BroadcastDeckState();
     }
 
     private void TickTimer_Tick(object? sender, EventArgs e)
     {
         var idleTime = IdleTimeService.GetIdleTime();
 
-        if (idleTime >= IdleThreshold)
+        if (_paused)
+        {
+            // Paused time isn't worked time — it's logged alongside idle time.
+            _idleSeconds++;
+        }
+        else if (idleTime >= IdleThreshold)
         {
             _idleSeconds++;
             if (!_isIdle)
@@ -1048,6 +1072,8 @@ public partial class MainWindow : Window
         // tracked time instead of the whole session — recovered on the next launch.
         if ((_activeSeconds + _idleSeconds) % 10 == 0)
             WriteSessionCheckpoint();
+
+        BroadcastDeckState();
     }
 
     private static string SessionCheckpointPath => Path.Combine(DataPaths.LocalDir, "active_session.json");
@@ -1280,7 +1306,11 @@ public partial class MainWindow : Window
         }
     }
 
-    private void FinishSession_Click(object sender, RoutedEventArgs e)
+    private void FinishSession_Click(object sender, RoutedEventArgs e) => FinishSession(askForNote: true);
+
+    // askForNote is false when the session is ended from the Stream Deck — a modal prompt
+    // would pop up mid-work with nobody at the window expecting it.
+    private void FinishSession(bool askForNote)
     {
         if (_activeMode == null && _activeProject == null) return;
 
@@ -1294,7 +1324,7 @@ public partial class MainWindow : Window
 
         string? note = null;
         var finishedProject = _activeProject;
-        if (finishedProject != null)
+        if (finishedProject != null && askForNote)
         {
             var noteDlg = new FinishNoteWindow { Owner = this };
             if (noteDlg.ShowDialog() == true)
@@ -1328,6 +1358,9 @@ public partial class MainWindow : Window
         _activeGoal = null;
         _targetMinutes = null;
         _countDownMode = false;
+        _paused = false;
+        _deckKeyId = null;
+        BroadcastDeckState();
 
         if (finishedProject != null)
         {
@@ -1344,12 +1377,129 @@ public partial class MainWindow : Window
         }
     }
 
+    // ---------- Pause ----------
+
+    private void PauseToggle_Click(object sender, RoutedEventArgs e) => TogglePause();
+
+    private void TogglePause()
+    {
+        if (!IsSessionActive) return;
+
+        _paused = !_paused;
+        _isIdle = false;
+        ActiveStatus.Text = _paused ? "Paused" : "Active";
+        PauseToggleButton.Content = _paused ? "Resume" : "Pause";
+        _timerPopout?.UpdateDisplay(_activeProject?.Name ?? _activeMode?.Name ?? "Session", TimerDisplay.Text, ActiveStatus.Text);
+        BroadcastDeckState();
+    }
+
+    // ---------- Stream Deck ----------
+
+    private JsonObject DeckState() => new()
+    {
+        ["type"] = "state",
+        ["active"] = IsSessionActive,
+        ["keyId"] = _deckKeyId,
+        ["title"] = _activeProject?.Name ?? _activeMode?.Name,
+        ["targetSeconds"] = _countDownMode && _targetMinutes is int target ? target * 60 : null,
+        ["activeSeconds"] = _activeSeconds,
+        ["paused"] = _paused,
+        ["idle"] = _isIdle && !_paused
+    };
+
+    private void BroadcastDeckState() => _deckBridge.Broadcast(DeckState());
+
+    // Runs on the UI thread (the bridge marshals every command here). The reply goes back to
+    // the plugin that asked; state changes also reach every connected plugin via broadcast.
+    private JsonObject? HandleDeckCommand(JsonObject request)
+    {
+        switch ((string?)request["type"])
+        {
+            case "catalog":
+                return new JsonObject
+                {
+                    ["modes"] = new JsonArray(_modes.Select(m => (JsonNode)new JsonObject { ["id"] = m.Id, ["name"] = m.Name }).ToArray()),
+                    ["projects"] = new JsonArray(_projects.Select(p => (JsonNode)new JsonObject { ["id"] = p.Id, ["name"] = p.Name }).ToArray())
+                };
+
+            case "state":
+                return DeckState();
+
+            case "start":
+                return StartFromDeck(request);
+
+            case "pause":
+                TogglePause();
+                return DeckState();
+
+            case "finish":
+                FinishSession(askForNote: false);
+                return DeckState();
+
+            default:
+                return new JsonObject { ["error"] = "Unknown command" };
+        }
+    }
+
+    private JsonObject StartFromDeck(JsonObject request)
+    {
+        var keyId = (string?)request["keyId"];
+        var modeId = (string?)request["modeId"];
+        var modeName = (string?)request["modeName"];
+        var projectId = (string?)request["projectId"];
+        var minutes = request["minutes"] is JsonValue m && m.TryGetValue<int>(out var parsed) && parsed > 0 ? parsed : (int?)null;
+
+        // Match by id, then by name, so a key still works after its mode is recreated.
+        var mode = _modes.FirstOrDefault(x => x.Id == modeId)
+                   ?? _modes.FirstOrDefault(x => string.Equals(x.Name, modeName, StringComparison.OrdinalIgnoreCase));
+        var project = string.IsNullOrEmpty(projectId) ? null : _projects.FirstOrDefault(x => x.Id == projectId);
+        if (mode == null && project == null)
+            return new JsonObject { ["error"] = "Mode not found — pick one in the key's settings" };
+
+        // A second press while modes are still launching would otherwise start twice.
+        if (_sessionStarting) return DeckState();
+
+        // Another session (from the app or another key) is logged as-is and replaced.
+        if (IsSessionActive)
+            FinishSession(askForNote: false);
+
+        _ = StartDeckSessionAsync(mode, project, minutes, keyId);
+        return new JsonObject { ["ok"] = true };
+    }
+
+    private async Task StartDeckSessionAsync(WorkMode? mode, Project? project, int? minutes, string? keyId)
+    {
+        _sessionStarting = true;
+        try
+        {
+            if (project != null) ProjectsList.SelectedItem = project;
+            await BeginSession(mode, project, null, minutes, countDown: minutes != null, deckKeyId: keyId);
+        }
+        finally
+        {
+            _sessionStarting = false;
+        }
+    }
+
+    private void OpenStreamDeck_Click(object sender, RoutedEventArgs e)
+    {
+        var win = new StreamDeckWindow(() => _deckBridge.ClientCount) { Owner = this };
+        win.ShowDialog();
+    }
+
     // ---------- Session log ----------
 
     private void SessionLog_Click(object sender, RoutedEventArgs e)
     {
-        var win = new SessionLogWindow(_logService) { Owner = this };
+        var win = new SessionLogWindow(_logService, _projects) { Owner = this };
         win.ShowDialog();
+
+        // Time moved onto a project changes its "time spent" and the home totals.
+        if (!win.AssignmentsChanged) return;
+        if (ProjectDetailPanel.Visibility == Visibility.Visible && _detailProject != null)
+            ShowProjectDetail(_detailProject);
+        else if (HomePanel.Visibility == Visibility.Visible)
+            ShowHome();
     }
 
     // ---------- Sync folder ----------

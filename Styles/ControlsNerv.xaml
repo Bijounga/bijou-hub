@@ -259,7 +259,9 @@
                             </ToggleButton.Template>
                         </ToggleButton>
                         <ContentPresenter x:Name="ContentSite" IsHitTestVisible="False"
-                                          Content="{TemplateBinding SelectedItem}"
+                                          Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
                                           Margin="{TemplateBinding Padding}"
                                           HorizontalAlignment="Left" VerticalAlignment="Center"/>
                         <Popup x:Name="Popup" IsOpen="{TemplateBinding IsDropDownOpen}"
