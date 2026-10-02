@@ -7,23 +7,24 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Assets\app-icon.ico</ApplicationIcon>
-    <Version>1.13.1</Version>
+    <Version>1.14.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Assets\app-icon.ico"/>
-    <Resource Include="Fonts\*.ttf"/>
-    <Resource Include="Assets\Themes\*"/>
+    <Resource Include="Assets\app-icon.ico" />
+    <Resource Include="Fonts\*.ttf" />
+    <Resource Include="Assets\Themes\*" />
   </ItemGroup>
 
   <!-- The packed Stream Deck plugin (built by StreamDeck/build.ps1) rides inside the exe so the
        Stream Deck window can install it in one click. -->
   <ItemGroup Condition="Exists('StreamDeck\dist\com.bijounga.bijouhub.streamDeckPlugin')">
-    <EmbeddedResource Include="StreamDeck\dist\com.bijounga.bijouhub.streamDeckPlugin" LogicalName="BijouHub.StreamDeckPlugin"/>
+    <EmbeddedResource Include="StreamDeck\dist\com.bijounga.bijouhub.streamDeckPlugin" LogicalName="BijouHub.StreamDeckPlugin" />
   </ItemGroup>
 
   <ItemGroup>

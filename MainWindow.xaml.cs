@@ -114,6 +114,7 @@ public partial class MainWindow : Window
 
         InitNotesToolbar();
         InitDailyGoals();
+        InitGoogleTasks();
         VersionText.Text = "v" + AppVersion;
         RefreshQuickLaunchPanel();
         UpdateSyncFolderButtonLabel();
@@ -804,6 +805,7 @@ public partial class MainWindow : Window
         LoadDailyPlan();
         RefreshDailyProjectCombo();
         _ = RefreshBoardAsync();
+        _ = RefreshGoogleGoalsAsync();
 
         // Opening the app lands here — be ready to type the day's first goal straight away.
         Dispatcher.BeginInvoke(() => DailyGoalInput.Focus(), System.Windows.Threading.DispatcherPriority.Input);
@@ -1516,7 +1518,7 @@ public partial class MainWindow : Window
         };
         _dailyGoals.CollectionChanged += (_, e) =>
         {
-            if (_loadingDailyPlan) return;
+            if (_loadingDailyPlan || _applyingRemote) return;
             if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Move && !_reorderingGoals)
                 PinStarredGoals();
             SaveDailyPlan();
@@ -1586,9 +1588,11 @@ public partial class MainWindow : Window
 
     private void DailyGoal_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (_applyingRemote) return;
         if (e.PropertyName is nameof(DailyGoal.IsEditing) or nameof(DailyGoal.HasProject)) return;
         if (e.PropertyName == nameof(DailyGoal.Starred)) PinStarredGoals();
         SaveDailyPlan();
+        if (sender is DailyGoal goal) PushGoalChange(goal, e.PropertyName);
     }
 
     // Starred goals sit above the rest; within each group the user's drag order is kept.
@@ -1615,6 +1619,14 @@ public partial class MainWindow : Window
         goal.PropertyChanged += DailyGoal_PropertyChanged;
         _dailyGoals.Add(goal);
         if (goal.Starred) PinStarredGoals();
+        if (GoogleMode) QueueGoogleCreate(goal);
+    }
+
+    private void RemoveDailyGoal(DailyGoal goal)
+    {
+        goal.PropertyChanged -= DailyGoal_PropertyChanged;
+        _dailyGoals.Remove(goal);
+        PushGoalDeleted(goal);
     }
 
     private void DailyGoalInput_KeyDown(object sender, KeyEventArgs e)
@@ -1632,8 +1644,8 @@ public partial class MainWindow : Window
         if (text.Length == 0) return;
 
         LoadDailyPlan(); // past midnight, the new goal belongs to the new day
-        var project = (DailyGoalProjectCombo.SelectedItem as ComboBoxItem)?.Tag as Project;
-        AddDailyGoal(new DailyGoal { Text = text, ProjectId = project?.Id, ProjectName = project?.Name });
+        var (linkId, linkName) = PickedLink();
+        AddDailyGoal(new DailyGoal { Text = text, ProjectId = linkId, ProjectName = linkName });
         DailyGoalInput.Clear();
     }
 
@@ -1654,13 +1666,21 @@ public partial class MainWindow : Window
 
     private void AddGoalBar_IsKeyboardFocusWithinChanged(object sender, DependencyPropertyChangedEventArgs e) => UpdateAddGoalBar();
 
-    private void DailyGoalProjectCombo_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateAddGoalBar();
+    private void DailyGoalProjectCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if ((DailyGoalProjectCombo.SelectedItem as ComboBoxItem)?.Tag == NewListTag)
+        {
+            CreateGoogleListFromPicker();
+            return;
+        }
+        UpdateAddGoalBar();
+    }
 
     // The project picker stays out of the way until the bar is in use, or a project is picked.
     private void UpdateAddGoalBar()
     {
         var active = AddGoalBar.IsKeyboardFocusWithin || DailyGoalProjectCombo.IsDropDownOpen;
-        var projectPicked = (DailyGoalProjectCombo.SelectedItem as ComboBoxItem)?.Tag is Project;
+        var projectPicked = PickedLink().Name != null;
         DailyGoalProjectCombo.Visibility = active || projectPicked ? Visibility.Visible : Visibility.Collapsed;
         AddGoalGlyph.Text = active ? "○" : "+";
         AddGoalGlyph.FontSize = active ? 18 : 22;
@@ -1675,25 +1695,49 @@ public partial class MainWindow : Window
         var lines = DailyGoalInput.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         DailyGoalInput.Clear();
         LoadDailyPlan();
-        var project = (DailyGoalProjectCombo.SelectedItem as ComboBoxItem)?.Tag as Project;
+        var (linkId, linkName) = PickedLink();
         foreach (var line in lines)
-            AddDailyGoal(new DailyGoal { Text = line.TrimStart('-', '*', '•', ' '), ProjectId = project?.Id, ProjectName = project?.Name });
+            AddDailyGoal(new DailyGoal { Text = line.TrimStart('-', '*', '•', ' '), ProjectId = linkId, ProjectName = linkName });
     }
 
-    // The project new goals get linked to. Keeps its choice across refreshes so a run of goals
-    // for one project only needs picking once.
-    private void RefreshDailyProjectCombo()
+    private static readonly object NewListTag = new();
+
+    // The project (or, with Google Tasks, the list) new goals go to. Keeps its choice across
+    // refreshes so a run of goals for one project only needs picking once.
+    private void RefreshDailyProjectCombo(string? selectListName = null)
     {
-        var selectedId = ((DailyGoalProjectCombo.SelectedItem as ComboBoxItem)?.Tag as Project)?.Id;
+        var (_, previousName) = PickedLink();
+        var keep = selectListName ?? previousName;
+
         DailyGoalProjectCombo.Items.Clear();
         var none = new ComboBoxItem { Content = "No project" };
         DailyGoalProjectCombo.Items.Add(none);
         foreach (var project in _projects)
             DailyGoalProjectCombo.Items.Add(new ComboBoxItem { Content = project.Name, Tag = project });
+        foreach (var listName in ExtraGoogleListNames())
+            DailyGoalProjectCombo.Items.Add(new ComboBoxItem { Content = listName, Tag = listName });
+        if (GoogleMode)
+            DailyGoalProjectCombo.Items.Add(new ComboBoxItem { Content = "+ New list…", Tag = NewListTag });
 
         DailyGoalProjectCombo.SelectedItem = DailyGoalProjectCombo.Items.OfType<ComboBoxItem>()
-            .FirstOrDefault(i => (i.Tag as Project)?.Id == selectedId) ?? none;
+            .FirstOrDefault(i => keep != null && string.Equals(LinkName(i.Tag), keep, StringComparison.OrdinalIgnoreCase)) ?? none;
     }
+
+    private static string? LinkName(object? tag) => tag switch
+    {
+        Project project => project.Name,
+        string listName => listName,
+        _ => null
+    };
+
+    // Project id (when the choice is a BijouHub project) and the name that labels the goal.
+    private (string? Id, string? Name) PickedLink() =>
+        (DailyGoalProjectCombo.SelectedItem as ComboBoxItem)?.Tag switch
+        {
+            Project project => (project.Id, project.Name),
+            string listName => (null, listName),
+            _ => (null, null)
+        };
 
     private static DailyGoal? GoalOf(object sender) => (sender as FrameworkElement)?.DataContext as DailyGoal;
 
@@ -1704,9 +1748,7 @@ public partial class MainWindow : Window
 
     private void DailyGoalDelete_Click(object sender, RoutedEventArgs e)
     {
-        if (GoalOf(sender) is not DailyGoal goal) return;
-        goal.PropertyChanged -= DailyGoal_PropertyChanged;
-        _dailyGoals.Remove(goal);
+        if (GoalOf(sender) is DailyGoal goal) RemoveDailyGoal(goal);
     }
 
     private void DailyGoalText_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -1790,25 +1832,32 @@ public partial class MainWindow : Window
         star.Click += (_, _) => goal.Starred = !goal.Starred;
         menu.Items.Add(star);
 
-        var link = new MenuItem { Header = "Link to project" };
+        var link = new MenuItem { Header = GoogleMode ? "Move to list" : "Link to project" };
         var none = new MenuItem { Header = "No project", IsCheckable = true, IsChecked = goal.ProjectId == null };
-        none.Click += (_, _) => { goal.ProjectName = null; goal.ProjectId = null; };
+        none.Click += (_, _) => { goal.ProjectId = null; goal.ProjectName = null; };
         link.Items.Add(none);
         foreach (var project in _projects)
         {
             var item = new MenuItem { Header = project.Name, IsCheckable = true, IsChecked = goal.ProjectId == project.Id };
-            item.Click += (_, _) => { goal.ProjectName = project.Name; goal.ProjectId = project.Id; };
+            item.Click += (_, _) => { goal.ProjectId = project.Id; goal.ProjectName = project.Name; };
+            link.Items.Add(item);
+        }
+        foreach (var listName in ExtraGoogleListNames())
+        {
+            var item = new MenuItem
+            {
+                Header = listName,
+                IsCheckable = true,
+                IsChecked = goal.ProjectId == null && string.Equals(goal.ProjectName, listName, StringComparison.OrdinalIgnoreCase)
+            };
+            item.Click += (_, _) => { goal.ProjectId = null; goal.ProjectName = listName; };
             link.Items.Add(item);
         }
         menu.Items.Add(link);
 
         menu.Items.Add(new Separator());
         var delete = new MenuItem { Header = "Delete" };
-        delete.Click += (_, _) =>
-        {
-            goal.PropertyChanged -= DailyGoal_PropertyChanged;
-            _dailyGoals.Remove(goal);
-        };
+        delete.Click += (_, _) => RemoveDailyGoal(goal);
         menu.Items.Add(delete);
     }
 
@@ -1830,7 +1879,7 @@ public partial class MainWindow : Window
     private void RefreshCarryOver()
     {
         _carryOverCandidates.Clear();
-        if (_today is { CarryOverHandled: false } && _dailyStore.LatestUnfinishedBefore(DateTime.Today) is var (date, goals))
+        if (!GoogleMode && _today is { CarryOverHandled: false } && _dailyStore.LatestUnfinishedBefore(DateTime.Today) is var (date, goals))
         {
             var carried = _dailyGoals.Select(g => g.CarriedFromId).ToHashSet();
             _carryOverCandidates = goals.Where(g => !carried.Contains(g.Id)).ToList();

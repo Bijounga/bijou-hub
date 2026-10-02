@@ -433,6 +433,17 @@
                                 <TextBlock Text="// TODAY'S GOALS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Bottom"/>
                                 <TextBlock x:Name="DailyProgressText" DockPanel.Dock="Right" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="12" VerticalAlignment="Bottom"/>
+                                <Button x:Name="GoogleSyncButton" DockPanel.Dock="Right" Margin="0,0,14,0" Click="GoogleSync_Click"
+                                        Cursor="Hand" VerticalAlignment="Bottom" AutomationProperties.Name="Google Tasks sync">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="Transparent">
+                                                <ContentPresenter/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                    <TextBlock x:Name="GoogleSyncText" FontSize="12"/>
+                                </Button>
                             </DockPanel>
                             <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                     CornerRadius="{DynamicResource CornerRadiusBase}" Padding="14,12">

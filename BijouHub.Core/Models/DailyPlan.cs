@@ -33,6 +33,10 @@ public class DailyGoal : INotifyPropertyChanged
     // Id of the earlier day's goal this was carried over from, if any.
     public string? CarriedFromId { get; set; }
 
+    // Google Tasks ids when goals sync there (null for a goal not yet created on Google).
+    public string? TaskId { get; set; }
+    public string? ListId { get; set; }
+
     private bool _isEditing;
 
     // UI-only: the goal's text is open for inline editing.

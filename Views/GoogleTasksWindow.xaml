@@ -1,0 +1,50 @@
+<Window x:Class="BijouHub.Views.GoogleTasksWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Google Tasks" Height="460" Width="480"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{DynamicResource BgBrush}">
+    <Grid>
+        <Rectangle Fill="{DynamicResource DotGridBrush}" Visibility="{DynamicResource ClassicChromeVisibility}" IsHitTestVisible="False"/>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="Sync goals with Google Tasks" Style="{StaticResource HeadingText}" FontSize="18" Margin="0,0,0,6"/>
+            <TextBlock Grid.Row="1" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="0,0,0,14"
+                       Text="Your goals live in Google Tasks lists named &quot;EDITING - …&quot;: one per project, plus EDITING - General. Use the Google Tasks app on your phone or tasks.google.com to see them anywhere."/>
+
+            <Border Grid.Row="2" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,16">
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse x:Name="StatusDot" Width="9" Height="9" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="StatusText" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="390"/>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Grid.Row="3">
+                <TextBlock x:Name="Step1" TextWrapping="Wrap" Margin="0,0,0,8"
+                           Text="1.  In Google Cloud, create a Desktop app OAuth client for the Google Tasks API and download its JSON file."/>
+                <Button x:Name="ImportButton" Content="Import Client JSON…" HorizontalAlignment="Left" Padding="14,6" Margin="18,0,0,14"
+                        Click="Import_Click"/>
+                <TextBlock x:Name="Step2" TextWrapping="Wrap" Margin="0,0,0,8"
+                           Text="2.  Sign in. Your browser opens; approve access to Google Tasks, then come back here."/>
+                <StackPanel Orientation="Horizontal" Margin="18,0,0,0">
+                    <Button x:Name="SignInButton" Content="Sign in with Google" Padding="14,6" Click="SignIn_Click"
+                            Style="{DynamicResource AccentButton}"/>
+                    <Button x:Name="CancelSignInButton" Content="Cancel" Padding="12,6" Margin="8,0,0,0" Click="CancelSignIn_Click"
+                            Visibility="Collapsed"/>
+                    <Button x:Name="DisconnectButton" Content="Disconnect" Padding="12,6" Margin="8,0,0,0" Click="Disconnect_Click"/>
+                </StackPanel>
+            </StackPanel>
+
+            <Button Grid.Row="4" Content="Close" Width="90" HorizontalAlignment="Right" Click="Close_Click"/>
+        </Grid>
+    </Grid>
+</Window>
