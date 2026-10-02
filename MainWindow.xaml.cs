@@ -1462,16 +1462,9 @@ public partial class MainWindow : Window
 
     private void ApplyChecklistMarkerVisual(Border border, bool isChecked)
     {
-        border.Background = isChecked
-            ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(0x55, 0x33, 0xE1, 0xFF))
-            : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(0x1A, 0x33, 0xE1, 0xFF));
-        border.Effect = new System.Windows.Media.Effects.DropShadowEffect
-        {
-            Color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#33E1FF"),
-            BlurRadius = isChecked ? 10 : 5,
-            ShadowDepth = 0,
-            Opacity = isChecked ? 0.85 : 0.4
-        };
+        var accent = (System.Windows.Media.Color)Application.Current.Resources["AccentColor"];
+        border.Background = new System.Windows.Media.SolidColorBrush(
+            System.Windows.Media.Color.FromArgb(isChecked ? (byte)0x55 : (byte)0x1A, accent.R, accent.G, accent.B));
         border.Child = isChecked
             ? new System.Windows.Shapes.Path
             {
@@ -1546,6 +1539,12 @@ public partial class MainWindow : Window
     {
         var win = new KeybindsWindow(_keybindStore) { Owner = this };
         win.KeybindsChanged += ApplyNoteKeybinds;
+        win.ShowDialog();
+    }
+
+    private void OpenTheme_Click(object sender, RoutedEventArgs e)
+    {
+        var win = new ThemeWindow(_settingsStore) { Owner = this };
         win.ShowDialog();
     }
 

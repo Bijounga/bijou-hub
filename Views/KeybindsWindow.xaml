@@ -4,9 +4,8 @@
         Title="Notes Keybinds" Height="360" Width="380"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="{StaticResource BgBrush}">
+        Background="{DynamicResource BgBrush}">
     <Grid>
-        <Rectangle Fill="{StaticResource DotGridBrush}" IsHitTestVisible="False"/>
         <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -14,7 +13,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Click a field, then press the new key combo." Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,0,12"/>
+        <TextBlock Text="Click a field, then press the new key combo." Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="0,0,0,12"/>
 
         <StackPanel x:Name="RowsPanel" Grid.Row="1"/>
 

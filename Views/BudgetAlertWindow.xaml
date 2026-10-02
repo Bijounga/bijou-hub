@@ -7,8 +7,8 @@
         Topmost="True"
         SizeToContent="Manual"
         Width="340" Height="132"
-        Background="{StaticResource PanelBrush}">
-    <Border BorderBrush="{StaticResource HazardBrush}" BorderThickness="2">
+        Background="{DynamicResource PanelBrush}">
+    <Border BorderBrush="{DynamicResource HazardBrush}" BorderThickness="2">
         <Grid Margin="16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>

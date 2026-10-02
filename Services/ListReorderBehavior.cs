@@ -31,8 +31,9 @@ public static class ListReorderBehavior
         protected override void OnRender(DrawingContext dc)
         {
             var width = AdornedElement.RenderSize.Width;
-            var lineBrush = new SolidColorBrush(Color.FromRgb(0x35, 0xC1, 0xF0));
-            var dotBrush = new SolidColorBrush(Color.FromRgb(0x35, 0xC1, 0xF0));
+            var accent = (Color)Application.Current.Resources["AccentColor"];
+            var lineBrush = new SolidColorBrush(accent);
+            var dotBrush = new SolidColorBrush(accent);
 
             dc.DrawEllipse(dotBrush, null, new Point(6, _y), 4, 4);
             dc.DrawRectangle(lineBrush, null, new Rect(14, _y - 2, Math.Max(0, width - 20), 4));

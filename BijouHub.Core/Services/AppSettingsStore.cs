@@ -11,6 +11,8 @@ public class AppSettings
     // the user syncs across devices (Dropbox, Google Drive, OneDrive, iCloud Drive, ...)
     // so Projects and session history follow them between machines.
     public string? DataFolderPath { get; set; }
+
+    public string ThemeName { get; set; } = "Dark";
 }
 
 public class AppSettingsStore

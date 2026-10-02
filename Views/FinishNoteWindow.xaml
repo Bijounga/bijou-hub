@@ -4,9 +4,8 @@
         Title="Where did you leave off?" Height="380" Width="440"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="{StaticResource BgBrush}">
+        Background="{DynamicResource BgBrush}">
     <Grid>
-        <Rectangle Fill="{StaticResource DotGridBrush}" IsHitTestVisible="False"/>
         <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -16,11 +15,11 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="// WHAT DID YOU DO?" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+        <TextBlock Text="// WHAT DID YOU DO?" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
         <TextBox x:Name="DidBox" Grid.Row="1" AcceptsReturn="True" TextWrapping="Wrap"
                  VerticalContentAlignment="Top" Margin="0,0,0,16"/>
 
-        <TextBlock Grid.Row="2" Text="// WHAT'S NEXT?" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+        <TextBlock Grid.Row="2" Text="// WHAT'S NEXT?" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
         <TextBox x:Name="NextBox" Grid.Row="3" AcceptsReturn="True" TextWrapping="Wrap"
                  VerticalContentAlignment="Top" Margin="0,0,0,16"/>
 

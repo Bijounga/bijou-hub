@@ -17,7 +17,7 @@ public static class DarkTitleBar
         {
             var hwnd = new WindowInteropHelper(window).Handle;
             if (hwnd == IntPtr.Zero) return;
-            int useDark = 1;
+            int useDark = ThemeService.IsLight(ThemeService.CurrentThemeName) ? 0 : 1;
             DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref useDark, sizeof(int));
         }
 

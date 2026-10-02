@@ -4,9 +4,8 @@
         Title="Add Link" Height="260" Width="440"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="{StaticResource BgBrush}">
+        Background="{DynamicResource BgBrush}">
     <Grid>
-        <Rectangle Fill="{StaticResource DotGridBrush}" IsHitTestVisible="False"/>
         <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>

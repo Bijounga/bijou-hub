@@ -8,7 +8,7 @@
         Title="BijouHub" Height="820" Width="1280" MinHeight="520" MinWidth="760"
         WindowStartupLocation="CenterScreen"
         Icon="Assets/app-icon.ico"
-        Background="{StaticResource BgBrush}"
+        Background="{DynamicResource BgBrush}"
         PreviewKeyDown="Window_PreviewKeyDown">
     <Grid x:Name="RootGrid">
         <Grid.LayoutTransform>
@@ -20,14 +20,8 @@
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar -->
-        <Border Grid.Column="0" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0" ClipToBounds="True">
+        <Border Grid.Column="0" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0" ClipToBounds="True">
             <Grid>
-            <Ellipse Width="220" Height="220" Fill="{StaticResource AccentGradientBrush}" Opacity="0.10"
-                     HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-90,-110,0,0" IsHitTestVisible="False">
-                <Ellipse.Effect>
-                    <BlurEffect Radius="60"/>
-                </Ellipse.Effect>
-            </Ellipse>
             <Grid Margin="16">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -36,6 +30,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="2*"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -51,14 +46,9 @@
                                  Width="24" Height="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
                         <TextBlock Text="BijouHub" Style="{StaticResource HeadingText}" FontSize="19" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <!-- corner ticks -->
-                    <Line X1="0" Y1="0" X2="10" Y2="0" Stroke="{StaticResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                    <Line X1="0" Y1="0" X2="0" Y2="10" Stroke="{StaticResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                    <Line X1="0" Y1="0" X2="10" Y2="0" Stroke="{StaticResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
-                    <Line X1="0" Y1="0" X2="0" Y2="10" Stroke="{StaticResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
                 </Grid>
 
-                <TextBlock Grid.Row="1" Text="// MODES" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="4,0,0,8"/>
+                <TextBlock Grid.Row="1" Text="// MODES" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="4,0,0,8"/>
 
                 <ListBox x:Name="ModesList" Grid.Row="2"
                          AlternationCount="3"
@@ -80,7 +70,7 @@
 
                 <Button Grid.Row="3" Content="+ New Mode" Style="{StaticResource AccentButton}" Margin="0,8,8,0" Padding="10,8" Click="NewMode_Click"/>
 
-                <TextBlock Grid.Row="4" Text="// PROJECTS" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="4,16,0,8"/>
+                <TextBlock Grid.Row="4" Text="// PROJECTS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="4,16,0,8"/>
 
                 <ListBox x:Name="ProjectsList" Grid.Row="5"
                          AlternationCount="3"
@@ -106,7 +96,9 @@
                         ToolTip="Point Projects and session history at a folder you sync across devices"/>
                 <Button x:Name="StartupToggleButton" Grid.Row="9" Content="Start on Startup" Margin="0,8,0,0" Click="StartupToggle_Click"
                         ToolTip="Launch BijouHub automatically when you sign in to Windows"/>
-                <Button x:Name="UpdateButton" Grid.Row="10" Style="{StaticResource AccentButton}" Margin="0,8,0,0" Padding="10,8"
+                <Button x:Name="ThemeButton" Grid.Row="10" Content="Theme..." Margin="0,8,0,0" Click="OpenTheme_Click"
+                        ToolTip="Choose BijouHub's color theme"/>
+                <Button x:Name="UpdateButton" Grid.Row="11" Style="{StaticResource AccentButton}" Margin="0,8,0,0" Padding="10,8"
                         Click="UpdateButton_Click" Visibility="Collapsed"/>
             </Grid>
             </Grid>
@@ -114,7 +106,6 @@
 
         <!-- Main content -->
         <Grid Grid.Column="1">
-            <Rectangle Fill="{StaticResource DotGridBrush}" IsHitTestVisible="False"/>
             <Grid Margin="28">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
@@ -126,17 +117,14 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <Border x:Name="ActiveSessionBanner" Visibility="Collapsed" Background="{StaticResource CardBrush}"
-                    BorderBrush="{StaticResource AccentBrush}" BorderThickness="1" CornerRadius="2" Padding="12,7"
+            <Border x:Name="ActiveSessionBanner" Visibility="Collapsed" Background="{DynamicResource CardBrush}"
+                    BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1" CornerRadius="{DynamicResource CornerRadiusBase}" Padding="12,7"
                     HorizontalAlignment="Right" VerticalAlignment="Top" Cursor="Hand"
                     MouseLeftButtonDown="ActiveSessionBanner_Click" Panel.ZIndex="10">
-                <Border.Effect>
-                    <DropShadowEffect Color="#33E1FF" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
-                </Border.Effect>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="⏱" Margin="0,0,8,0" Foreground="{StaticResource AccentBrush}"/>
-                    <TextBlock x:Name="ActiveSessionBannerText" Foreground="{StaticResource AccentBrush}" FontWeight="Bold"/>
-                    <TextBlock Text="  ·  click to return" Foreground="{StaticResource MutedTextBrush}" Margin="4,0,0,0"/>
+                    <TextBlock Text="⏱" Margin="0,0,8,0" Foreground="{DynamicResource AccentBrush}"/>
+                    <TextBlock x:Name="ActiveSessionBannerText" Foreground="{DynamicResource AccentBrush}" FontWeight="Bold"/>
+                    <TextBlock Text="  ·  click to return" Foreground="{DynamicResource MutedTextBrush}" Margin="4,0,0,0"/>
                 </StackPanel>
             </Border>
 
@@ -146,34 +134,34 @@
                          Stroke="#071018" StrokeThickness="1.5" StrokeLineJoin="Round"
                          Width="44" Height="30" Opacity="0.45" HorizontalAlignment="Center" Margin="0,0,0,16"/>
                 <TextBlock Text="Select a mode, or create one to get started."
-                           Foreground="{StaticResource MutedTextBrush}" FontSize="14" HorizontalAlignment="Center"/>
+                           Foreground="{DynamicResource MutedTextBrush}" FontSize="14" HorizontalAlignment="Center"/>
             </StackPanel>
 
             <!-- Mode detail (idle, not launched) -->
             <StackPanel x:Name="ModeDetailPanel" Visibility="Collapsed">
                 <TextBlock x:Name="ModeDetailName" Style="{StaticResource HeadingText}" FontSize="26" Margin="0,0,0,20"/>
 
-                <TextBlock Text="// LAUNCH ITEMS" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                <TextBlock Text="// LAUNCH ITEMS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
                 <ItemsControl x:Name="ModeDetailLaunchItems" Margin="0,0,0,20">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush}"
-                                    BorderThickness="1" CornerRadius="2" Padding="10,7" Margin="0,0,0,6">
+                            <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1" CornerRadius="{DynamicResource CornerRadiusBase}" Padding="10,7" Margin="0,0,0,6">
                                 <TextBlock Text="{Binding DisplayName}"/>
                             </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <TextBlock Text="// BLOCKED" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                <TextBlock Text="// BLOCKED" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
                 <ItemsControl x:Name="ModeDetailBlockItems" Margin="0,0,0,28">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource DangerBrush}"
-                                    BorderThickness="1" CornerRadius="2" Padding="10,7" Margin="0,0,0,6">
+                            <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource DangerBrush}"
+                                    BorderThickness="1" CornerRadius="{DynamicResource CornerRadiusBase}" Padding="10,7" Margin="0,0,0,6">
                                 <DockPanel LastChildFill="False">
                                     <TextBlock Text="{Binding ProcessName}"/>
-                                    <TextBlock Text="HARD BLOCK" FontSize="10" Foreground="{StaticResource DangerBrush}"
+                                    <TextBlock Text="HARD BLOCK" FontSize="10" Foreground="{DynamicResource DangerBrush}"
                                                DockPanel.Dock="Right" VerticalAlignment="Center"
                                                Visibility="{Binding IsHardBlock, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                 </DockPanel>
@@ -192,27 +180,13 @@
             <!-- Active session -->
             <StackPanel x:Name="ActiveSessionPanel" Visibility="Collapsed">
                 <TextBlock x:Name="ActiveModeName" Style="{StaticResource HeadingText}" FontSize="26" Margin="0,0,0,4"/>
-                <TextBlock x:Name="ActiveContextText" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,0,4"/>
-                <TextBlock x:Name="ActiveStatus" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,24"/>
+                <TextBlock x:Name="ActiveContextText" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="0,0,0,4"/>
+                <TextBlock x:Name="ActiveStatus" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,24"/>
 
                 <TextBlock x:Name="TimerDisplay" Style="{StaticResource HeadingText}" Text="00:00:00" FontSize="52"
-                           Foreground="{StaticResource AccentBrush}" Margin="0,0,0,28">
-                    <TextBlock.Effect>
-                        <DropShadowEffect x:Name="TimerGlow" Color="#33E1FF" BlurRadius="24" ShadowDepth="0" Opacity="0.6"/>
-                    </TextBlock.Effect>
-                    <TextBlock.Triggers>
-                        <EventTrigger RoutedEvent="Loaded">
-                            <BeginStoryboard>
-                                <Storyboard RepeatBehavior="Forever" AutoReverse="True">
-                                    <DoubleAnimation Storyboard.TargetName="TimerGlow" Storyboard.TargetProperty="Opacity"
-                                                     From="0.35" To="0.8" Duration="0:0:1.6"/>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </EventTrigger>
-                    </TextBlock.Triggers>
-                </TextBlock>
+                           Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,28"/>
 
-                <TextBlock Text="// ACTIVITY" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
+                <TextBlock Text="// ACTIVITY" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
                 <StackPanel x:Name="BlockNotifications" Margin="0,0,0,28"/>
 
                 <StackPanel Orientation="Horizontal">
@@ -227,15 +201,15 @@
                     <StackPanel MaxWidth="380" HorizontalAlignment="Left">
                         <TextBlock x:Name="ProjectDetailName" Style="{StaticResource HeadingText}" FontSize="26" Margin="0,0,0,12"/>
 
-                        <Border Width="320" Height="14" CornerRadius="3" Background="{StaticResource CardBrush}"
+                        <Border Width="320" Height="14" CornerRadius="7" Background="{DynamicResource CardBrush}"
                                 HorizontalAlignment="Left" Margin="0,0,0,4">
-                            <Border x:Name="ProjectProgressFill" Width="0" Height="14" CornerRadius="3"
-                                    Background="{StaticResource HazardHatchBrush}" HorizontalAlignment="Left"/>
+                            <Border x:Name="ProjectProgressFill" Width="0" Height="14" CornerRadius="7"
+                                    Background="{DynamicResource AccentBrush}" HorizontalAlignment="Left"/>
                         </Border>
-                        <TextBlock x:Name="ProjectProgressLabel" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,0,4"/>
-                        <TextBlock x:Name="ProjectTimeSpentText" Foreground="{StaticResource AccentBrush}" FontSize="12" Margin="0,0,0,20"/>
+                        <TextBlock x:Name="ProjectProgressLabel" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="0,0,0,4"/>
+                        <TextBlock x:Name="ProjectTimeSpentText" Foreground="{DynamicResource AccentBrush}" FontSize="12" Margin="0,0,0,20"/>
 
-                        <TextBlock Text="// GOALS" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                        <TextBlock Text="// GOALS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
                         <ItemsControl x:Name="ProjectGoalsDisplay" Margin="0,0,0,20">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -244,12 +218,8 @@
                                             <ColumnDefinition Width="4"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <Border Grid.Column="0" Background="{StaticResource AccentBrush}">
-                                            <Border.Effect>
-                                                <DropShadowEffect Color="#33E1FF" BlurRadius="6" ShadowDepth="0" Opacity="0.7"/>
-                                            </Border.Effect>
-                                        </Border>
-                                        <Border Grid.Column="1" Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush}"
+                                        <Border Grid.Column="0" Background="{DynamicResource AccentBrush}"/>
+                                        <Border Grid.Column="1" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="1" Padding="10,8">
                                             <StackPanel>
                                                 <Grid>
@@ -275,7 +245,7 @@
                                                     </CheckBox>
                                                     <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" FontWeight="Bold"/>
                                                     <TextBlock Grid.Column="2" Text="{Binding Completion, StringFormat={}{0:P0}}"
-                                                               Foreground="{StaticResource HazardBrush}" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                               Foreground="{DynamicResource HazardBrush}" Margin="0,0,8,0" VerticalAlignment="Center">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Visibility" Value="Visible"/>
@@ -288,7 +258,7 @@
                                                         </TextBlock.Style>
                                                     </TextBlock>
                                                     <TextBlock Grid.Column="3" Text="{Binding Weight, StringFormat={}{0}%}"
-                                                               Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center"/>
+                                                               Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"/>
                                                 </Grid>
                                                 <ItemsControl ItemsSource="{Binding SubGoals}" Margin="0,8,0,0">
                                                     <ItemsControl.ItemTemplate>
@@ -298,7 +268,7 @@
                                                                     <ColumnDefinition Width="3"/>
                                                                     <ColumnDefinition Width="*"/>
                                                                 </Grid.ColumnDefinitions>
-                                                                <Border Grid.Column="0" Background="{StaticResource HazardBrush}" Margin="0,0,8,0"/>
+                                                                <Border Grid.Column="0" Background="{DynamicResource HazardBrush}" Margin="0,0,8,0"/>
                                                                 <Grid Grid.Column="1">
                                                                     <Grid.ColumnDefinitions>
                                                                         <ColumnDefinition Width="Auto"/>
@@ -310,7 +280,7 @@
                                                                               Checked="GoalCheckBox_Changed" Unchecked="GoalCheckBox_Changed"/>
                                                                     <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center"/>
                                                                     <TextBlock Grid.Column="2" Text="{Binding Weight, StringFormat={}{0}%}"
-                                                                               Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center"/>
+                                                                               Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"/>
                                                                 </Grid>
                                                             </Grid>
                                                         </DataTemplate>
@@ -332,12 +302,12 @@
                             <Button x:Name="ProjectNotesToggleButton" Content="Hide Notes" Padding="16,9" Click="NotesToggle_Click" Margin="0,0,8,8"/>
                         </WrapPanel>
 
-                        <TextBlock Text="// SESSION LOG" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                        <TextBlock Text="// SESSION LOG" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
                         <ItemsControl x:Name="ProjectNotesDisplay">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,0,0,8"
-                                               Foreground="{StaticResource TextBrush}" FontSize="12"/>
+                                               Foreground="{DynamicResource TextBrush}" FontSize="12"/>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
@@ -349,33 +319,29 @@
                 <StackPanel>
                     <TextBlock x:Name="HomeWelcomeText" Style="{StaticResource HeadingText}" Text="Welcome back" FontSize="28" Margin="0,0,0,4"/>
                     <TextBlock x:Name="HomeGreetingText" FontSize="16" Margin="0,0,0,24" TextWrapping="Wrap"
-                               Foreground="{StaticResource AccentBrush}">
-                        <TextBlock.Effect>
-                            <DropShadowEffect Color="#33E1FF" BlurRadius="14" ShadowDepth="0" Opacity="0.4"/>
-                        </TextBlock.Effect>
-                    </TextBlock>
+                               Foreground="{DynamicResource AccentBrush}"/>
 
-                    <TextBlock Text="// QUICK LAUNCH" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
+                    <TextBlock Text="// QUICK LAUNCH" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
                     <WrapPanel x:Name="QuickLaunchPanel" Margin="0,0,0,24"/>
 
-                    <TextBlock Text="// TODAY" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
-                    <TextBlock x:Name="HomeTodayText" FontSize="32" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,8"/>
-                    <TextBlock x:Name="HomeWeekText" Foreground="{StaticResource MutedTextBrush}" FontSize="13" Margin="0,0,0,24"/>
+                    <TextBlock Text="// TODAY" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                    <TextBlock x:Name="HomeTodayText" FontSize="32" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,8"/>
+                    <TextBlock x:Name="HomeWeekText" Foreground="{DynamicResource MutedTextBrush}" FontSize="13" Margin="0,0,0,24"/>
 
-                    <TextBlock Text="// PROJECTS" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                    <TextBlock Text="// PROJECTS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
                     <ItemsControl x:Name="HomeProjectsList">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderBrush="{StaticResource BorderBrush}"
-                                        BorderThickness="1" CornerRadius="2" Padding="12,10" Margin="0,0,0,8"
+                                <Border BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1" CornerRadius="{DynamicResource CornerRadiusBase}" Padding="12,10" Margin="0,0,0,8"
                                         Cursor="Hand" MouseLeftButtonDown="HomeProjectRow_Click">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="Background" Value="{StaticResource CardBrush}"/>
+                                            <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
                                             <Style.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="{StaticResource CardHoverBrush}"/>
-                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                                    <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>
@@ -387,10 +353,10 @@
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0">
                                             <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Bold"/>
-                                            <TextBlock Text="{Binding NextGoalSummary}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,2,0,0"/>
+                                            <TextBlock Text="{Binding NextGoalSummary}" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="0,2,0,0"/>
                                         </StackPanel>
                                         <TextBlock Grid.Column="1" Text="{Binding CompletionPercentText}"
-                                                   Foreground="{StaticResource AccentBrush}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                   Foreground="{DynamicResource AccentBrush}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -403,7 +369,7 @@
             <!-- Shared notes panel: toggleable, shown alongside Project Detail or Active Session -->
             <StackPanel x:Name="NotesPanel" Grid.Column="1" Width="420" Margin="24,0,0,0" Visibility="Collapsed">
                 <DockPanel LastChildFill="False" Margin="0,0,0,8">
-                    <TextBlock Text="// MY NOTES" Foreground="{StaticResource MutedTextBrush}" FontSize="11" VerticalAlignment="Center"/>
+                    <TextBlock Text="// MY NOTES" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Center"/>
                     <Button Content="Keybinds" DockPanel.Dock="Right" Padding="8,3" Click="OpenKeybinds_Click"/>
                 </DockPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
@@ -420,8 +386,8 @@
                     <ComboBox x:Name="NotesFontFamilyCombo" Width="150" Margin="8,0,0,0" SelectionChanged="NotesFontFamilyCombo_SelectionChanged" ToolTip="Font"/>
                 </StackPanel>
                 <RichTextBox x:Name="NotesRichBox" Height="440"
-                             Background="{StaticResource CardBrush}" Foreground="{StaticResource TextBrush}"
-                             BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                             Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextBrush}"
+                             BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                              Padding="12" AcceptsTab="True" VerticalScrollBarVisibility="Auto"
                              PreviewMouseLeftButtonDown="NotesRichBox_PreviewMouseLeftButtonDown"/>
             </StackPanel>
