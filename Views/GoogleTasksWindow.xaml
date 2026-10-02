@@ -18,7 +18,7 @@
 
             <TextBlock Text="Sync goals with Google Tasks" Style="{StaticResource HeadingText}" FontSize="18" Margin="0,0,0,6"/>
             <TextBlock Grid.Row="1" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="0,0,0,14"
-                       Text="Your goals live in Google Tasks lists named &quot;EDITING - …&quot;: one per project, plus EDITING - General. Use the Google Tasks app on your phone or tasks.google.com to see them anywhere."/>
+                       Text="BijouHub's goals live in Google Tasks lists named &quot;EDITING - …&quot;: one per project, plus EDITING - General. Lists from your other apps (STUDY - …, LIFE - …) get their own tabs. Use the Google Tasks app on your phone or tasks.google.com to see them anywhere."/>
 
             <Border Grid.Row="2" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,16">

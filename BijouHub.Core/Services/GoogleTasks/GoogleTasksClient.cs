@@ -119,7 +119,17 @@ public sealed class GoogleTasksClient
             if (body != null)
                 request.Content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json");
 
-            using var response = await _http.SendAsync(request, cancel);
+            HttpResponseMessage sent;
+            try
+            {
+                sent = await _http.SendAsync(request, cancel);
+            }
+            catch (HttpRequestException) when (method == HttpMethod.Get && attempt == 0 && !cancel.IsCancellationRequested)
+            {
+                continue; // a pooled connection the far end had already dropped — reads are safe to repeat
+            }
+
+            using var response = sent;
             if (response.StatusCode == HttpStatusCode.Unauthorized && attempt == 0)
             {
                 _auth.InvalidateAccessToken(); // expired early or revoked — refresh once and retry

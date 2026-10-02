@@ -37,6 +37,16 @@ public class DailyGoal : INotifyPropertyChanged
     public string? TaskId { get; set; }
     public string? ListId { get; set; }
 
+    private string? _group;
+    private string? _chipText;
+
+    // List group from the "GROUP - Name" naming convention (EDITING, STUDY, LIFE…; "" for lists
+    // without a prefix). Null means EDITING — BijouHub's own goals.
+    public string? Group { get => _group; set => Set(ref _group, value); }
+
+    // UI-only: the list label shown on the goal (adds the group on the All tab).
+    [JsonIgnore] public string? ChipText { get => _chipText; set => Set(ref _chipText, value); }
+
     private bool _isEditing;
 
     // UI-only: the goal's text is open for inline editing.

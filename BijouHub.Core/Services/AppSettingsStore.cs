@@ -13,6 +13,9 @@ public class AppSettings
     public string? DataFolderPath { get; set; }
 
     public string ThemeName { get; set; } = "Dark";
+
+    // The home goal list's selected tab (a Google Tasks list group, or "*" for all).
+    public string GoalScope { get; set; } = "EDITING";
 }
 
 public class AppSettingsStore

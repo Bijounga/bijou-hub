@@ -55,6 +55,10 @@ def list_by_title(title):
 
 
 class Handler(BaseHTTPRequestHandler):
+    # Persistent HTTP/1.1 like the real API; HTTP/1.0's close-per-request trips up .NET's
+    # pooled parallel connections on Windows (WSAECONNABORTED).
+    protocol_version = "HTTP/1.1"
+
     def log_message(self, *args):
         pass
 
@@ -165,4 +169,5 @@ if __name__ == "__main__":
             lid = new_list(title)["id"]
             for t in tasks:
                 new_task(lid, t["title"], status=t.get("status", "needsAction"), completed=t.get("completed"))
+    ThreadingHTTPServer.request_queue_size = 64  # the default backlog of 5 drops bursts of parallel requests
     ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()

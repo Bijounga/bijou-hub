@@ -445,6 +445,8 @@
                                     <TextBlock x:Name="GoogleSyncText" FontSize="12"/>
                                 </Button>
                             </DockPanel>
+                            <!-- One tab per Google Tasks list group (EDITING, STUDY, LIFE…), plus All. -->
+                            <WrapPanel x:Name="GoalScopeTabs" Margin="0,0,0,4" Visibility="Collapsed"/>
                             <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                     CornerRadius="{DynamicResource CornerRadiusBase}" Padding="14,12">
                                 <StackPanel>
@@ -544,8 +546,8 @@
                                                     <Border Grid.Column="4" CornerRadius="9" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center"
                                                             Background="{DynamicResource CardHoverBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                                             Cursor="Hand" MouseLeftButtonUp="DailyGoalChip_Click" ToolTip="Change the linked project"
-                                                            Visibility="{Binding HasProject, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                        <TextBlock Text="{Binding ProjectName}" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
+                                                            Visibility="{Binding ChipText, Converter={StaticResource EmptyToCollapsedConverter}}">
+                                                        <TextBlock Text="{Binding ChipText}" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
                                                     </Border>
                                                     <Button Grid.Column="5" Click="DailyGoalDelete_Click" Focusable="False" Cursor="Hand"
                                                             Margin="6,0,2,0" VerticalAlignment="Center" ToolTip="Delete" AutomationProperties.Name="Delete goal">

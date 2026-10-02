@@ -84,6 +84,7 @@ public partial class MainWindow
         else
         {
             SetSyncState(SyncState.Off);
+            RefreshGoalScope();
             RefreshCarryOver();
             RefreshDailyProjectCombo();
         }
@@ -140,6 +141,7 @@ public partial class MainWindow
                 if (remoteById.Remove(goal.TaskId, out var remote))
                 {
                     goal.Text = remote.Text;
+                    goal.Group = remote.Group;
                     goal.Starred = remote.Starred;
                     goal.ListId = remote.ListId;
                     goal.ProjectName = remote.ProjectName;
@@ -167,6 +169,7 @@ public partial class MainWindow
         {
             _applyingRemote = false;
         }
+        RefreshGoalScope();
         SaveDailyPlan();
     }
 
@@ -226,9 +229,6 @@ public partial class MainWindow
             case nameof(DailyGoal.Starred):
                 QueueGoogle(sync => sync.UpdateAsync(goal));
                 break;
-            case nameof(DailyGoal.ProjectName):
-                QueueGoogle(sync => sync.MoveToListAsync(goal));
-                break;
         }
     }
 
@@ -252,38 +252,4 @@ public partial class MainWindow
                 break;
         }
     }
-
-    // "+ New list…" in the picker: makes "EDITING - <name>" on Google and selects it.
-    private async void CreateGoogleListFromPicker()
-    {
-        var prompt = new TextPromptWindow("New list", "Name for the new list (saved as \"EDITING - name\"):") { Owner = this };
-        if (prompt.ShowDialog() != true || string.IsNullOrWhiteSpace(prompt.Value) || _googleSync == null)
-        {
-            RefreshDailyProjectCombo();
-            return;
-        }
-
-        var name = prompt.Value.Trim();
-        await _googleLock.WaitAsync();
-        try
-        {
-            await _googleSync.CreateListAsync(name);
-            SetSyncState(SyncState.Synced);
-        }
-        catch (Exception ex)
-        {
-            ReportGoogleError(ex);
-        }
-        finally
-        {
-            _googleLock.Release();
-        }
-        RefreshDailyProjectCombo(selectListName: name);
-    }
-
-    // Lists on Google that aren't BijouHub projects (e.g. "EDITING - Sponsors"), for the pickers.
-    private IEnumerable<string> ExtraGoogleListNames() =>
-        GoogleMode && _googleSync != null
-            ? _googleSync.ListNames.Where(n => !_projects.Any(p => string.Equals(p.Name.Trim(), n, StringComparison.OrdinalIgnoreCase)))
-            : Enumerable.Empty<string>();
 }
