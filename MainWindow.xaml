@@ -599,7 +599,7 @@
                                             <TextBlock x:Name="AddGoalGlyph" Text="+" FontSize="22" Width="22" Margin="0,0,10,2"
                                                        VerticalAlignment="Center" TextAlignment="Center" Foreground="{DynamicResource AccentBrush}"/>
                                             <Grid Grid.Column="1" VerticalAlignment="Center">
-                                                <TextBox x:Name="DailyGoalInput" FontSize="14" Background="Transparent" BorderThickness="0"
+                                                <TextBox x:Name="DailyGoalInput" FontSize="14" Background="Transparent" BorderThickness="0" Padding="0"
                                                          Foreground="{DynamicResource TextBrush}" CaretBrush="{DynamicResource TextBrush}"
                                                          KeyDown="DailyGoalInput_KeyDown" TextChanged="DailyGoalInput_TextChanged"
                                                          AutomationProperties.Name="Add a task">
