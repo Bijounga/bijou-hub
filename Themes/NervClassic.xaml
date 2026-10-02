@@ -39,8 +39,10 @@
 
     <!-- The original bundled display/mono pairing — restored only for this theme; every
          other theme uses Segoe UI (see Themes/Dark.xaml and friends). -->
-    <FontFamily x:Key="HeadingFont">./Fonts/#Rajdhani SemiBold</FontFamily>
-    <FontFamily x:Key="BodyFont">./Fonts/#IBM Plex Mono</FontFamily>
+    <!-- Absolute pack URIs: a relative "./Fonts/" would resolve against this file's own
+         folder (Themes/), not the app root where the font files live. -->
+    <FontFamily x:Key="HeadingFont">pack://application:,,,/Fonts/#Rajdhani SemiBold</FontFamily>
+    <FontFamily x:Key="BodyFont">pack://application:,,,/Fonts/#IBM Plex Mono</FontFamily>
 
     <CornerRadius x:Key="CornerRadiusBase">2</CornerRadius>
 </ResourceDictionary>

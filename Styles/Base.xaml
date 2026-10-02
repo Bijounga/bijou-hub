@@ -3,7 +3,9 @@
 
     <!-- Styles that never change regardless of which interactive-control template set
          (Styles/Controls.xaml "calm" vs Styles/ControlsNerv.xaml "classic") is active —
-         always merged at a fixed slot, never swapped. -->
+         always merged at a fixed slot, never swapped. Anything that differs between the
+         two template sets (heading weight, glows, chrome visibility...) is a resource the
+         template set defines and these styles/views read via DynamicResource. -->
 
     <Style TargetType="Window">
         <Setter Property="Background" Value="{DynamicResource BgBrush}"/>
@@ -20,34 +22,23 @@
 
     <Style x:Key="HeadingText" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="FontFamily" Value="{DynamicResource HeadingFont}"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontWeight" Value="{DynamicResource HeadingFontWeight}"/>
     </Style>
 
-    <!-- Ambient header glow — only shown by the NERV Classic theme (MainWindow.AmbientGlow),
-         but defined here (not per-theme) so it always resolves from whichever theme is
-         active, computed off that theme's own accent. -->
+    <!-- Decorative brushes only the classic template set makes visible (via
+         ClassicChromeVisibility), defined here so they always resolve whichever set is active. -->
     <LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0,0" EndPoint="1,0">
-        <GradientStop Color="{DynamicResource AccentColor}" Offset="0"/>
+        <GradientStop Color="#1CA9E8" Offset="0"/>
         <GradientStop Color="{DynamicResource AccentColor}" Offset="1"/>
     </LinearGradientBrush>
 
-    <!-- Hazard-stripe texture — only used by the NERV Classic theme's project progress
-         bar fill (MainWindow.xaml), kept here rather than in ControlsNerv.xaml since it's
-         a brush resource, not a control template. Color-matched to the active accent. -->
-    <DrawingBrush x:Key="HazardHatchBrush" TileMode="Tile" Viewport="0,0,10,10" ViewportUnits="Absolute" Stretch="None">
+    <DrawingBrush x:Key="DotGridBrush" TileMode="Tile" Viewport="0,0,26,26" ViewportUnits="Absolute" Stretch="None" Opacity="0.5">
         <DrawingBrush.Drawing>
-            <DrawingGroup>
-                <GeometryDrawing Brush="{DynamicResource AccentBrush}">
-                    <GeometryDrawing.Geometry>
-                        <RectangleGeometry Rect="0,0,10,10"/>
-                    </GeometryDrawing.Geometry>
-                </GeometryDrawing>
-                <GeometryDrawing Brush="#40000000">
-                    <GeometryDrawing.Geometry>
-                        <PathGeometry Figures="M0,10 L10,0 L10,3 L3,10 Z M0,3 L3,0 L0,0 Z"/>
-                    </GeometryDrawing.Geometry>
-                </GeometryDrawing>
-            </DrawingGroup>
+            <GeometryDrawing Brush="#2A4A4E">
+                <GeometryDrawing.Geometry>
+                    <EllipseGeometry Center="2,2" RadiusX="1.1" RadiusY="1.1"/>
+                </GeometryDrawing.Geometry>
+            </GeometryDrawing>
         </DrawingBrush.Drawing>
     </DrawingBrush>
 </ResourceDictionary>

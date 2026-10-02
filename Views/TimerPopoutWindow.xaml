@@ -13,10 +13,8 @@
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
     <Grid>
         <Border BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5"
-                CornerRadius="{DynamicResource CornerRadiusBase}" Background="{DynamicResource BgBrush}">
-            <Border.Effect>
-                <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="4" Opacity="0.4"/>
-            </Border.Effect>
+                CornerRadius="{DynamicResource CornerRadiusBase}" Background="{DynamicResource BgBrush}"
+                Effect="{DynamicResource PopoutShadow}">
             <Viewbox Stretch="Uniform" Margin="14,10,14,12">
             <Grid Width="220">
                 <Grid.RowDefinitions>
@@ -36,6 +34,10 @@
                 </DockPanel>
 
                 <Grid Grid.Row="1" Margin="0,2,0,2">
+                    <!-- Classic-chrome glow layer: a blurred copy under the real text. -->
+                    <TextBlock Text="{Binding Text, ElementName=TimerText}" Style="{StaticResource HeadingText}" FontSize="34"
+                               Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" IsHitTestVisible="False"
+                               Visibility="{DynamicResource ClassicChromeVisibility}" Effect="{DynamicResource GlowPopoutText}"/>
                     <TextBlock x:Name="TimerText" Style="{StaticResource HeadingText}" Text="00:00:00" FontSize="34"
                                Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center"/>
                 </Grid>

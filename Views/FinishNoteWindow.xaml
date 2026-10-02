@@ -6,6 +6,7 @@
         ResizeMode="NoResize"
         Background="{DynamicResource BgBrush}">
     <Grid>
+        <Rectangle Fill="{DynamicResource DotGridBrush}" Visibility="{DynamicResource ClassicChromeVisibility}" IsHitTestVisible="False"/>
         <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -25,7 +26,7 @@
 
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Skip" Width="90" Margin="0,0,8,0" Click="Skip_Click"/>
-            <Button Content="Save" Width="90" Style="{StaticResource AccentButton}" Click="Save_Click"/>
+            <Button Content="Save" Width="90" Style="{DynamicResource AccentButton}" Click="Save_Click"/>
         </StackPanel>
     </Grid>
     </Grid>

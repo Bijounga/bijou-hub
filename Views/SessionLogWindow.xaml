@@ -5,6 +5,7 @@
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BgBrush}">
     <Grid>
+        <Rectangle Fill="{DynamicResource DotGridBrush}" Visibility="{DynamicResource ClassicChromeVisibility}" IsHitTestVisible="False"/>
         <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>

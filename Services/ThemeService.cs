@@ -33,8 +33,8 @@ public static class ThemeService
 
     public static bool IsLight(string themeName) => LightThemes.Contains(themeName);
 
-    // Exposed so MainWindow can toggle its own hand-built decorations (corner brackets,
-    // ambient glow, pulsing timer) that live outside any control template.
+    // Exposed for MainWindow's pulsing timer glow — an animation, so it can't ride along
+    // as a swappable resource the way the rest of the classic chrome does.
     public static bool IsClassicChrome(string themeName) => TemplateSets.ContainsKey(themeName);
 
     public static void Apply(string? themeName)

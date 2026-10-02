@@ -5,6 +5,7 @@
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BgBrush}">
     <Grid>
+        <Rectangle Fill="{DynamicResource DotGridBrush}" Visibility="{DynamicResource ClassicChromeVisibility}" IsHitTestVisible="False"/>
         <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -15,7 +16,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="// MODE NAME" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4"/>
+        <TextBlock Text="// MODE NAME" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"/>
         <TextBox x:Name="NameBox" Grid.Row="1" Margin="0,0,0,16" FontSize="16"/>
 
         <Grid Grid.Row="2">
@@ -24,7 +25,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <DockPanel LastChildFill="False" Margin="0,0,0,6">
-                <TextBlock Text="// LAUNCH ITEMS" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="// LAUNCH ITEMS" Foreground="{DynamicResource SectionLabelBrush}" VerticalAlignment="Center"/>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
                     <Button Content="+ App" Margin="4,0,0,0" Click="AddApp_Click"/>
                     <Button Content="+ Folder" Margin="4,0,0,0" Click="AddFolder_Click"/>
@@ -43,11 +44,11 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="⠿" Foreground="{DynamicResource FaintTextBrush}" Margin="0,0,8,0"
+                            <TextBlock Grid.Column="0" Text="⠿" Foreground="{DynamicResource DragHandleBrush}" Margin="0,0,8,0"
                                        VerticalAlignment="Center" Cursor="SizeAll" ToolTip="Drag to reorder"/>
                             <TextBlock Grid.Column="1" Text="{Binding DisplayName}" VerticalAlignment="Center"/>
                             <TextBlock Grid.Column="2" Text="{Binding DelayMs, StringFormat='delay {0}ms'}"
-                                       Foreground="{DynamicResource MutedTextBrush}" Margin="8,0" VerticalAlignment="Center"/>
+                                       Foreground="{DynamicResource SectionLabelBrush}" Margin="8,0" VerticalAlignment="Center"/>
                             <Button Grid.Column="3" Content="Set app..." Padding="6,2" Margin="2,0" Click="SetOpenWith_Click" Tag="{Binding}">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
@@ -78,7 +79,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <DockPanel LastChildFill="False" Margin="0,0,0,6">
-                <TextBlock Text="// BLOCKED WHILE THIS MODE IS ACTIVE" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="// BLOCKED WHILE THIS MODE IS ACTIVE" Foreground="{DynamicResource SectionLabelBrush}" VerticalAlignment="Center"/>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
                     <Button Content="Browse..." Margin="0,0,4,0" Click="BrowseBlock_Click"/>
                     <TextBox x:Name="BlockNameBox" Width="110" Margin="0,0,4,0" KeyDown="BlockNameBox_KeyDown"/>
@@ -95,7 +96,7 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="⠿" Foreground="{DynamicResource FaintTextBrush}" Margin="0,0,8,0"
+                            <TextBlock Grid.Column="0" Text="⠿" Foreground="{DynamicResource DragHandleBrush}" Margin="0,0,8,0"
                                        VerticalAlignment="Center" Cursor="SizeAll" ToolTip="Drag to reorder"/>
                             <TextBlock Grid.Column="1" Text="{Binding ProcessName}" VerticalAlignment="Center"/>
                             <CheckBox Grid.Column="2" IsChecked="{Binding IsHardBlock}" Content="Hard block" Margin="0,0,8,0" VerticalAlignment="Center"

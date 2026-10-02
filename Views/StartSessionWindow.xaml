@@ -6,6 +6,7 @@
         ResizeMode="NoResize"
         Background="{DynamicResource BgBrush}">
     <Grid>
+        <Rectangle Fill="{DynamicResource DotGridBrush}" Visibility="{DynamicResource ClassicChromeVisibility}" IsHitTestVisible="False"/>
         <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -21,13 +22,13 @@
 
         <TextBlock x:Name="ProjectNameText" Style="{StaticResource HeadingText}" FontSize="18" Margin="0,0,0,16"/>
 
-        <TextBlock Grid.Row="1" Text="// MODE FOR THIS SESSION" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4"/>
+        <TextBlock Grid.Row="1" Text="// MODE FOR THIS SESSION" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"/>
         <ComboBox Grid.Row="2" x:Name="ModeCombo" Margin="0,0,0,16"/>
 
-        <TextBlock Grid.Row="3" Text="// WORKING ON" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4"/>
+        <TextBlock Grid.Row="3" Text="// WORKING ON" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"/>
         <ComboBox Grid.Row="4" x:Name="GoalCombo" Margin="0,0,0,16" DisplayMemberPath="Label"/>
 
-        <TextBlock Grid.Row="5" Text="// TIME BUDGET" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4"/>
+        <TextBlock Grid.Row="5" Text="// TIME BUDGET" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"/>
         <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,0,0,8">
             <ComboBox x:Name="BudgetCombo" Width="140" SelectionChanged="BudgetCombo_SelectionChanged"/>
             <TextBox x:Name="CustomBudgetBox" Width="80" Margin="8,0,0,0" Visibility="Collapsed"/>
@@ -38,7 +39,7 @@
 
         <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Cancel" Width="90" Margin="0,0,8,0" Click="Cancel_Click"/>
-            <Button Content="▶  Start" Width="100" Style="{StaticResource AccentButton}" Click="Start_Click"/>
+            <Button Content="▶  Start" Width="100" Style="{DynamicResource AccentButton}" Click="Start_Click"/>
         </StackPanel>
     </Grid>
     </Grid>

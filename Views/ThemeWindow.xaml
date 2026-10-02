@@ -31,6 +31,6 @@
         </ListBox>
 
         <Button Grid.Row="2" Content="Close" Width="90" HorizontalAlignment="Right"
-                Style="{StaticResource AccentButton}" Margin="0,16,0,0" Click="Close_Click"/>
+                Style="{DynamicResource AccentButton}" Margin="0,16,0,0" Click="Close_Click"/>
     </Grid>
 </Window>

@@ -9,6 +9,19 @@
          surface-ladder elevation). Window/TextBlock/HeadingText live in Styles/Base.xaml,
          always loaded regardless of which control-template set is active. -->
 
+    <!-- Per-template-set values read by Styles/Base.xaml and the views. Every key here has
+         a counterpart in Styles/ControlsNerv.xaml — keep the two in sync. -->
+    <Visibility x:Key="ClassicChromeVisibility">Collapsed</Visibility>
+    <FontWeight x:Key="HeadingFontWeight">SemiBold</FontWeight>
+    <SolidColorBrush x:Key="SectionLabelBrush" Color="{DynamicResource MutedTextColor}"/>
+    <SolidColorBrush x:Key="DragHandleBrush" Color="{DynamicResource FaintTextColor}"/>
+    <SolidColorBrush x:Key="ProgressFillBrush" Color="{DynamicResource AccentColor}"/>
+    <x:Null x:Key="GlowBanner"/>
+    <x:Null x:Key="GlowGoalBar"/>
+    <x:Null x:Key="GlowGreeting"/>
+    <x:Null x:Key="GlowPopoutText"/>
+    <DropShadowEffect x:Key="PopoutShadow" x:Shared="False" Color="#000000" BlurRadius="16" ShadowDepth="4" Opacity="0.4"/>
+
     <!-- Buttons: flat card surface, hairline border, soft radius. Hover lifts the surface
          one step (CardBrush -> CardHoverBrush) and warms the border toward the accent —
          no glow, no corner brackets, no scale animation. -->
@@ -63,7 +76,16 @@
                             CornerRadius="{DynamicResource CornerRadiusBase}"
                             Padding="{TemplateBinding Padding}"
                             Opacity="1">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <!-- Styles/Base.xaml's implicit TextBlock style pins Foreground to
+                                 TextBrush, which would win over this button's own (BgBrush)
+                                 foreground for string content; a closer implicit style wins back. -->
+                            <ContentPresenter.Resources>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                                </Style>
+                            </ContentPresenter.Resources>
+                        </ContentPresenter>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">

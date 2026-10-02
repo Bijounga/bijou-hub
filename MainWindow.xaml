@@ -22,10 +22,10 @@
         <!-- Sidebar -->
         <Border Grid.Column="0" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0" ClipToBounds="True">
             <Grid>
-            <!-- NERV Classic only — restored/toggled by MainWindow.RefreshThemeChrome(). -->
+            <!-- Classic-chrome only: ClassicChromeVisibility comes from the active control-template set. -->
             <Ellipse x:Name="AmbientGlow" Width="220" Height="220" Fill="{DynamicResource AccentGradientBrush}" Opacity="0.10"
                      HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-90,-110,0,0" IsHitTestVisible="False"
-                     Visibility="Collapsed">
+                     Visibility="{DynamicResource ClassicChromeVisibility}">
                 <Ellipse.Effect>
                     <BlurEffect Radius="60"/>
                 </Ellipse.Effect>
@@ -54,7 +54,7 @@
                                  Width="24" Height="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
                         <TextBlock Text="BijouHub" Style="{StaticResource HeadingText}" FontSize="19" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <Grid x:Name="HeaderBrackets" Visibility="Collapsed">
+                    <Grid x:Name="HeaderBrackets" Visibility="{DynamicResource ClassicChromeVisibility}">
                         <Line X1="0" Y1="0" X2="10" Y2="0" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                         <Line X1="0" Y1="0" X2="0" Y2="10" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                         <Line X1="0" Y1="0" X2="10" Y2="0" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
@@ -82,7 +82,7 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <Button Grid.Row="3" Content="+ New Mode" Style="{StaticResource AccentButton}" Margin="0,8,8,0" Padding="10,8" Click="NewMode_Click"/>
+                <Button Grid.Row="3" Content="+ New Mode" Style="{DynamicResource AccentButton}" Margin="0,8,8,0" Padding="10,8" Click="NewMode_Click"/>
 
                 <TextBlock Grid.Row="4" Text="// PROJECTS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="4,16,0,8"/>
 
@@ -104,7 +104,7 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <Button Grid.Row="6" Content="+ New Project" Style="{StaticResource AccentButton}" Margin="0,8,0,0" Padding="10,8" Click="NewProject_Click"/>
+                <Button Grid.Row="6" Content="+ New Project" Style="{DynamicResource AccentButton}" Margin="0,8,0,0" Padding="10,8" Click="NewProject_Click"/>
                 <Button Grid.Row="7" Content="Session Log" Margin="0,8,0,0" Click="SessionLog_Click"/>
                 <Button x:Name="SyncFolderButton" Grid.Row="8" Content="Sync Folder..." Margin="0,8,0,0" Click="SyncFolder_Click"
                         ToolTip="Point Projects and session history at a folder you sync across devices"/>
@@ -112,7 +112,7 @@
                         ToolTip="Launch BijouHub automatically when you sign in to Windows"/>
                 <Button x:Name="ThemeButton" Grid.Row="10" Content="Theme..." Margin="0,8,0,0" Click="OpenTheme_Click"
                         ToolTip="Choose BijouHub's color theme"/>
-                <Button x:Name="UpdateButton" Grid.Row="11" Style="{StaticResource AccentButton}" Margin="0,8,0,0" Padding="10,8"
+                <Button x:Name="UpdateButton" Grid.Row="11" Style="{DynamicResource AccentButton}" Margin="0,8,0,0" Padding="10,8"
                         Click="UpdateButton_Click" Visibility="Collapsed"/>
             </Grid>
             </Grid>
@@ -120,6 +120,7 @@
 
         <!-- Main content -->
         <Grid Grid.Column="1">
+            <Rectangle Fill="{DynamicResource DotGridBrush}" Visibility="{DynamicResource ClassicChromeVisibility}" IsHitTestVisible="False"/>
             <Grid Margin="28">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
@@ -131,7 +132,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <Border x:Name="ActiveSessionBanner" Visibility="Collapsed" Background="{DynamicResource CardBrush}"
+            <Border x:Name="ActiveSessionBanner" Visibility="Collapsed" Background="{DynamicResource CardBrush}" Effect="{DynamicResource GlowBanner}"
                     BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1" CornerRadius="{DynamicResource CornerRadiusBase}" Padding="12,7"
                     HorizontalAlignment="Right" VerticalAlignment="Top" Cursor="Hand"
                     MouseLeftButtonDown="ActiveSessionBanner_Click" Panel.ZIndex="10">
@@ -185,7 +186,7 @@
                 </ItemsControl>
 
                 <StackPanel Orientation="Horizontal">
-                    <Button Content="▶  Launch" Style="{StaticResource AccentButton}" Padding="20,9" Click="Launch_Click"/>
+                    <Button Content="▶  Launch" Style="{DynamicResource AccentButton}" Padding="20,9" Click="Launch_Click"/>
                     <Button Content="Edit" Margin="8,0,0,0" Padding="16,9" Click="EditMode_Click"/>
                     <Button Content="Delete" Margin="8,0,0,0" Padding="16,9" Click="DeleteMode_Click"/>
                 </StackPanel>
@@ -218,7 +219,7 @@
                         <Border Width="320" Height="14" CornerRadius="7" Background="{DynamicResource CardBrush}"
                                 HorizontalAlignment="Left" Margin="0,0,0,4">
                             <Border x:Name="ProjectProgressFill" Width="0" Height="14" CornerRadius="7"
-                                    Background="{DynamicResource AccentBrush}" HorizontalAlignment="Left"/>
+                                    Background="{DynamicResource ProgressFillBrush}" HorizontalAlignment="Left"/>
                         </Border>
                         <TextBlock x:Name="ProjectProgressLabel" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="0,0,0,4"/>
                         <TextBlock x:Name="ProjectTimeSpentText" Foreground="{DynamicResource AccentBrush}" FontSize="12" Margin="0,0,0,20"/>
@@ -232,7 +233,7 @@
                                             <ColumnDefinition Width="4"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <Border Grid.Column="0" Background="{DynamicResource AccentBrush}"/>
+                                        <Border Grid.Column="0" Background="{DynamicResource AccentBrush}" Effect="{DynamicResource GlowGoalBar}"/>
                                         <Border Grid.Column="1" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="1" Padding="10,8">
                                             <StackPanel>
@@ -308,7 +309,7 @@
                         </ItemsControl>
 
                         <WrapPanel Margin="0,0,0,12">
-                            <Button Content="▶  Start Session" Style="{StaticResource AccentButton}" Padding="20,9" Click="StartProjectSession_Click" Margin="0,0,8,8"/>
+                            <Button Content="▶  Start Session" Style="{DynamicResource AccentButton}" Padding="20,9" Click="StartProjectSession_Click" Margin="0,0,8,8"/>
                             <Button Content="Log Time..." Padding="16,9" Click="LogTime_Click" Margin="0,0,8,8"
                                     ToolTip="Add a session you worked without the timer running"/>
                             <Button Content="Edit" Padding="16,9" Click="EditProject_Click" Margin="0,0,8,8"/>
@@ -332,7 +333,7 @@
             <ScrollViewer x:Name="HomePanel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
                 <StackPanel>
                     <TextBlock x:Name="HomeWelcomeText" Style="{StaticResource HeadingText}" Text="Welcome back" FontSize="28" Margin="0,0,0,4"/>
-                    <TextBlock x:Name="HomeGreetingText" FontSize="16" Margin="0,0,0,24" TextWrapping="Wrap"
+                    <TextBlock x:Name="HomeGreetingText" FontSize="16" Margin="0,0,0,24" TextWrapping="Wrap" Effect="{DynamicResource GlowGreeting}"
                                Foreground="{DynamicResource AccentBrush}"/>
 
                     <TextBlock Text="// QUICK LAUNCH" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>

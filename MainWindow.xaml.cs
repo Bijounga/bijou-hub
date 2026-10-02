@@ -98,7 +98,6 @@ public partial class MainWindow : Window
             app.Icon = IconExtractor.GetIcon(app.Path);
 
         InitNotesToolbar();
-        SetupAnimatedProgressFill();
         RefreshQuickLaunchPanel();
         UpdateSyncFolderButtonLabel();
         UpdateStartupButtonLabel();
@@ -142,7 +141,7 @@ public partial class MainWindow : Window
     {
         var stripes = new System.Windows.Media.GeometryDrawing
         {
-            Brush = (System.Windows.Media.Brush)FindResource("HazardBrush"),
+            Brush = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)Application.Current.Resources["HazardColor"]),
             Geometry = new System.Windows.Media.RectangleGeometry(new Rect(0, 0, 10, 10))
         };
         var hatch = new System.Windows.Media.GeometryDrawing
@@ -615,6 +614,58 @@ public partial class MainWindow : Window
         {
             // Corrupt or incompatible saved content; start fresh rather than crash.
         }
+
+        RefreshNoteColors();
+    }
+
+    // Notes never carry a user-chosen text color (the toolbar has no color option), but
+    // RichTextBox saves bake the effective foreground into the XAML — so notes saved under
+    // a dark theme would load as near-white text under a light one. Strip every foreground
+    // back to inherited (the RichTextBox's own theme-driven Foreground), then re-derive the
+    // only colored text there is: muted completed checklist lines, plus the marker boxes.
+    private void RefreshNoteColors()
+    {
+        var doc = NotesRichBox.Document;
+        doc.ClearValue(FlowDocument.ForegroundProperty);
+        ClearForeground(doc.Blocks);
+
+        foreach (var block in doc.Blocks)
+        {
+            if (block is not Paragraph para) continue;
+            foreach (var inline in para.Inlines.ToList())
+            {
+                if (inline is not InlineUIContainer { Child: Border { Uid: "checklist-marker" } marker } container)
+                    continue;
+                var isChecked = marker.Child is System.Windows.Shapes.Path;
+                ApplyChecklistMarkerVisual(marker, isChecked);
+                if (isChecked) StyleChecklistLineFrom(container.ElementEnd, true);
+            }
+        }
+    }
+
+    private static void ClearForeground(IEnumerable<Block> blocks)
+    {
+        foreach (var block in blocks)
+        {
+            block.ClearValue(TextElement.ForegroundProperty);
+            switch (block)
+            {
+                case Paragraph p: ClearForeground(p.Inlines); break;
+                case Section s: ClearForeground(s.Blocks); break;
+                case List l:
+                    foreach (var item in l.ListItems) { item.ClearValue(TextElement.ForegroundProperty); ClearForeground(item.Blocks); }
+                    break;
+            }
+        }
+    }
+
+    private static void ClearForeground(IEnumerable<Inline> inlines)
+    {
+        foreach (var inline in inlines)
+        {
+            inline.ClearValue(TextElement.ForegroundProperty);
+            if (inline is Span span) ClearForeground(span.Inlines);
+        }
     }
 
     private void SaveFreeformNotes()
@@ -771,23 +822,24 @@ public partial class MainWindow : Window
             Margin = new Thickness(0, 0, 0, 8),
             HorizontalAlignment = HorizontalAlignment.Center
         });
-        stack.Children.Add(new TextBlock
+        var nameText = new TextBlock
         {
             Text = app.Name,
             FontSize = 11,
             TextAlignment = TextAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
-            MaxWidth = 84,
-            Foreground = (System.Windows.Media.Brush)FindResource("TextBrush")
-        });
+            MaxWidth = 84
+        };
+        nameText.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
+        stack.Children.Add(nameText);
 
         var button = new Button
         {
-            Style = (Style)FindResource("QuickLaunchTileStyle"),
             Content = stack,
             Tag = app,
             ToolTip = app.Name
         };
+        button.SetResourceReference(StyleProperty, "QuickLaunchTileStyle");
         button.Click += QuickLaunchTile_Click;
 
         var removeItem = new MenuItem { Header = "Remove" };
@@ -800,29 +852,31 @@ public partial class MainWindow : Window
     private Button BuildAddQuickLaunchTile()
     {
         var stack = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-        stack.Children.Add(new TextBlock
+        var plus = new TextBlock
         {
             Text = "+",
             FontSize = 28,
             FontWeight = FontWeights.Bold,
             HorizontalAlignment = HorizontalAlignment.Center,
-            Foreground = (System.Windows.Media.Brush)FindResource("AccentBrush"),
             Margin = new Thickness(0, 0, 0, 2)
-        });
-        stack.Children.Add(new TextBlock
+        };
+        plus.SetResourceReference(TextBlock.ForegroundProperty, "AccentBrush");
+        stack.Children.Add(plus);
+        var label = new TextBlock
         {
             Text = "Add App",
             FontSize = 11,
-            TextAlignment = TextAlignment.Center,
-            Foreground = (System.Windows.Media.Brush)FindResource("MutedTextBrush")
-        });
+            TextAlignment = TextAlignment.Center
+        };
+        label.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
+        stack.Children.Add(label);
 
         var button = new Button
         {
-            Style = (Style)FindResource("QuickLaunchTileStyle"),
             Content = stack,
             ToolTip = "Add an app to Quick Launch"
         };
+        button.SetResourceReference(StyleProperty, "QuickLaunchTileStyle");
         button.Click += AddQuickLaunchApp_Click;
         return button;
     }
@@ -1450,13 +1504,13 @@ public partial class MainWindow : Window
             Width = 18,
             Height = 18,
             BorderThickness = new Thickness(1.5),
-            BorderBrush = (System.Windows.Media.Brush)FindResource("AccentBrush"),
             Margin = new Thickness(0, 0, 6, -3),
             VerticalAlignment = VerticalAlignment.Center,
             Cursor = Cursors.Hand,
             RenderTransformOrigin = new Point(0.5, 0.5),
             RenderTransform = new System.Windows.Media.ScaleTransform(1, 1)
         };
+        border.SetResourceReference(Border.BorderBrushProperty, "AccentBrush");
         ApplyChecklistMarkerVisual(border, isChecked);
         return border;
     }
@@ -1466,11 +1520,19 @@ public partial class MainWindow : Window
         var accent = (System.Windows.Media.Color)Application.Current.Resources["AccentColor"];
         border.Background = new System.Windows.Media.SolidColorBrush(
             System.Windows.Media.Color.FromArgb(isChecked ? (byte)0x55 : (byte)0x1A, accent.R, accent.G, accent.B));
-        border.Child = isChecked
+        border.Effect = ThemeService.IsClassicChrome(ThemeService.CurrentThemeName)
+            ? new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = accent,
+                BlurRadius = isChecked ? 10 : 5,
+                ShadowDepth = 0,
+                Opacity = isChecked ? 0.85 : 0.4
+            }
+            : null;
+        System.Windows.Shapes.Path? check = isChecked
             ? new System.Windows.Shapes.Path
             {
                 Data = System.Windows.Media.Geometry.Parse("M2,7 L7,12 L15,2"),
-                Stroke = (System.Windows.Media.Brush)FindResource("AccentBrush"),
                 StrokeThickness = 2.2,
                 StrokeStartLineCap = System.Windows.Media.PenLineCap.Round,
                 StrokeEndLineCap = System.Windows.Media.PenLineCap.Round,
@@ -1480,6 +1542,8 @@ public partial class MainWindow : Window
                 Stretch = System.Windows.Media.Stretch.Uniform
             }
             : null;
+        check?.SetResourceReference(System.Windows.Shapes.Shape.StrokeProperty, "AccentBrush");
+        border.Child = check;
     }
 
     private void NotesRichBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -1549,40 +1613,29 @@ public partial class MainWindow : Window
         win.ShowDialog();
     }
 
-    // Toggles the hand-built decorations that only the NERV Classic theme uses (corner
-    // brackets, ambient header glow, the pulsing timer glow, the hazard-stripe progress
-    // fill) — these live outside any control template, so ThemeService can't swap them the
-    // way it swaps colors/templates. Called once at startup and again whenever the active
-    // theme changes (see ThemeWindow.ThemesList_SelectionChanged).
+    // Theme-dependent visuals that can't follow a theme swap on their own: note text colors
+    // (see RefreshNoteColors) and the classic-chrome animations — the pulsing timer glow and
+    // the scrolling hazard-stripe progress fill (everything else keys off resources the
+    // active control-template set defines). Called at startup and on every theme change.
     public void RefreshThemeChrome()
     {
-        var isClassic = ThemeService.IsClassicChrome(ThemeService.CurrentThemeName);
+        RefreshNoteColors();
 
-        AmbientGlow.Visibility = isClassic ? Visibility.Visible : Visibility.Collapsed;
-        HeaderBrackets.Visibility = isClassic ? Visibility.Visible : Visibility.Collapsed;
-
-        var accent = (System.Windows.Media.Color)Application.Current.Resources["AccentColor"];
-
-        ActiveSessionBanner.Effect = isClassic
-            ? new System.Windows.Media.Effects.DropShadowEffect { Color = accent, BlurRadius = 10, ShadowDepth = 0, Opacity = 0.5 }
-            : null;
-
-        if (isClassic)
-        {
-            var glow = new System.Windows.Media.Effects.DropShadowEffect { Color = accent, BlurRadius = 24, ShadowDepth = 0, Opacity = 0.35 };
-            TimerDisplay.Effect = glow;
-            var pulse = new DoubleAnimation(0.35, 0.8, TimeSpan.FromSeconds(1.6))
-                { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever };
-            glow.BeginAnimation(System.Windows.Media.Effects.DropShadowEffect.OpacityProperty, pulse);
-        }
-        else
+        if (!ThemeService.IsClassicChrome(ThemeService.CurrentThemeName))
         {
             TimerDisplay.Effect = null;
+            ProjectProgressFill.SetResourceReference(Border.BackgroundProperty, "ProgressFillBrush");
+            return;
         }
 
-        ProjectProgressFill.Background = isClassic
-            ? (System.Windows.Media.Brush)FindResource("HazardHatchBrush")
-            : (System.Windows.Media.Brush)FindResource("AccentBrush");
+        SetupAnimatedProgressFill();
+
+        var accent = (System.Windows.Media.Color)Application.Current.Resources["AccentColor"];
+        var glow = new System.Windows.Media.Effects.DropShadowEffect { Color = accent, BlurRadius = 24, ShadowDepth = 0, Opacity = 0.35 };
+        TimerDisplay.Effect = glow;
+        var pulse = new DoubleAnimation(0.35, 0.8, TimeSpan.FromSeconds(1.6))
+            { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever };
+        glow.BeginAnimation(System.Windows.Media.Effects.DropShadowEffect.OpacityProperty, pulse);
     }
 
     private void ApplyNoteKeybinds()
