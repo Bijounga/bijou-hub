@@ -22,6 +22,8 @@
             <conv:IndexToBrushConverter x:Key="IndexToBrushConverter"/>
             <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+            <conv:ToneBrushConverter x:Key="ToneBrushConverter"/>
+            <conv:EmptyToCollapsedConverter x:Key="EmptyToCollapsedConverter"/>
 
             <!-- Brand mark (the sidebar "gem" logo) — a fixed identity color, not a theme
                  token, the same way a real logo doesn't recolor itself per app theme. -->

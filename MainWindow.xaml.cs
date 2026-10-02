@@ -112,12 +112,21 @@ public partial class MainWindow : Window
             app.Icon = IconExtractor.GetIcon(app.Path);
 
         InitNotesToolbar();
+        InitDailyGoals();
+        VersionText.Text = "v" + AppVersion;
         RefreshQuickLaunchPanel();
         UpdateSyncFolderButtonLabel();
         UpdateStartupButtonLabel();
         ShowHome();
         _ = CheckForUpdateAsync();
     }
+
+    // "1.13.0" — the informational version minus the commit hash the SDK appends.
+    private static string AppVersion =>
+        (System.Reflection.Assembly.GetExecutingAssembly()
+            .GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+            .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion ?? "")
+        .Split('+')[0];
 
     private UpdateInfo? _pendingUpdate;
 
@@ -789,11 +798,53 @@ public partial class MainWindow : Window
 
         var todaySeconds = _logService.GetTodayTotalSeconds();
         HomeTodayText.Text = FormatSpan(todaySeconds);
+        BuildWeekBars(_logService.GetLastNDaysTotals(7));
 
-        var last7 = _logService.GetLastNDaysTotals(7);
-        HomeWeekText.Text = "Last 7 days: " + string.Join("   ", last7.Select(kv => $"{kv.Key:ddd} {FormatSpan(kv.Value)}"));
+        LoadDailyPlan();
+        RefreshDailyProjectCombo();
+        _ = RefreshBoardAsync();
 
-        HomeProjectsList.ItemsSource = _projects;
+        // Opening the app lands here — be ready to type the day's first goal straight away.
+        Dispatcher.BeginInvoke(() => DailyGoalInput.Focus(), System.Windows.Threading.DispatcherPriority.Input);
+    }
+
+    private void BuildWeekBars(Dictionary<DateTime, int> days)
+    {
+        const double barArea = 56;
+        var max = Math.Max(1, days.Values.DefaultIfEmpty(0).Max());
+        var columns = new List<UIElement>();
+
+        foreach (var (day, seconds) in days.OrderBy(kv => kv.Key))
+        {
+            var isToday = day == DateTime.Today;
+            var bar = new Border
+            {
+                Width = 14,
+                Height = seconds == 0 ? 3 : Math.Max(4, barArea * seconds / max),
+                CornerRadius = new CornerRadius(3),
+                VerticalAlignment = VerticalAlignment.Bottom,
+                Opacity = seconds == 0 ? 0.25 : isToday ? 1 : 0.5
+            };
+            bar.SetResourceReference(Border.BackgroundProperty, "AccentBrush");
+
+            var label = new TextBlock
+            {
+                Text = day.ToString("ddd")[..1],
+                FontSize = 10,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 5, 0, 0),
+                FontWeight = isToday ? FontWeights.Bold : FontWeights.Normal
+            };
+            label.SetResourceReference(TextBlock.ForegroundProperty, isToday ? "TextBrush" : "MutedTextBrush");
+
+            var column = new StackPanel { ToolTip = $"{day:dddd}: {FormatSpan(seconds)}" };
+            column.Children.Add(new Grid { Height = barArea, Children = { bar } });
+            column.Children.Add(label);
+            columns.Add(column);
+        }
+
+        HomeWeekBars.ItemsSource = columns;
+        HomeWeekText.Text = $"Last 7 days: {FormatSpan(days.Values.Sum())}";
     }
 
     private void HomeHeader_Click(object sender, MouseButtonEventArgs e)
@@ -803,9 +854,64 @@ public partial class MainWindow : Window
         ShowHome();
     }
 
-    private void HomeProjectRow_Click(object sender, MouseButtonEventArgs e)
+    // ---------- Project board (formerly BijouBoard) ----------
+
+    private ProjectBoardService.Board? _board;
+
+    private async Task RefreshBoardAsync()
     {
-        if (sender is not FrameworkElement { DataContext: Project project }) return;
+        var projects = _projects.ToList();
+        var sessions = _logService.GetAll();
+        _board = await Task.Run(() => ProjectBoardService.Build(projects, sessions));
+        ShowBoard();
+    }
+
+    // Separate from the refresh so a theme change can re-resolve the tone colors without re-reading files.
+    private void ShowBoard()
+    {
+        if (_board == null) return;
+
+        BoardCards.ItemsSource = null;
+        BoardCards.ItemsSource = _board.Cards;
+        BoardEmptyText.Visibility = _board.Cards.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        BoardSummary.Children.Clear();
+        BoardSummary.Children.Add(BuildSummaryPill(_board.ReadyToPublish, "ready to publish", "SuccessBrush"));
+        BoardSummary.Children.Add(BuildSummaryPill(_board.BehindPace, "behind pace", "DangerBrush"));
+        BoardSummary.Children.Add(BuildSummaryPill(_board.NeedMusic, "need music", "HazardBrush"));
+        BoardSummary.Children.Add(BuildSummaryPill(_board.Active, _board.Active == 1 ? "active project" : "active projects", "AccentBrush"));
+    }
+
+    private static Border BuildSummaryPill(int count, string label, string toneBrush)
+    {
+        var dot = new System.Windows.Shapes.Ellipse { Width = 7, Height = 7, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
+        dot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, toneBrush);
+
+        var number = new TextBlock { Text = count.ToString(), FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 6, 0), VerticalAlignment = VerticalAlignment.Center };
+        number.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
+
+        var text = new TextBlock { Text = label, FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
+        text.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
+
+        var pill = new Border
+        {
+            CornerRadius = new CornerRadius(14),
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(12, 5, 14, 5),
+            Margin = new Thickness(0, 0, 8, 8),
+            Child = new StackPanel { Orientation = Orientation.Horizontal, Children = { dot, number, text } }
+        };
+        pill.SetResourceReference(Border.BackgroundProperty, "CardBrush");
+        pill.SetResourceReference(Border.BorderBrushProperty, "BorderBrush");
+        return pill;
+    }
+
+    private async void RefreshBoard_Click(object sender, RoutedEventArgs e) => await RefreshBoardAsync();
+
+    private void BoardCard_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: ProjectBoardService.Card card }) return;
+        var project = card.Project;
 
         if (project == _activeProject)
         {
@@ -1385,6 +1491,348 @@ public partial class MainWindow : Window
         }
     }
 
+    // ---------- Today's goals ----------
+
+    private readonly DailyPlanStore _dailyStore = new();
+    private readonly System.Collections.ObjectModel.ObservableCollection<DailyGoal> _dailyGoals = new();
+    private DailyPlan? _today;
+    private bool _loadingDailyPlan;
+    private bool _reorderingGoals;
+    private System.Windows.Threading.DispatcherTimer? _notesSaveTimer;
+    private List<DailyGoal> _carryOverCandidates = new();
+
+    // Set up once: the reorder behavior and change tracking hold on to this one collection.
+    private void InitDailyGoals()
+    {
+        DailyGoalsList.ItemsSource = _dailyGoals;
+        ListReorderBehavior.Enable(DailyGoalsList, _dailyGoals);
+
+        // The list's own (disabled) scroller would swallow the wheel; let the home page scroll instead.
+        DailyGoalsList.PreviewMouseWheel += (_, e) =>
+        {
+            e.Handled = true;
+            HomePanel.RaiseEvent(new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta) { RoutedEvent = MouseWheelEvent });
+        };
+        _dailyGoals.CollectionChanged += (_, e) =>
+        {
+            if (_loadingDailyPlan) return;
+            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Move && !_reorderingGoals)
+                PinStarredGoals();
+            SaveDailyPlan();
+        };
+
+        _notesSaveTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _notesSaveTimer.Tick += (_, _) =>
+        {
+            _notesSaveTimer.Stop();
+            SaveDailyPlan();
+        };
+    }
+
+    // Reloads only when the day changed (or on first show), so edits in progress aren't clobbered.
+    private void LoadDailyPlan()
+    {
+        var key = DailyPlanStore.Key(DateTime.Today);
+        if (_today?.Date == key) return;
+
+        _loadingDailyPlan = true;
+        try
+        {
+            foreach (var goal in _dailyGoals) goal.PropertyChanged -= DailyGoal_PropertyChanged;
+            _dailyGoals.Clear();
+
+            _today = _dailyStore.LoadDay(DateTime.Today);
+            foreach (var goal in _today.Goals)
+            {
+                goal.PropertyChanged += DailyGoal_PropertyChanged;
+                _dailyGoals.Add(goal);
+            }
+            DailyNotesBox.Text = _today.Notes ?? "";
+        }
+        finally
+        {
+            _loadingDailyPlan = false;
+        }
+
+        RefreshCarryOver();
+        UpdateDailyProgress();
+    }
+
+    private void SaveDailyPlan()
+    {
+        if (_today == null || _loadingDailyPlan) return;
+        _today.Goals = _dailyGoals.ToList();
+        _today.Notes = string.IsNullOrWhiteSpace(DailyNotesBox.Text) ? null : DailyNotesBox.Text;
+        _dailyStore.SaveDay(_today);
+        UpdateDailyProgress();
+    }
+
+    private void UpdateDailyProgress()
+    {
+        var total = _dailyGoals.Count;
+        var done = _dailyGoals.Count(g => g.Done);
+        DailyProgressText.Text = total == 0 ? "" : done == total ? $"All {total} done" : $"{done} of {total} done";
+        DailyEmptyText.Visibility = total == 0 ? Visibility.Visible : Visibility.Collapsed;
+        DailyGoalsList.Visibility = total == 0 ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void DailyGoal_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(DailyGoal.IsEditing) or nameof(DailyGoal.HasProject)) return;
+        if (e.PropertyName == nameof(DailyGoal.Starred)) PinStarredGoals();
+        SaveDailyPlan();
+    }
+
+    // Starred goals sit above the rest; within each group the user's drag order is kept.
+    private void PinStarredGoals()
+    {
+        var desired = _dailyGoals.OrderBy(g => g.Starred ? 0 : 1).ToList();
+        _reorderingGoals = true;
+        try
+        {
+            for (var i = 0; i < desired.Count; i++)
+            {
+                var current = _dailyGoals.IndexOf(desired[i]);
+                if (current != i) _dailyGoals.Move(current, i);
+            }
+        }
+        finally
+        {
+            _reorderingGoals = false;
+        }
+    }
+
+    private void AddDailyGoal(DailyGoal goal)
+    {
+        goal.PropertyChanged += DailyGoal_PropertyChanged;
+        _dailyGoals.Add(goal);
+        if (goal.Starred) PinStarredGoals();
+    }
+
+    private void DailyGoalInput_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            DailyGoalInput.Clear();
+            e.Handled = true;
+            return;
+        }
+        if (e.Key != Key.Enter) return;
+        e.Handled = true;
+
+        var text = DailyGoalInput.Text.Trim();
+        if (text.Length == 0) return;
+
+        LoadDailyPlan(); // past midnight, the new goal belongs to the new day
+        var project = (DailyGoalProjectCombo.SelectedItem as ComboBoxItem)?.Tag as Project;
+        AddDailyGoal(new DailyGoal { Text = text, ProjectId = project?.Id, ProjectName = project?.Name });
+        DailyGoalInput.Clear();
+    }
+
+    private void DailyGoalInput_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        DailyGoalPlaceholder.Visibility = DailyGoalInput.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        // A pasted list arrives in one go — each line becomes its own goal.
+        if (DailyGoalInput.Text.IndexOfAny(new[] { '\n', '\r' }) < 0) return;
+        var lines = DailyGoalInput.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        DailyGoalInput.Clear();
+        LoadDailyPlan();
+        var project = (DailyGoalProjectCombo.SelectedItem as ComboBoxItem)?.Tag as Project;
+        foreach (var line in lines)
+            AddDailyGoal(new DailyGoal { Text = line.TrimStart('-', '*', '•', ' '), ProjectId = project?.Id, ProjectName = project?.Name });
+    }
+
+    // The project new goals get linked to. Keeps its choice across refreshes so a run of goals
+    // for one project only needs picking once.
+    private void RefreshDailyProjectCombo()
+    {
+        var selectedId = ((DailyGoalProjectCombo.SelectedItem as ComboBoxItem)?.Tag as Project)?.Id;
+        DailyGoalProjectCombo.Items.Clear();
+        var none = new ComboBoxItem { Content = "No project" };
+        DailyGoalProjectCombo.Items.Add(none);
+        foreach (var project in _projects)
+            DailyGoalProjectCombo.Items.Add(new ComboBoxItem { Content = project.Name, Tag = project });
+
+        DailyGoalProjectCombo.SelectedItem = DailyGoalProjectCombo.Items.OfType<ComboBoxItem>()
+            .FirstOrDefault(i => (i.Tag as Project)?.Id == selectedId) ?? none;
+    }
+
+    private static DailyGoal? GoalOf(object sender) => (sender as FrameworkElement)?.DataContext as DailyGoal;
+
+    private void DailyGoalStar_Click(object sender, RoutedEventArgs e)
+    {
+        if (GoalOf(sender) is DailyGoal goal) goal.Starred = !goal.Starred;
+    }
+
+    private void DailyGoalDelete_Click(object sender, RoutedEventArgs e)
+    {
+        if (GoalOf(sender) is not DailyGoal goal) return;
+        goal.PropertyChanged -= DailyGoal_PropertyChanged;
+        _dailyGoals.Remove(goal);
+    }
+
+    private void DailyGoalText_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ClickCount != 2 || GoalOf(sender) is not DailyGoal goal) return;
+        goal.IsEditing = true;
+        e.Handled = true;
+    }
+
+    private void DailyGoalEditor_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (sender is not TextBox box || !box.IsVisible) return;
+        box.Text = GoalOf(box)?.Text ?? "";
+        box.Focus();
+        box.SelectAll();
+    }
+
+    private void DailyGoalEditor_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (sender is not TextBox box || GoalOf(box) is not DailyGoal goal) return;
+        if (e.Key == Key.Enter)
+        {
+            CommitGoalEdit(box, goal);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            goal.IsEditing = false;
+            e.Handled = true;
+        }
+    }
+
+    private void DailyGoalEditor_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (sender is TextBox box && GoalOf(box) is DailyGoal { IsEditing: true } goal)
+            CommitGoalEdit(box, goal);
+    }
+
+    private static void CommitGoalEdit(TextBox box, DailyGoal goal)
+    {
+        var text = box.Text.Trim();
+        if (text.Length > 0) goal.Text = text;
+        goal.IsEditing = false;
+    }
+
+    private void DailyGoalChip_Click(object sender, MouseButtonEventArgs e)
+    {
+        // The chip opens the same menu as right-clicking the row.
+        if (sender is not FrameworkElement chip) return;
+        var row = (FrameworkElement)VisualTreeHelperParentGrid(chip);
+        if (row.ContextMenu == null) return;
+        BuildGoalMenu(row.ContextMenu, (DailyGoal)row.DataContext);
+        row.ContextMenu.PlacementTarget = chip;
+        row.ContextMenu.IsOpen = true;
+        e.Handled = true;
+    }
+
+    private static DependencyObject VisualTreeHelperParentGrid(DependencyObject element)
+    {
+        var current = System.Windows.Media.VisualTreeHelper.GetParent(element);
+        while (current is not null && !(current is Grid { ContextMenu: not null }))
+            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+        return current ?? element;
+    }
+
+    private void DailyGoalRow_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        if (sender is FrameworkElement { ContextMenu: { } menu, DataContext: DailyGoal goal })
+            BuildGoalMenu(menu, goal);
+    }
+
+    private void BuildGoalMenu(ContextMenu menu, DailyGoal goal)
+    {
+        menu.Items.Clear();
+
+        var edit = new MenuItem { Header = "Edit" };
+        edit.Click += (_, _) => goal.IsEditing = true;
+        menu.Items.Add(edit);
+
+        var star = new MenuItem { Header = goal.Starred ? "Unstar" : "Star (pin to top)" };
+        star.Click += (_, _) => goal.Starred = !goal.Starred;
+        menu.Items.Add(star);
+
+        var link = new MenuItem { Header = "Link to project" };
+        var none = new MenuItem { Header = "No project", IsCheckable = true, IsChecked = goal.ProjectId == null };
+        none.Click += (_, _) => { goal.ProjectName = null; goal.ProjectId = null; };
+        link.Items.Add(none);
+        foreach (var project in _projects)
+        {
+            var item = new MenuItem { Header = project.Name, IsCheckable = true, IsChecked = goal.ProjectId == project.Id };
+            item.Click += (_, _) => { goal.ProjectName = project.Name; goal.ProjectId = project.Id; };
+            link.Items.Add(item);
+        }
+        menu.Items.Add(link);
+
+        menu.Items.Add(new Separator());
+        var delete = new MenuItem { Header = "Delete" };
+        delete.Click += (_, _) =>
+        {
+            goal.PropertyChanged -= DailyGoal_PropertyChanged;
+            _dailyGoals.Remove(goal);
+        };
+        menu.Items.Add(delete);
+    }
+
+    private void DailyNotesBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_loadingDailyPlan || _notesSaveTimer == null) return;
+        _notesSaveTimer.Stop();
+        _notesSaveTimer.Start();
+    }
+
+    private void DailyNotesBox_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (_notesSaveTimer?.IsEnabled != true) return;
+        _notesSaveTimer.Stop();
+        SaveDailyPlan();
+    }
+
+    // Offers the most recent earlier day's unfinished goals, once per day.
+    private void RefreshCarryOver()
+    {
+        _carryOverCandidates.Clear();
+        if (_today is { CarryOverHandled: false } && _dailyStore.LatestUnfinishedBefore(DateTime.Today) is var (date, goals))
+        {
+            var carried = _dailyGoals.Select(g => g.CarriedFromId).ToHashSet();
+            _carryOverCandidates = goals.Where(g => !carried.Contains(g.Id)).ToList();
+            if (_carryOverCandidates.Count > 0)
+            {
+                var day = DateTime.ParseExact(date, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+                var when = day == DateTime.Today.AddDays(-1) ? "yesterday" : day.ToString("dddd");
+                var count = _carryOverCandidates.Count;
+                CarryOverButton.Content = $"↪  Carry over {count} unfinished goal{(count == 1 ? "" : "s")} from {when}";
+            }
+        }
+        CarryOverRow.Visibility = _carryOverCandidates.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void CarryOver_Click(object sender, RoutedEventArgs e)
+    {
+        foreach (var old in _carryOverCandidates)
+        {
+            AddDailyGoal(new DailyGoal
+            {
+                Text = old.Text,
+                Starred = old.Starred,
+                ProjectId = old.ProjectId,
+                ProjectName = old.ProjectName,
+                CarriedFromId = old.Id
+            });
+        }
+        DismissCarryOver_Click(sender, e);
+    }
+
+    private void DismissCarryOver_Click(object sender, RoutedEventArgs e)
+    {
+        if (_today == null) return;
+        _today.CarryOverHandled = true;
+        SaveDailyPlan();
+        _carryOverCandidates.Clear();
+        CarryOverRow.Visibility = Visibility.Collapsed;
+    }
+
     // ---------- Mode timers ----------
 
     private void RefreshModeTimers(WorkMode mode)
@@ -1881,6 +2329,7 @@ public partial class MainWindow : Window
     public void RefreshThemeChrome()
     {
         RefreshNoteColors();
+        ShowBoard(); // status colors come through a converter, so re-resolve them for the new theme
 
         if (!ThemeService.IsClassicChrome(ThemeService.CurrentThemeName))
         {

@@ -92,6 +92,8 @@
                                         <TextBlock Text="b" Foreground="#258026" FontFamily="Comic Sans MS" FontWeight="Black" FontSize="20" RenderTransformOrigin="0.5,0.5"><TextBlock.RenderTransform><TranslateTransform Y="-2"/></TextBlock.RenderTransform></TextBlock>
                                     </StackPanel>
                                 </StackPanel>
+                                <TextBlock x:Name="VersionText" FontSize="10" Margin="8,0,0,2" VerticalAlignment="Bottom" Opacity="0.6"
+                                           Foreground="{DynamicResource SidebarHeaderInkBrush}" ToolTip="BijouHub version"/>
                             </StackPanel>
                             <Grid x:Name="HeaderBrackets" Visibility="{DynamicResource ClassicChromeVisibility}">
                                 <Line X1="0" Y1="0" X2="10" Y2="0" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top"/>
@@ -418,23 +420,217 @@
                     <TextBlock x:Name="HomeGreetingText" FontSize="16" Margin="0,0,0,24" TextWrapping="Wrap" Effect="{DynamicResource GlowGreeting}"
                                Foreground="{DynamicResource AccentBrush}"/>
 
-                    <TextBlock Text="// QUICK LAUNCH" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
-                    <WrapPanel x:Name="QuickLaunchPanel" Margin="0,0,0,24"/>
+                    <!-- Today: the day's goals (type, Enter, repeat) beside a glance at time worked. -->
+                    <Grid Margin="0,0,0,28">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MaxWidth="720"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="260"/>
+                        </Grid.ColumnDefinitions>
 
-                    <TextBlock Text="// TODAY" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
-                    <TextBlock x:Name="HomeTodayText" FontSize="32" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,8"/>
-                    <TextBlock x:Name="HomeWeekText" Foreground="{DynamicResource MutedTextBrush}" FontSize="13" Margin="0,0,0,24"/>
+                        <StackPanel Grid.Column="0">
+                            <DockPanel Margin="0,0,0,8" LastChildFill="False">
+                                <TextBlock Text="// TODAY'S GOALS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Bottom"/>
+                                <TextBlock x:Name="DailyProgressText" DockPanel.Dock="Right" Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="12" VerticalAlignment="Bottom"/>
+                            </DockPanel>
+                            <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                    CornerRadius="{DynamicResource CornerRadiusBase}" Padding="14,12">
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid>
+                                            <TextBox x:Name="DailyGoalInput" Padding="10,7" VerticalContentAlignment="Center"
+                                                     KeyDown="DailyGoalInput_KeyDown" TextChanged="DailyGoalInput_TextChanged"
+                                                     AutomationProperties.Name="New goal for today"/>
+                                            <TextBlock x:Name="DailyGoalPlaceholder" Text="What do you want to get done today? Press Enter to add."
+                                                       Foreground="{DynamicResource FaintTextBrush}" IsHitTestVisible="False"
+                                                       VerticalAlignment="Center" Margin="13,0,0,0" TextTrimming="CharacterEllipsis"/>
+                                        </Grid>
+                                        <ComboBox x:Name="DailyGoalProjectCombo" Grid.Column="1" Width="170" Margin="8,0,0,0"
+                                                  ToolTip="Link new goals to a project (optional)"/>
+                                    </Grid>
 
-                    <TextBlock Text="// PROJECTS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6"/>
-                    <ItemsControl x:Name="HomeProjectsList">
+                                    <DockPanel x:Name="CarryOverRow" Margin="0,10,0,0" LastChildFill="False" Visibility="Collapsed">
+                                        <Button x:Name="CarryOverButton" Padding="12,5" Click="CarryOver_Click"/>
+                                        <Button Content="Dismiss" Margin="8,0,0,0" Padding="10,5" Click="DismissCarryOver_Click"/>
+                                    </DockPanel>
+
+                                    <ListBox x:Name="DailyGoalsList" Margin="0,10,0,0" Background="Transparent" BorderThickness="0" Padding="0"
+                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                             ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="ListBoxItem">
+                                                <Setter Property="Focusable" Value="False"/>
+                                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="ListBoxItem">
+                                                            <Border x:Name="Row" Background="Transparent" CornerRadius="6" Padding="2,3">
+                                                                <ContentPresenter/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter TargetName="Row" Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Background="Transparent" ContextMenuOpening="DailyGoalRow_ContextMenuOpening">
+                                                    <Grid.ContextMenu>
+                                                        <ContextMenu/>
+                                                    </Grid.ContextMenu>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="18"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="⠿" Foreground="{DynamicResource FaintTextBrush}" VerticalAlignment="Center"
+                                                               HorizontalAlignment="Center" Cursor="SizeAll" ToolTip="Drag to reorder"/>
+                                                    <CheckBox Grid.Column="1" IsChecked="{Binding Done, Mode=TwoWay}" VerticalAlignment="Center"
+                                                              Margin="2,0,6,0" AutomationProperties.Name="{Binding Text}"/>
+                                                    <Button Grid.Column="2" Click="DailyGoalStar_Click" Cursor="Hand" VerticalAlignment="Center"
+                                                            Focusable="False" Margin="0,0,8,0" ToolTip="Star to pin it to the top"
+                                                            AutomationProperties.Name="Star">
+                                                        <Button.Template>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="Transparent" Padding="2,0">
+                                                                    <ContentPresenter/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Button.Template>
+                                                        <TextBlock FontSize="15">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Text" Value="☆"/>
+                                                                    <Setter Property="Foreground" Value="{DynamicResource FaintTextBrush}"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Starred}" Value="True">
+                                                                            <Setter Property="Text" Value="★"/>
+                                                                            <Setter Property="Foreground" Value="{DynamicResource HazardBrush}"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Button>
+                                                    <Grid Grid.Column="3" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="14"
+                                                                   MouseLeftButtonDown="DailyGoalText_MouseLeftButtonDown" ToolTip="Double-click to edit">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Done}" Value="True">
+                                                                            <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                                                            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Hidden"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                        <TextBox Text="{Binding Text, Mode=OneWay}" Padding="4,2" Margin="-5,-3,0,-3"
+                                                                 Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                                 IsVisibleChanged="DailyGoalEditor_IsVisibleChanged"
+                                                                 KeyDown="DailyGoalEditor_KeyDown" LostKeyboardFocus="DailyGoalEditor_LostKeyboardFocus"/>
+                                                    </Grid>
+                                                    <Border Grid.Column="4" CornerRadius="9" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                            Background="{DynamicResource CardHoverBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                                            Cursor="Hand" MouseLeftButtonUp="DailyGoalChip_Click" ToolTip="Change the linked project"
+                                                            Visibility="{Binding HasProject, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                        <TextBlock Text="{Binding ProjectName}" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
+                                                    </Border>
+                                                    <Button Grid.Column="5" Click="DailyGoalDelete_Click" Focusable="False" Cursor="Hand"
+                                                            Margin="6,0,2,0" VerticalAlignment="Center" ToolTip="Delete" AutomationProperties.Name="Delete goal">
+                                                        <Button.Template>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="Transparent" Padding="5,1">
+                                                                    <TextBlock Text="✕" FontSize="11" Foreground="{DynamicResource FaintTextBrush}"/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Button.Template>
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Visibility" Value="Hidden"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                    <TextBlock x:Name="DailyEmptyText" Margin="2,10,0,2" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"
+                                               TextWrapping="Wrap"
+                                               Text="Nothing planned yet. Add a few goals — star the important ones, drag to put them in order."/>
+
+                                    <TextBlock Text="NOTES FOR TODAY" Foreground="{DynamicResource MutedTextBrush}" FontSize="10" Margin="2,14,0,4"/>
+                                    <TextBox x:Name="DailyNotesBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="54" MaxHeight="220"
+                                             VerticalScrollBarVisibility="Auto" Padding="8,6" TextChanged="DailyNotesBox_TextChanged"
+                                             LostKeyboardFocus="DailyNotesBox_LostKeyboardFocus" AutomationProperties.Name="Notes for today"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="// TODAY" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
+                            <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                    CornerRadius="{DynamicResource CornerRadiusBase}" Padding="16,14">
+                                <StackPanel>
+                                    <TextBlock x:Name="HomeTodayText" FontSize="32" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
+                                    <TextBlock Text="worked today" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="0,0,0,14"/>
+                                    <ItemsControl x:Name="HomeWeekBars">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <UniformGrid Rows="1"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                    <TextBlock x:Name="HomeWeekText" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="0,10,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Project board (formerly the separate BijouBoard app). -->
+                    <DockPanel Margin="0,0,0,10" LastChildFill="False">
+                        <TextBlock Text="// PROJECTS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Center"/>
+                        <Button DockPanel.Dock="Right" Content="Refresh" Padding="12,4" Click="RefreshBoard_Click"
+                                ToolTip="Re-read BijouDocs and BijouMusic"/>
+                    </DockPanel>
+                    <WrapPanel x:Name="BoardSummary" Margin="0,0,0,12"/>
+                    <ItemsControl x:Name="BoardCards">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="1" CornerRadius="{DynamicResource CornerRadiusBase}" Padding="12,10" Margin="0,0,0,8"
-                                        Cursor="Hand" MouseLeftButtonDown="HomeProjectRow_Click">
+                                <Border Width="340" Margin="0,0,14,14" Padding="16,14" BorderThickness="1"
+                                        CornerRadius="{DynamicResource CornerRadiusBase}" Cursor="Hand" MouseLeftButtonUp="BoardCard_Click"
+                                        AutomationProperties.Name="{Binding Title}">
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+                                            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                                             <Style.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
@@ -443,22 +639,77 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0">
-                                            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Bold"/>
-                                            <TextBlock Text="{Binding NextGoalSummary}" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="0,2,0,0"/>
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" MaxWidth="190"/>
+                                            <Border CornerRadius="4" Padding="7,2" Margin="10,0,0,0" VerticalAlignment="Center"
+                                                    Background="{Binding StatusTone, Converter={StaticResource ToneBrushConverter}, ConverterParameter=Soft}">
+                                                <TextBlock Text="{Binding StatusPillText}" FontSize="10" FontWeight="Bold"
+                                                           Foreground="{Binding StatusTone, Converter={StaticResource ToneBrushConverter}}"/>
+                                            </Border>
                                         </StackPanel>
-                                        <TextBlock Grid.Column="1" Text="{Binding CompletionPercentText}"
-                                                   Foreground="{DynamicResource AccentBrush}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
-                                    </Grid>
+                                        <TextBlock Text="{Binding Subtitle}" FontSize="11" Foreground="{DynamicResource MutedTextBrush}" Margin="0,3,0,14"/>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="62"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Text="SCRIPT" FontSize="10" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center" Margin="0,0,0,7"/>
+                                            <DockPanel Grid.Column="1" Margin="0,0,0,7">
+                                                <Ellipse Width="6" Height="6" Margin="0,0,7,0" VerticalAlignment="Center"
+                                                         Fill="{Binding ScriptTone, Converter={StaticResource ToneBrushConverter}}"/>
+                                                <TextBlock Text="{Binding ScriptLabel}" FontSize="13"/>
+                                                <TextBlock Text="{Binding ScriptDetail, StringFormat=' — {0}'}" FontSize="12" TextTrimming="CharacterEllipsis"
+                                                           Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"
+                                                           ToolTip="{Binding ScriptDetail}"/>
+                                            </DockPanel>
+                                            <TextBlock Grid.Row="1" Text="MUSIC" FontSize="10" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center" Margin="0,0,0,7"/>
+                                            <DockPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,7">
+                                                <Ellipse Width="6" Height="6" Margin="0,0,7,0" VerticalAlignment="Center"
+                                                         Fill="{Binding MusicTone, Converter={StaticResource ToneBrushConverter}}"/>
+                                                <TextBlock Text="{Binding MusicLabel}" FontSize="13"/>
+                                                <TextBlock Text="{Binding MusicDetail, StringFormat=' — {0}'}" FontSize="12" TextTrimming="CharacterEllipsis"
+                                                           Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"
+                                                           ToolTip="{Binding MusicDetail}"/>
+                                            </DockPanel>
+                                            <TextBlock Grid.Row="2" Text="TIME" FontSize="10" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+                                                <TextBlock Text="{Binding TimeThisWeek}" FontSize="13" FontWeight="SemiBold"/>
+                                                <TextBlock Text=" this week" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <TextBlock Text="{Binding GoalsText}" FontSize="12" Margin="0,14,0,6"/>
+                                        <Grid Height="6">
+                                            <Border CornerRadius="3" Background="{DynamicResource SoftBorderBrush}"/>
+                                            <Border CornerRadius="3" Background="{DynamicResource AccentBrush}" RenderTransformOrigin="0,0.5">
+                                                <Border.RenderTransform>
+                                                    <ScaleTransform ScaleX="{Binding GoalsFraction}"/>
+                                                </Border.RenderTransform>
+                                            </Border>
+                                        </Grid>
+                                        <TextBlock Text="{Binding NextGoal}" FontSize="11" Foreground="{DynamicResource MutedTextBrush}" Margin="0,8,0,0"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Visibility="{Binding NextGoal, Converter={StaticResource EmptyToCollapsedConverter}}"/>
+                                    </StackPanel>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                    <TextBlock x:Name="BoardEmptyText" Visibility="Collapsed" Foreground="{DynamicResource MutedTextBrush}" FontSize="12"
+                               Text="No projects yet — add one with + New Project."/>
+                    <TextBlock Foreground="{DynamicResource FaintTextBrush}" FontSize="11" Margin="0,2,0,28" TextWrapping="Wrap"
+                               Text="Script progress comes from BijouDocs and tracks from BijouMusic, matched by project name. Click a card to open the project."/>
+
+                    <TextBlock Text="// QUICK LAUNCH" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
+                    <WrapPanel x:Name="QuickLaunchPanel" Margin="0,0,0,24"/>
                 </StackPanel>
             </ScrollViewer>
             </Grid>
