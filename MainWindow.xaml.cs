@@ -511,6 +511,9 @@ public partial class MainWindow : Window
         TypewriterReveal(ModeDetailName, mode.Name);
         ModeDetailLaunchItems.ItemsSource = mode.LaunchItems;
         ModeDetailBlockItems.ItemsSource = mode.BlockItems;
+        RefreshModeTimers(mode);
+        ModeTimerBox.Text = "";
+        UpdateModeTimerInput();
 
         _detailProject = null;
         UpdateNotesPanelVisibility();
@@ -968,6 +971,11 @@ public partial class MainWindow : Window
     private async Task BeginSession(WorkMode? mode, Project? project, Goal? goal, int? targetMinutes, bool countDown = false,
         string? deckKeyId = null)
     {
+        // Starting while another session runs replaces it — log the running one first instead of
+        // silently dropping its time.
+        if (IsSessionActive)
+            FinishSession(askForNote: false);
+
         if (mode != null)
         {
             var failures = await ModeLauncherService.LaunchAsync(mode);
@@ -1377,6 +1385,112 @@ public partial class MainWindow : Window
         }
     }
 
+    // ---------- Mode timers ----------
+
+    private void RefreshModeTimers(WorkMode mode)
+    {
+        ModeTimerTiles.Children.Clear();
+        foreach (var minutes in mode.TimerMinutes.Order())
+            ModeTimerTiles.Children.Add(BuildModeTimerTile(mode, minutes));
+    }
+
+    private Button BuildModeTimerTile(WorkMode mode, int minutes)
+    {
+        var stack = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+
+        var play = new TextBlock { Text = "▶", FontSize = 11, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 6) };
+        play.SetResourceReference(TextBlock.ForegroundProperty, "AccentBrush");
+        stack.Children.Add(play);
+
+        // Same face as the timer screen, so the tile reads as the countdown it starts.
+        var length = new TextBlock { Text = DurationText.Format(minutes), FontSize = 20, HorizontalAlignment = HorizontalAlignment.Center };
+        length.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
+        length.SetResourceReference(TextBlock.FontFamilyProperty, "TimerFont");
+        length.SetResourceReference(TextBlock.FontWeightProperty, "TimerFontWeight");
+        stack.Children.Add(length);
+
+        var caption = new TextBlock { Text = "count down", FontSize = 10, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 4, 0, 0) };
+        caption.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
+        stack.Children.Add(caption);
+
+        var button = new Button
+        {
+            Content = stack,
+            Height = 84,
+            ToolTip = $"Launch {mode.Name} and count down from {DurationText.Format(minutes)}"
+        };
+        System.Windows.Automation.AutomationProperties.SetName(button, $"{DurationText.Format(minutes)} timer");
+        button.SetResourceReference(StyleProperty, "QuickLaunchTileStyle");
+        button.Click += async (_, _) => await StartModeTimer(mode, minutes);
+
+        var remove = new MenuItem { Header = "Remove timer" };
+        remove.Click += (_, _) =>
+        {
+            mode.TimerMinutes.Remove(minutes);
+            _modeStore.Save(_modes);
+            RefreshModeTimers(mode);
+            UpdateModeTimerInput();
+        };
+        button.ContextMenu = new ContextMenu { Items = { remove } };
+        return button;
+    }
+
+    private Task StartModeTimer(WorkMode mode, int minutes) =>
+        BeginSession(mode, null, null, minutes, countDown: true);
+
+    private void ModeTimerBox_TextChanged(object sender, TextChangedEventArgs e) => UpdateModeTimerInput();
+
+    private async void ModeTimerBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        e.Handled = true;
+        if (ModesList.SelectedItem is WorkMode mode && DurationText.TryParseMinutes(ModeTimerBox.Text) is int minutes)
+            await StartModeTimer(mode, minutes);
+    }
+
+    private async void ModeTimerStart_Click(object sender, RoutedEventArgs e)
+    {
+        if (ModesList.SelectedItem is WorkMode mode && DurationText.TryParseMinutes(ModeTimerBox.Text) is int minutes)
+            await StartModeTimer(mode, minutes);
+    }
+
+    private void ModeTimerSave_Click(object sender, RoutedEventArgs e)
+    {
+        if (ModesList.SelectedItem is not WorkMode mode || DurationText.TryParseMinutes(ModeTimerBox.Text) is not int minutes) return;
+        if (mode.TimerMinutes.Contains(minutes)) return;
+
+        mode.TimerMinutes.Add(minutes);
+        _modeStore.Save(_modes);
+        RefreshModeTimers(mode);
+        ModeTimerBox.Text = "";
+    }
+
+    private void UpdateModeTimerInput()
+    {
+        var text = ModeTimerBox.Text;
+        var minutes = DurationText.TryParseMinutes(text);
+        var alreadySaved = minutes is int m && ModesList.SelectedItem is WorkMode mode && mode.TimerMinutes.Contains(m);
+
+        ModeTimerStartButton.IsEnabled = minutes != null;
+        ModeTimerSaveButton.IsEnabled = minutes != null && !alreadySaved;
+        ModeTimerSaveButton.Content = alreadySaved ? "Saved" : "+ Save Timer";
+
+        string hint;
+        string brush = "MutedTextBrush";
+        if (string.IsNullOrWhiteSpace(text))
+            hint = "Type a length — 45, 1:30, 2h — then start it once or save it to this mode." +
+                   (ModeTimerTiles.Children.Count > 0 ? " Right-click a timer to remove it." : "");
+        else if (minutes is int valid)
+            hint = $"Counts down from {DurationText.Format(valid)}.";
+        else
+        {
+            hint = "Can't read that — try 45, 1:30 or 2h.";
+            brush = "DangerBrush";
+        }
+        ModeTimerHint.Text = hint;
+        ModeTimerHint.SetResourceReference(TextBlock.ForegroundProperty, brush);
+    }
+
     // ---------- Pause ----------
 
     private void PauseToggle_Click(object sender, RoutedEventArgs e) => TogglePause();
@@ -1459,10 +1573,7 @@ public partial class MainWindow : Window
         // A second press while modes are still launching would otherwise start twice.
         if (_sessionStarting) return DeckState();
 
-        // Another session (from the app or another key) is logged as-is and replaced.
-        if (IsSessionActive)
-            FinishSession(askForNote: false);
-
+        // A session already running (from the app or another key) is logged and replaced by BeginSession.
         _ = StartDeckSessionAsync(mode, project, minutes, keyId);
         return new JsonObject { ["ok"] = true };
     }

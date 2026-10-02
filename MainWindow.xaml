@@ -259,8 +259,23 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
+                <!-- Countdown timers saved on this mode: one click launches the mode and counts down. -->
+                <TextBlock Text="// TIMERS" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"/>
+                <WrapPanel x:Name="ModeTimerTiles"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                    <TextBox x:Name="ModeTimerBox" Width="120" VerticalContentAlignment="Center"
+                             TextChanged="ModeTimerBox_TextChanged" KeyDown="ModeTimerBox_KeyDown"
+                             ToolTip="How long: 45, 1:30, 2h"/>
+                    <Button x:Name="ModeTimerStartButton" Content="▶  Start" Margin="8,0,0,0" Padding="14,6"
+                            Click="ModeTimerStart_Click" IsEnabled="False"/>
+                    <Button x:Name="ModeTimerSaveButton" Content="+ Save Timer" Margin="8,0,0,0" Padding="14,6"
+                            Click="ModeTimerSave_Click" IsEnabled="False"/>
+                </StackPanel>
+                <TextBlock x:Name="ModeTimerHint" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,28"/>
+
                 <StackPanel Orientation="Horizontal">
-                    <Button Content="▶  Launch" Style="{DynamicResource AccentButton}" Padding="20,9" Click="Launch_Click"/>
+                    <Button Content="▶  Launch" Style="{DynamicResource AccentButton}" Padding="20,9" Click="Launch_Click"
+                            ToolTip="Launch the mode and count up, with no time limit"/>
                     <Button Content="Edit" Margin="8,0,0,0" Padding="16,9" Click="EditMode_Click"/>
                     <Button Content="Delete" Margin="8,0,0,0" Padding="16,9" Click="DeleteMode_Click"/>
                 </StackPanel>

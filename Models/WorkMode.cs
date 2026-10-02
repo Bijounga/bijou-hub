@@ -7,5 +7,8 @@ public class WorkMode
     public List<LaunchItem> LaunchItems { get; set; } = new();
     public List<BlockItem> BlockItems { get; set; } = new();
 
+    // Saved countdown lengths, in minutes, shown as one-click timers on the mode's page.
+    public List<int> TimerMinutes { get; set; } = new();
+
     public override string ToString() => Name;
 }
