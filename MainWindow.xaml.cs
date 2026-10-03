@@ -137,6 +137,10 @@ public partial class MainWindow : Window
         InitTray();
         ShowHome();
         _ = CheckForUpdateAsync();
+        // Kept running in the tray, BijouHub can go days without a restart: look again every few hours.
+        var updateTimer = new DispatcherTimer { Interval = TimeSpan.FromHours(6) };
+        updateTimer.Tick += (_, _) => { if (_pendingUpdate == null) _ = CheckForUpdateAsync(); };
+        updateTimer.Start();
     }
 
     // "1.13.0" — the informational version minus the commit hash the SDK appends.
@@ -154,6 +158,7 @@ public partial class MainWindow : Window
         if (update == null) return;
 
         _pendingUpdate = update;
+        if (!IsVisible) _tray?.ShowBalloon("BijouHub update", $"Version {update.Version} is ready. Open BijouHub and click Update.");
         UpdateButton.Content = $"⬆ Update to v{update.Version}";
         UpdateButton.ToolTip = "A new version of BijouHub is available. Click to download and restart.";
         UpdateButton.Visibility = Visibility.Visible;
