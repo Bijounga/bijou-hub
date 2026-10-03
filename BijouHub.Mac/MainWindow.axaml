@@ -1,143 +1,422 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:models="clr-namespace:BijouHub.Models;assembly=BijouHub.Core"
-        xmlns:views="clr-namespace:BijouHub.Mac.Views"
-        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="780"
+        xmlns:controls="clr-namespace:BijouHub.Mac.Controls"
         x:Class="BijouHub.Mac.MainWindow"
-        Title="BijouHub" Width="1200" Height="780" MinWidth="760" MinHeight="520"
-        Background="{StaticResource BgBrush}">
-    <Grid ColumnDefinitions="240,*">
+        Title="BijouHub" Width="1240" Height="800" MinWidth="900" MinHeight="580">
+
+    <Window.Styles>
+        <!-- Goal rows: delete appears on hover; done goals strike through; starred stars glow. -->
+        <Style Selector="ListBox#DailyGoalsList ListBoxItem">
+            <Setter Property="Padding" Value="4,3"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+        <Style Selector="ListBox#DailyGoalsList ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBox#DailyGoalsList ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+        </Style>
+        <Style Selector="Button.rowdelete">
+            <Setter Property="Opacity" Value="0"/>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover Button.rowdelete">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+        <Style Selector="TextBlock.done">
+            <Setter Property="TextDecorations" Value="Strikethrough"/>
+            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+        </Style>
+        <Style Selector="Button.star">
+            <Setter Property="Foreground" Value="{DynamicResource FaintTextBrush}"/>
+        </Style>
+        <Style Selector="Button.star.starred">
+            <Setter Property="Foreground" Value="{DynamicResource HazardBrush}"/>
+        </Style>
+        <Style Selector="Border.chip">
+            <Setter Property="CornerRadius" Value="9"/>
+            <Setter Property="Padding" Value="8,1"/>
+            <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <!-- The To Do-style add bar. -->
+        <Style Selector="Border#AddGoalBar">
+            <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Border#AddGoalBar:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        </Style>
+        <Style Selector="Border#AddGoalBar:focus-within">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="TextBox#DailyGoalInput">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+        </Style>
+        <Style Selector="TextBox#DailyGoalInput:focus /template/ Border#PART_BorderElement, TextBox#DailyGoalInput:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <!-- Hover lift on board cards. -->
+        <Style Selector="Border.boardcard:pointerover">
+            <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="Border.tile:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid Margin="{DynamicResource ShellPadding}" ColumnDefinitions="236,*">
 
         <!-- Sidebar -->
-        <Border Grid.Column="0" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrushColor}" BorderThickness="0,0,1,0">
-            <Grid RowDefinitions="Auto,Auto,*,Auto,Auto,Auto" Margin="16">
-                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="2,4,0,24">
-                    <Polygon Points="6,0 18,0 24,8 18,16 6,16 0,8" Fill="#EAF6FF" Width="24" Height="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                    <TextBlock Text="BijouHub" Classes="heading" FontSize="19" VerticalAlignment="Center"/>
+        <Border Grid.Column="0" Margin="{DynamicResource PanelGap}" Background="{DynamicResource SidebarBrush}"
+                BorderBrush="{DynamicResource PanelEdgeBrush}" BorderThickness="{DynamicResource PanelEdge}"
+                CornerRadius="{DynamicResource PanelRadius}" BoxShadow="{DynamicResource PanelShadow}">
+            <Grid RowDefinitions="Auto,Auto,*,Auto,*,Auto,Auto" Margin="14,16,14,12">
+                <StackPanel Orientation="Horizontal" Margin="4,0,0,18" Cursor="Hand" Background="Transparent" PointerPressed="Logo_PointerPressed">
+                    <Polygon Points="6,0 18,0 24,8 18,16 6,16 0,8" Width="24" Height="16" Margin="0,0,10,0" VerticalAlignment="Center"
+                             Stroke="#071018" StrokeThickness="1.2">
+                        <Polygon.Fill>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                <GradientStop Color="#FFFFFF" Offset="0"/>
+                                <GradientStop Color="#EAF6FF" Offset="0.5"/>
+                                <GradientStop Color="#A8D8F0" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Polygon.Fill>
+                    </Polygon>
+                    <TextBlock Text="BijouHub" Classes="h2" VerticalAlignment="Center"/>
+                    <TextBlock Name="VersionText" Classes="faint" VerticalAlignment="Bottom" Margin="8,0,0,2"/>
                 </StackPanel>
 
-                <TextBlock Grid.Row="1" Text="// PROJECTS" Classes="muted" Margin="4,0,0,8"/>
-
-                <ListBox Name="ProjectsList" Grid.Row="2" SelectionChanged="ProjectsList_SelectionChanged">
+                <DockPanel Grid.Row="1" Margin="4,0,0,6">
+                    <Button DockPanel.Dock="Right" Classes="ghost" Padding="5" Click="NewMode_Click" ToolTip.Tip="New mode">
+                        <controls:LineIcon Kind="add" Width="12" Height="12"/>
+                    </Button>
+                    <TextBlock Name="ModesLabel" Classes="label" Text="MODES" VerticalAlignment="Center"/>
+                </DockPanel>
+                <ListBox Name="ModesList" Grid.Row="2" Classes="nav" SelectionChanged="ModesList_SelectionChanged">
                     <ListBox.ItemTemplate>
-                        <DataTemplate DataType="models:Project">
-                            <StackPanel>
-                                <TextBlock Text="{Binding Name}" FontSize="13"/>
-                                <TextBlock Text="{Binding NextGoalSummary}" Classes="muted" Margin="0,2,0,0"/>
-                            </StackPanel>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis"/>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <Button Grid.Row="3" Classes="accent" Content="+ New Project" Margin="0,8,0,0" Click="NewProject_Click"/>
-                <Button Name="SyncFolderButton" Grid.Row="4" Content="Sync Folder..." Margin="0,8,0,0" Click="SyncFolder_Click"/>
+                <DockPanel Grid.Row="3" Margin="4,14,0,6">
+                    <Button DockPanel.Dock="Right" Classes="ghost" Padding="5" Click="NewProject_Click" ToolTip.Tip="New project">
+                        <controls:LineIcon Kind="add" Width="12" Height="12"/>
+                    </Button>
+                    <TextBlock Name="ProjectsLabel" Classes="label" Text="PROJECTS" VerticalAlignment="Center"/>
+                </DockPanel>
+                <ListBox Name="ProjectsList" Grid.Row="4" Classes="nav" SelectionChanged="ProjectsList_SelectionChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
 
-                <Grid Grid.Row="5" ColumnDefinitions="*,Auto" Margin="0,14,0,0">
-                    <Button Name="VersionButton" Grid.Column="0" Content="v" Click="VersionButton_Click"
-                            ToolTip.Tip="Check for updates"/>
-                    <Button Name="UpdateButton" Grid.Column="1" Classes="accent" Content="⬆ Update" IsVisible="False"
-                            Margin="8,0,0,0" Click="UpdateButton_Click"/>
-                </Grid>
+                <!-- Everything that isn't daily work: one quiet row of tools. -->
+                <UniformGrid Grid.Row="5" Rows="1" Margin="0,12,0,0">
+                    <Button Classes="ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="SessionLog_Click" ToolTip.Tip="Session log">
+                        <controls:LineIcon Kind="history" Width="17" Height="17"/>
+                    </Button>
+                    <Button Name="SyncFolderButton" Classes="ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="SyncFolder_Click" ToolTip.Tip="Sync folder">
+                        <controls:LineIcon Kind="folder" Width="17" Height="17"/>
+                    </Button>
+                    <Button Name="LoginItemButton" Classes="ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="LoginItem_Click" ToolTip.Tip="Open at login">
+                        <controls:LineIcon Kind="power" Width="17" Height="17"/>
+                    </Button>
+                    <Button Classes="ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="Theme_Click" ToolTip.Tip="Theme">
+                        <controls:LineIcon Kind="palette" Width="17" Height="17"/>
+                    </Button>
+                    <Button Classes="ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="StreamDeck_Click" ToolTip.Tip="Stream Deck">
+                        <controls:LineIcon Kind="deck" Width="17" Height="17"/>
+                    </Button>
+                </UniformGrid>
+                <Button Name="UpdateButton" Grid.Row="6" Classes="primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                        Margin="0,10,0,0" IsVisible="False" Click="UpdateButton_Click"/>
             </Grid>
         </Border>
 
-        <!-- Main content -->
-        <Grid Grid.Column="1" Margin="28">
-            <!-- Home (no project selected) -->
-            <StackPanel Name="HomePanel" IsVisible="True">
-                <TextBlock Text="Welcome back" Classes="heading" FontSize="26"/>
-                <TextBlock Name="TodayTotalText" Text="Today: 0m" Classes="muted" Margin="0,8,0,0"/>
-                <TextBlock Text="Select a project on the left, or create one." Classes="muted" Margin="0,4,0,0"/>
-            </StackPanel>
+        <!-- Content -->
+        <Border Grid.Column="1" Background="{DynamicResource ContentBrush}" BorderBrush="{DynamicResource PanelEdgeBrush}"
+                BorderThickness="{DynamicResource PanelEdge}" CornerRadius="{DynamicResource PanelRadius}"
+                BoxShadow="{DynamicResource PanelShadow}" ClipToBounds="True">
+            <Grid ColumnDefinitions="*,Auto">
+                <Panel Grid.Column="0">
 
-            <!-- Project detail -->
-            <Grid Name="ProjectPanel" IsVisible="False" ColumnDefinitions="*,Auto">
-            <ScrollViewer Grid.Column="0">
-                <StackPanel MaxWidth="640" HorizontalAlignment="Left">
-                    <TextBlock Name="ProjectNameText" Classes="heading" FontSize="24"/>
-                    <Grid ColumnDefinitions="*,Auto" Margin="0,10,0,4">
-                        <ProgressBar Name="ProjectProgressBar" Grid.Column="0" Minimum="0" Maximum="1" VerticalAlignment="Center"/>
-                        <TextBlock Name="ProjectProgressText" Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                    </Grid>
+                    <!-- Home -->
+                    <ScrollViewer Name="HomePanel" Padding="28,26,28,20">
+                        <StackPanel>
+                            <TextBlock Name="HomeDateText" Classes="h1"/>
+                            <TextBlock Name="HomeGreetingText" FontSize="15" Foreground="{DynamicResource AccentBrush}" Margin="0,4,0,24" TextWrapping="Wrap"/>
 
-                    <WrapPanel Margin="0,4,0,0">
-                        <Button Content="Log Time..." Padding="14,7" Margin="0,0,8,8" Click="LogTime_Click"
-                                ToolTip.Tip="Add a session you worked without the timer running"/>
-                        <Button Content="Edit" Padding="14,7" Margin="0,0,8,8" Click="EditProject_Click"/>
-                        <Button Content="Delete" Padding="14,7" Margin="0,0,8,8" Click="DeleteProject_Click"/>
-                        <Button Name="NotesToggleButton" Content="Hide Notes" Padding="14,7" Margin="0,0,8,8" Click="NotesToggle_Click"/>
-                    </WrapPanel>
+                            <Grid ColumnDefinitions="*,20,260" Margin="0,0,0,28">
+                                <StackPanel Grid.Column="0" MaxWidth="720">
+                                    <DockPanel Margin="0,0,0,8" LastChildFill="False">
+                                        <TextBlock Name="GoalsLabel" Classes="label" Text="TODAY'S GOALS" VerticalAlignment="Bottom"/>
+                                        <TextBlock Name="DailyProgressText" DockPanel.Dock="Right" Classes="muted" VerticalAlignment="Bottom"/>
+                                        <Button Name="GoogleSyncButton" DockPanel.Dock="Right" Classes="ghost" Padding="6,2" Margin="0,0,10,-3"
+                                                VerticalAlignment="Bottom" Click="GoogleSync_Click">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <controls:LineIcon Name="GoogleSyncIcon" Kind="cloud" Width="14" Height="14"/>
+                                                <TextBlock Name="GoogleSyncText" FontSize="12" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </DockPanel>
+                                    <WrapPanel Name="GoalScopeTabs" Margin="0,0,0,6" IsVisible="False"/>
+                                    <Border Classes="card" Padding="14,12">
+                                        <StackPanel>
+                                            <DockPanel Name="CarryOverRow" Margin="0,0,0,10" IsVisible="False" LastChildFill="False">
+                                                <Button Name="CarryOverButton" Click="CarryOver_Click"/>
+                                                <Button Content="Dismiss" Margin="8,0,0,0" Click="DismissCarryOver_Click"/>
+                                            </DockPanel>
+                                            <ListBox Name="DailyGoalsList" Background="Transparent" Margin="0,0,0,6" SelectionMode="Single"
+                                                     ScrollViewer.VerticalScrollBarVisibility="Disabled" DragDrop.AllowDrop="True">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid ColumnDefinitions="18,Auto,Auto,*,Auto,Auto">
+                                                            <Grid.ContextMenu>
+                                                                <ContextMenu Opening="GoalMenu_Opening"/>
+                                                            </Grid.ContextMenu>
+                                                            <controls:LineIcon Kind="grip" Width="14" Height="14" StrokeWidth="2.2" Cursor="SizeAll"
+                                                                               Foreground="{DynamicResource FaintTextBrush}" PointerPressed="GoalGrip_PointerPressed"
+                                                                               ToolTip.Tip="Drag to reorder"/>
+                                                            <CheckBox Grid.Column="1" IsChecked="{Binding Done}" MinWidth="0" Margin="2,0,4,0" AutomationProperties.Name="{Binding Text}"/>
+                                                            <Button Grid.Column="2" Classes="ghost star" Classes.starred="{Binding Starred}" Padding="3"
+                                                                    Margin="0,0,8,0" Click="GoalStar_Click" ToolTip.Tip="Star to pin it to the top">
+                                                                <controls:LineIcon Kind="star" Width="15" Height="15" Filled="{Binding Starred}"/>
+                                                            </Button>
+                                                            <Panel Grid.Column="3" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Text}" Classes.done="{Binding Done}" FontSize="14" TextWrapping="Wrap"
+                                                                           IsVisible="{Binding !IsEditing}" DoubleTapped="GoalText_DoubleTapped"/>
+                                                                <TextBox Text="{Binding Text, Mode=OneWay}" IsVisible="{Binding IsEditing}" Padding="4,2" MinHeight="0"
+                                                                         KeyDown="GoalEditor_KeyDown" LostFocus="GoalEditor_LostFocus"
+                                                                         PropertyChanged="GoalEditor_PropertyChanged"/>
+                                                            </Panel>
+                                                            <Border Grid.Column="4" Classes="chip" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                                    IsVisible="{Binding ChipText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                                <TextBlock Text="{Binding ChipText}" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
+                                                            </Border>
+                                                            <Button Grid.Column="5" Classes="ghost rowdelete" Padding="5" Margin="6,0,0,0" Click="GoalDelete_Click" ToolTip.Tip="Delete">
+                                                                <controls:LineIcon Kind="close" Width="11" Height="11"/>
+                                                            </Button>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
 
-                    <!-- Session timer -->
-                    <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrushColor}" BorderThickness="1" Padding="14" Margin="0,12,0,0">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Name="SessionSubtitleText" Text="// SESSION" Classes="muted"/>
-                                <TextBlock Name="ElapsedText" Text="00:00:00" FontSize="22" Classes="heading" Margin="0,4,0,0"/>
+                                            <Border Name="AddGoalBar" CornerRadius="6" BorderThickness="1" Padding="12,0" MinHeight="42" Cursor="IBeam"
+                                                    PointerPressed="AddGoalBar_PointerPressed">
+                                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                                    <controls:LineIcon Name="AddGoalIcon" Kind="add" Width="16" Height="16" Margin="0,0,10,0"
+                                                                       Foreground="{DynamicResource AccentBrush}"/>
+                                                    <Panel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBox Name="DailyGoalInput" FontSize="14" KeyDown="DailyGoalInput_KeyDown" TextChanged="DailyGoalInput_TextChanged"
+                                                                 GotFocus="AddGoal_FocusChanged" LostFocus="AddGoal_FocusChanged"/>
+                                                        <TextBlock Name="DailyGoalPlaceholder" Text="Add a task" FontSize="14" IsHitTestVisible="False"
+                                                                   Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
+                                                    </Panel>
+                                                    <ComboBox Name="DailyGoalProjectCombo" Grid.Column="2" Width="160" Margin="10,6,0,6" IsVisible="False"
+                                                              SelectionChanged="DailyGoalProjectCombo_SelectionChanged" DropDownClosed="DailyGoalProjectCombo_DropDownClosed"
+                                                              ToolTip.Tip="Link new tasks to a project or list (optional)"/>
+                                                </Grid>
+                                            </Border>
+
+                                            <TextBlock Classes="label" Text="NOTES FOR TODAY" Margin="2,14,0,4"/>
+                                            <TextBox Name="DailyNotesBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="56" MaxHeight="220"
+                                                     TextChanged="DailyNotesBox_TextChanged" LostFocus="DailyNotesBox_LostFocus"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Classes="label" Text="TODAY" Margin="0,0,0,8"/>
+                                    <Border Classes="card" Padding="16,14">
+                                        <StackPanel>
+                                            <TextBlock Name="HomeTodayText" FontSize="32" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
+                                            <TextBlock Classes="muted" Text="worked today" Margin="0,0,0,14"/>
+                                            <UniformGrid Name="HomeWeekBars" Rows="1"/>
+                                            <TextBlock Name="HomeWeekText" Classes="muted" Margin="0,10,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+
+                            <DockPanel Margin="0,0,0,10" LastChildFill="False">
+                                <TextBlock Name="BoardLabel" Classes="label" Text="PROJECTS" VerticalAlignment="Center"/>
+                                <Button DockPanel.Dock="Right" Classes="ghost" Padding="6" Click="RefreshBoard_Click"
+                                        ToolTip.Tip="Refresh — script progress comes from BijouDocs and tracks from BijouMusic, matched by project name">
+                                    <controls:LineIcon Kind="refresh" Width="14" Height="14"/>
+                                </Button>
+                            </DockPanel>
+                            <WrapPanel Name="BoardSummary" Margin="0,0,0,12"/>
+                            <ItemsControl Name="BoardCards">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                            <TextBlock Name="BoardEmptyText" Classes="muted" IsVisible="False" Text="No projects yet — add one with the + next to Projects."/>
+
+                            <TextBlock Classes="label" Text="QUICK LAUNCH" Margin="0,24,0,8"/>
+                            <WrapPanel Name="QuickLaunchPanel" Margin="0,0,0,12"/>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Mode -->
+                    <ScrollViewer Name="ModePanel" Padding="28,26" IsVisible="False">
+                        <StackPanel MaxWidth="760" HorizontalAlignment="Left">
+                            <TextBlock Name="ModeNameText" Classes="h1" Margin="0,0,0,20"/>
+                            <TextBlock Classes="label" Text="OPENS" Margin="0,0,0,6"/>
+                            <ItemsControl Name="ModeLaunchItems" Margin="0,0,0,20">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Classes="card" Padding="10,7" Margin="0,0,0,6">
+                                            <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock Name="ModeNoItemsText" Classes="muted" Text="Nothing to open yet — add apps, folders or links with the edit button." Margin="0,-14,0,20"/>
+
+                            <TextBlock Classes="label" Text="TIMERS" Margin="0,0,0,8"/>
+                            <WrapPanel Name="ModeTimerTiles"/>
+                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
+                                <TextBox Name="ModeTimerBox" Width="130" Watermark="45, 1:30, 2h" TextChanged="ModeTimerBox_TextChanged" KeyDown="ModeTimerBox_KeyDown"
+                                         ToolTip.Tip="How long: 45, 1:30, 2h. Right-click a saved timer to remove it."/>
+                                <Button Name="ModeTimerStartButton" IsEnabled="False" Click="ModeTimerStart_Click">
+                                    <StackPanel Orientation="Horizontal" Spacing="7"><controls:LineIcon Kind="play" Width="12" Height="12"/><TextBlock Text="Start"/></StackPanel>
+                                </Button>
+                                <Button Name="ModeTimerSaveButton" IsEnabled="False" Click="ModeTimerSave_Click" ToolTip.Tip="Save this length as a timer on the mode">
+                                    <StackPanel Orientation="Horizontal" Spacing="7"><controls:LineIcon Kind="add" Width="12" Height="12"/><TextBlock Text="Save"/></StackPanel>
+                                </Button>
                             </StackPanel>
-                            <Button Name="SessionButton" Grid.Column="1" Classes="accent" Content="▶ Start Session" VerticalAlignment="Center" Click="SessionButton_Click"/>
-                        </Grid>
-                    </Border>
+                            <TextBlock Name="ModeTimerHint" FontSize="12" IsVisible="False" Margin="0,4,0,0"/>
 
-                    <TextBlock Text="// GOALS" Classes="muted" Margin="0,20,0,8"/>
-                    <ItemsControl Name="GoalsList">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="models:Goal">
-                                <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrushColor}" BorderThickness="1" Padding="10,8" Margin="0,0,0,6">
-                                    <StackPanel>
-                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                                            <CheckBox Grid.Column="0" IsChecked="{Binding IsComplete, Mode=TwoWay}" Click="GoalCheck_Click"
-                                                      IsVisible="{Binding SubGoals.Count, Converter={x:Static views:ProjectEditorWindow.IsZeroConverter}}"/>
-                                            <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" Margin="8,0,0,0" FontWeight="Bold"/>
-                                            <TextBlock Grid.Column="2" Text="{Binding Completion, StringFormat={}{0:P0}}" Classes="muted" Margin="0,0,8,0" VerticalAlignment="Center"
-                                                       IsVisible="{Binding SubGoals.Count, Converter={x:Static views:ProjectEditorWindow.IsNotZeroConverter}}"/>
-                                            <TextBlock Grid.Column="3" Text="{Binding Weight, StringFormat={}{0}%}" Classes="muted" VerticalAlignment="Center"/>
-                                        </Grid>
-                                        <ItemsControl ItemsSource="{Binding SubGoals}" Margin="20,6,0,0">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate DataType="models:Goal">
-                                                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,4">
-                                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsComplete, Mode=TwoWay}" Click="GoalCheck_Click"/>
-                                                        <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                                                        <TextBlock Grid.Column="2" Text="{Binding Weight, StringFormat={}{0}%}" Classes="muted" VerticalAlignment="Center"/>
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
+                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,24,0,0">
+                                <Button Classes="primary" Padding="18,8" Click="Launch_Click" ToolTip.Tip="Launch the mode and count up, with no time limit">
+                                    <StackPanel Orientation="Horizontal" Spacing="8"><controls:LineIcon Kind="play" Width="12" Height="12"/><TextBlock Text="Launch"/></StackPanel>
+                                </Button>
+                                <Button Classes="icon" Click="EditMode_Click" ToolTip.Tip="Edit mode"><controls:LineIcon Kind="edit"/></Button>
+                                <Button Classes="icon" Click="DeleteMode_Click" ToolTip.Tip="Delete mode"><controls:LineIcon Kind="delete"/></Button>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Project -->
+                    <ScrollViewer Name="ProjectPanel" Padding="28,26" IsVisible="False">
+                        <StackPanel MaxWidth="560" HorizontalAlignment="Left">
+                            <TextBlock Name="ProjectNameText" Classes="h1" Margin="0,0,0,12"/>
+                            <ProgressBar Name="ProjectProgressBar" Minimum="0" Maximum="1" Width="260" HorizontalAlignment="Left"/>
+                            <TextBlock Name="ProjectProgressText" Classes="muted" Margin="0,6,0,2"/>
+                            <TextBlock Name="ProjectTimeText" FontSize="12" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,20"/>
+
+                            <TextBlock Classes="label" Text="GOALS" Margin="0,0,0,6"/>
+                            <ItemsControl Name="ProjectGoals" Margin="0,0,0,20">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Classes="card" Padding="10,8" Margin="0,0,0,6">
+                                            <StackPanel>
+                                                <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsComplete}" MinWidth="0" Click="ProjectGoal_Click"
+                                                              IsVisible="{Binding !SubGoals.Count}"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding Completion, StringFormat={}{0:P0}}" Foreground="{DynamicResource HazardBrush}"
+                                                               Margin="0,0,10,0" VerticalAlignment="Center" IsVisible="{Binding !!SubGoals.Count}"/>
+                                                    <TextBlock Grid.Column="3" Text="{Binding Weight, StringFormat={}{0}%}" Classes="muted" VerticalAlignment="Center"/>
+                                                </Grid>
+                                                <ItemsControl ItemsSource="{Binding SubGoals}" Margin="22,6,0,0" IsVisible="{Binding !!SubGoals.Count}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,2">
+                                                                <CheckBox IsChecked="{Binding IsComplete}" MinWidth="0" Click="ProjectGoal_Click"/>
+                                                                <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                                                <TextBlock Grid.Column="2" Text="{Binding Weight, StringFormat={}{0}%}" Classes="muted" VerticalAlignment="Center"/>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <WrapPanel>
+                                <Button Classes="primary" Padding="18,8" Margin="0,0,8,8" Click="StartProjectSession_Click">
+                                    <StackPanel Orientation="Horizontal" Spacing="8"><controls:LineIcon Kind="play" Width="12" Height="12"/><TextBlock Text="Start Session"/></StackPanel>
+                                </Button>
+                                <Button Classes="icon" Margin="0,0,8,8" Click="LogTime_Click" ToolTip.Tip="Log time you worked away from BijouHub"><controls:LineIcon Kind="clock"/></Button>
+                                <Button Classes="icon" Margin="0,0,8,8" Click="EditProject_Click" ToolTip.Tip="Edit project"><controls:LineIcon Kind="edit"/></Button>
+                                <Button Classes="icon" Margin="0,0,8,8" Click="DeleteProject_Click" ToolTip.Tip="Delete project"><controls:LineIcon Kind="delete"/></Button>
+                                <Button Name="ProjectNotesToggle" Classes="icon" Margin="0,0,8,8" Click="NotesToggle_Click" ToolTip.Tip="Hide notes"><controls:LineIcon Kind="note"/></Button>
+                            </WrapPanel>
+
+                            <TextBlock Classes="label" Text="SESSION NOTES" Margin="0,16,0,6" Name="ProjectNotesLabel"/>
+                            <ItemsControl Name="ProjectNotesList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,8">
+                                            <Run Text="{Binding Timestamp, StringFormat='{}{0:MMM d, HH:mm}'}" Foreground="{DynamicResource MutedTextBrush}"/>
+                                            <Run Text=" — "/>
+                                            <Run Text="{Binding Text}"/>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Active session -->
+                    <ScrollViewer Name="SessionPanel" Padding="28,26" IsVisible="False">
+                        <StackPanel>
+                            <TextBlock Name="SessionTitleText" Classes="h1" Margin="0,0,0,4"/>
+                            <TextBlock Name="SessionContextText" Classes="muted" Margin="0,0,0,4"/>
+                            <TextBlock Name="SessionStatusText" Classes="muted" Margin="0,0,0,22"/>
+                            <TextBlock Name="SessionTimerText" FontFamily="{DynamicResource TimerFont}" FontSize="64" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,26"/>
+
+                            <!-- Time's up: extend or finish, without leaving the page. -->
+                            <Border Name="TimeUpBanner" Classes="card" Padding="14,10" Margin="0,0,0,20" IsVisible="False" MaxWidth="520" HorizontalAlignment="Left"
+                                    BorderBrush="{DynamicResource HazardBrush}">
+                                <DockPanel>
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <Button Content="+15 min" Click="Extend15_Click"/>
+                                        <Button Content="Finish" Classes="primary" Click="FinishSession_Click"/>
                                     </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                                    <TextBlock Name="TimeUpText" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0"/>
+                                </DockPanel>
+                            </Border>
 
-                    <TextBlock Text="// SESSION LOG" Classes="muted" Margin="0,24,0,8"/>
-                    <ItemsControl Name="NotesList">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="models:ProjectNote">
-                                <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrushColor}" BorderThickness="1" Padding="10,8" Margin="0,0,0,6">
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:MMM d, h:mm tt}'}" Classes="muted"/>
-                                        <TextBlock Text="{Binding Text}" TextWrapping="Wrap" Margin="0,4,0,0"/>
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </ScrollViewer>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Padding="16,8" Click="FinishSession_Click" ToolTip.Tip="Finish and log this session">
+                                    <StackPanel Orientation="Horizontal" Spacing="8"><controls:LineIcon Kind="stop" Width="13" Height="13"/><TextBlock Text="Finish"/></StackPanel>
+                                </Button>
+                                <Button Name="PauseButton" Classes="icon" Click="Pause_Click" ToolTip.Tip="Pause"><controls:LineIcon Name="PauseIcon" Kind="pause"/></Button>
+                                <Button Name="SessionNotesToggle" Classes="icon" Click="NotesToggle_Click" ToolTip.Tip="Notes"><controls:LineIcon Kind="note"/></Button>
+                                <Button Name="PopoutButton" Classes="icon" Click="Popout_Click" ToolTip.Tip="Pop out the timer"><controls:LineIcon Name="PopoutIcon" Kind="popout"/></Button>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Panel>
 
-            <!-- Freeform notes panel -->
-            <Border Name="NotesPanel" Grid.Column="1" Width="360" Margin="24,0,0,0"
-                    Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrushColor}" BorderThickness="1" Padding="12">
-                <Grid RowDefinitions="Auto,*">
-                    <TextBlock Text="// NOTES" Classes="muted" Margin="0,0,0,8"/>
-                    <TextBox Name="FreeformNotesBox" Grid.Row="1" AcceptsReturn="True" TextWrapping="Wrap"
-                              VerticalContentAlignment="Top" Watermark="Freeform notes for this project..."/>
-                </Grid>
-            </Border>
+                <!-- Project notes (plain text, shared with the Windows app's NotesPlainText). -->
+                <Border Name="NotesPanel" Grid.Column="1" Width="340" Margin="0,22,22,22" IsVisible="False">
+                    <Grid RowDefinitions="Auto,*">
+                        <TextBlock Classes="label" Text="NOTES" Margin="2,0,0,8"/>
+                        <TextBox Name="NotesBox" Grid.Row="1" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top"
+                                 Watermark="Notes for this project…" LostFocus="NotesBox_LostFocus"/>
+                    </Grid>
+                </Border>
             </Grid>
-        </Grid>
+        </Border>
     </Grid>
 </Window>

@@ -5,21 +5,21 @@
         x:Class="BijouHub.Mac.Views.ProjectEditorWindow"
         Title="Edit Project" Width="680" Height="640"
         WindowStartupLocation="CenterOwner"
-        Background="{StaticResource BgBrush}">
+        Background="{DynamicResource BgBrush}">
     <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,*,Auto">
 
         <StackPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock Text="// PROJECT NAME" Classes="muted"/>
+            <TextBlock Text="PROJECT NAME" Classes="label"/>
             <TextBox Name="NameBox" FontSize="16" Margin="0,4,0,0"/>
         </StackPanel>
 
         <StackPanel Grid.Row="1" Margin="0,0,0,16">
-            <TextBlock Text="// DEFAULT SESSION BUDGET (MINUTES, OPTIONAL)" Classes="muted"/>
+            <TextBlock Text="DEFAULT SESSION BUDGET (MINUTES, OPTIONAL)" Classes="label"/>
             <TextBox Name="BudgetBox" Width="120" HorizontalAlignment="Left" Margin="0,4,0,0"/>
         </StackPanel>
 
         <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
-            <TextBlock Grid.Column="0" Text="// GOALS" Classes="muted" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="0" Text="GOALS" Classes="label" VerticalAlignment="Center"/>
             <Button Grid.Column="1" Content="+ Goal" Click="AddGoal_Click"/>
         </Grid>
 
@@ -27,7 +27,7 @@
             <ItemsControl Name="GoalsList">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="models:Goal">
-                        <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrushColor}"
+                        <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1" Padding="10,8" Margin="0,0,0,8">
                             <StackPanel>
                                 <Grid ColumnDefinitions="Auto,*,60,Auto,Auto">
@@ -60,7 +60,7 @@
 
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button Content="Cancel" Width="90" Margin="0,0,8,0" Click="Cancel_Click"/>
-            <Button Classes="accent" Content="Save" Width="90" Click="Save_Click"/>
+            <Button Classes="primary" Content="Save" Width="90" Click="Save_Click"/>
         </StackPanel>
     </Grid>
 </Window>

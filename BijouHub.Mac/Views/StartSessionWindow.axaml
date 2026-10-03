@@ -1,25 +1,27 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="BijouHub.Mac.Views.StartSessionWindow"
-        Title="Start Session" Width="420" Height="340"
-        WindowStartupLocation="CenterOwner"
-        CanResize="False"
-        Background="{StaticResource BgBrush}">
-    <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*,Auto">
-        <TextBlock Name="ProjectNameText" Classes="heading" FontSize="18" Margin="0,0,0,16"/>
+        Title="Start Session" Width="440" Height="400"
+        WindowStartupLocation="CenterOwner" CanResize="False"
+        Background="{DynamicResource BgBrush}">
+    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,*,Auto">
+        <TextBlock Name="ProjectNameText" Classes="h2" Margin="0,0,0,16"/>
 
-        <TextBlock Grid.Row="1" Text="// WORKING ON" Classes="muted"/>
-        <ComboBox Name="GoalCombo" Grid.Row="2" Margin="0,4,0,16" HorizontalAlignment="Stretch"/>
+        <TextBlock Grid.Row="1" Text="MODE" Classes="label"/>
+        <ComboBox Name="ModeCombo" Grid.Row="2" Margin="0,4,0,14" HorizontalAlignment="Stretch"/>
 
-        <TextBlock Grid.Row="3" Text="// TIME BUDGET" Classes="muted"/>
-        <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,4,0,16">
-            <ComboBox Name="BudgetCombo" Width="160" SelectionChanged="BudgetCombo_SelectionChanged"/>
-            <TextBox Name="CustomBudgetBox" Width="80" Margin="8,0,0,0" IsVisible="False" Watermark="minutes"/>
-        </StackPanel>
+        <TextBlock Grid.Row="3" Text="WORKING ON" Classes="label"/>
+        <ComboBox Name="GoalCombo" Grid.Row="4" Margin="0,4,0,14" HorizontalAlignment="Stretch"/>
 
-        <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Cancel" Width="90" Margin="0,0,8,0" Click="Cancel_Click"/>
-            <Button Classes="accent" Content="▶ Start" Width="100" Click="Start_Click"/>
+        <TextBlock Grid.Row="5" Text="HOW LONG" Classes="label"/>
+        <TextBox Name="DurationBox" Grid.Row="6" Margin="0,4,0,4" Width="160" HorizontalAlignment="Left"
+                 Watermark="45, 1:30, 2h — or leave empty" TextChanged="DurationBox_TextChanged"/>
+        <CheckBox Name="CountDownCheck" Grid.Row="7" Content="Count down" IsEnabled="False"
+                  ToolTip.Tip="Show time remaining instead of time elapsed"/>
+
+        <StackPanel Grid.Row="9" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Cancel" Width="90" HorizontalContentAlignment="Center" Click="Cancel_Click"/>
+            <Button Classes="primary" Content="Start" Width="100" HorizontalContentAlignment="Center" Click="Start_Click"/>
         </StackPanel>
     </Grid>
 </Window>

@@ -4,7 +4,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Windows.Threading;
 
 namespace BijouHub.Services;
 
@@ -19,15 +18,16 @@ public sealed class StreamDeckBridge : IDisposable
 {
     public const int DefaultPort = 47823;
 
-    private readonly Dispatcher _dispatcher;
+    // Runs a command on the app's UI thread (WPF's Dispatcher, Avalonia's Dispatcher.UIThread).
+    private readonly Func<Func<JsonObject?>, Task<JsonObject?>> _runOnUi;
     private readonly Func<JsonObject, JsonObject?> _handler;
     private readonly List<Client> _clients = new();
     private readonly CancellationTokenSource _cts = new();
     private TcpListener? _listener;
 
-    public StreamDeckBridge(Dispatcher dispatcher, Func<JsonObject, JsonObject?> handler)
+    public StreamDeckBridge(Func<Func<JsonObject?>, Task<JsonObject?>> runOnUi, Func<JsonObject, JsonObject?> handler)
     {
-        _dispatcher = dispatcher;
+        _runOnUi = runOnUi;
         _handler = handler;
     }
 
@@ -111,7 +111,7 @@ public sealed class StreamDeckBridge : IDisposable
                 if (request == null) continue;
 
                 // Commands touch session state, so they run on the UI thread like a click would.
-                var reply = await _dispatcher.InvokeAsync(() => _handler(request));
+                var reply = await _runOnUi(() => _handler(request));
                 if (reply != null && request["id"] is JsonNode id)
                 {
                     reply["type"] = "reply";

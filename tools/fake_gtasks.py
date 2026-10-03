@@ -164,7 +164,7 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     port = int(sys.argv[1])
     if len(sys.argv) > 2:
-        seed = json.load(open(sys.argv[2], encoding="utf-8"))
+        seed = json.load(open(sys.argv[2], encoding="utf-8-sig"))
         for title, tasks in seed.items():
             lid = new_list(title)["id"]
             for t in tasks:

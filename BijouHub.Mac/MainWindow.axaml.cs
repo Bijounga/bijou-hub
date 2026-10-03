@@ -1,8 +1,9 @@
 using System.Collections.ObjectModel;
 using Avalonia.Controls;
+using Avalonia.Threading;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
-using Avalonia.Threading;
 using BijouHub.Mac.Services;
 using BijouHub.Mac.Views;
 using BijouHub.Models;
@@ -10,374 +11,305 @@ using BijouHub.Services;
 
 namespace BijouHub.Mac;
 
+// The Mac BijouHub: the same features as Windows (modes and timers, projects, sessions, today's
+// goals with Google Tasks, the project board, the Stream Deck) minus app blocking. Split into
+// partial files by area; this one is the shell — startup, navigation and the sidebar tools.
 public partial class MainWindow : Window
 {
+    private readonly ModeStore _modeStore = new();
     private ProjectStore _projectStore = new();
-    private SessionLogService _sessionLogService = new();
+    private SessionLogService _logService = new();
     private readonly AppSettingsStore _settingsStore = new();
 
-    private ObservableCollection<Project> _projects = new();
-    private Project? _activeProject;
-    private Project? _notesLoadedFor;
-
-    private DateTime? _sessionStart;
-    private Goal? _sessionGoal;
-    private int? _sessionTargetMinutes;
-    private DispatcherTimer? _tickTimer;
-
+    private readonly ObservableCollection<WorkMode> _modes;
+    private ObservableCollection<Project> _projects;
+    private WorkMode? _shownMode;
+    private Project? _detailProject;
     private bool _notesVisible = true;
-
-    private MacUpdateInfo? _pendingUpdate;
 
     public MainWindow()
     {
         InitializeComponent();
 
+        RecoverInterruptedSession();
+        _modes = new ObservableCollection<WorkMode>(_modeStore.Load());
+        ModesList.ItemsSource = _modes;
         _projects = new ObservableCollection<Project>(_projectStore.Load());
         ProjectsList.ItemsSource = _projects;
 
-        UpdateSyncFolderButtonLabel();
-        UpdateHomeStats();
+        VersionText.Text = "v" + MacUpdateService.GetCurrentVersion();
+        InitSession();
+        InitGoals();
+        InitGoogleTasks();
+        InitDeck();
+        RefreshToolStates();
+        ShowHome();
 
-        VersionButton.Content = $"v{MacUpdateService.GetCurrentVersion()}";
-        _ = CheckForUpdateAsync(silent: true);
-        _ = Task.Run(MacUpdateService.EjectStaleMounts);
-
-        Closing += (_, _) => SaveFreeformNotesIfLoaded();
+        Opened += async (_, _) =>
+        {
+            await OfferMoveToApplicationsAsync();
+            _ = CheckForUpdateAsync();
+            // BijouHub tends to stay open for days on a Mac, so look again every few hours.
+            var updateTimer = new DispatcherTimer { Interval = TimeSpan.FromHours(6) };
+            updateTimer.Tick += (_, _) => { if (_pendingUpdate == null) _ = CheckForUpdateAsync(); };
+            updateTimer.Start();
+            _ = Task.Run(MacUpdateService.TidyOnLaunch);
+        };
+        Closing += (_, _) =>
+        {
+            SaveProjectNotes();
+            SaveDailyPlanNow();
+            _dailyStore.Flush();
+            _deckBridge?.Dispose();
+            _popout?.Close();
+            if (IsSessionActive) FinalizeSessionSilently();
+        };
     }
 
-    private async Task CheckForUpdateAsync(bool silent)
+    // ---------- Navigation ----------
+
+    private void ShowOnly(Control panel)
     {
-        if (!silent)
-        {
-            VersionButton.Content = "Checking...";
-            VersionButton.IsEnabled = false;
-        }
-
-        MacUpdateInfo? update = null;
-        try
-        {
-            update = await MacUpdateService.CheckForUpdateAsync();
-        }
-        catch
-        {
-            // No network, rate-limited, etc. — silently skip.
-        }
-
-        _pendingUpdate = update;
-        if (update != null)
-        {
-            UpdateButton.IsVisible = true;
-            UpdateButton.Content = $"⬆ Update to v{update.Version}";
-        }
-        else
-        {
-            UpdateButton.IsVisible = false;
-        }
-
-        if (!silent)
-            VersionButton.IsEnabled = true;
-        VersionButton.Content = $"v{MacUpdateService.GetCurrentVersion()}";
+        SaveProjectNotes();
+        HomePanel.IsVisible = panel == HomePanel;
+        ModePanel.IsVisible = panel == ModePanel;
+        ProjectPanel.IsVisible = panel == ProjectPanel;
+        SessionPanel.IsVisible = panel == SessionPanel;
+        UpdateNotesPanel();
     }
 
-    private void VersionButton_Click(object? sender, RoutedEventArgs e) => _ = CheckForUpdateAsync(silent: false);
-
-    private async void UpdateButton_Click(object? sender, RoutedEventArgs e)
+    private void Logo_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (_pendingUpdate == null) return;
-
-        UpdateButton.IsEnabled = false;
-        UpdateButton.Content = "Downloading...";
-        try
-        {
-            await MacUpdateService.DownloadAndOpenAsync(_pendingUpdate.DownloadUrl);
-            UpdateButton.Content = "Opened DMG — drag to Applications";
-        }
-        catch
-        {
-            UpdateButton.IsEnabled = true;
-            UpdateButton.Content = "Update failed — retry?";
-        }
+        ModesList.SelectedItem = null;
+        ProjectsList.SelectedItem = null;
+        ShowHome();
     }
 
-    private void UpdateHomeStats()
+    private void ModesList_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        var todaySeconds = _sessionLogService.GetTodayTotalSeconds();
-        TodayTotalText.Text = $"Today: {FormatMinutes(todaySeconds)}";
+        if (ModesList.SelectedItem is not WorkMode mode)
+        {
+            if (ProjectsList.SelectedItem == null && !IsSessionActive) ShowHome();
+            return;
+        }
+        ProjectsList.SelectedItem = null;
+        if (mode == _activeMode && IsSessionActive) ShowSession();
+        else ShowMode(mode);
     }
-
-    private static string FormatMinutes(int totalSeconds) => $"{totalSeconds / 60}m";
 
     private void ProjectsList_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        SaveFreeformNotesIfLoaded();
-
-        _activeProject = ProjectsList.SelectedItem as Project;
-        if (_activeProject == null)
+        if (ProjectsList.SelectedItem is not Project project)
         {
-            HomePanel.IsVisible = true;
-            ProjectPanel.IsVisible = false;
+            if (ModesList.SelectedItem == null && !IsSessionActive) ShowHome();
             return;
         }
-
-        HomePanel.IsVisible = false;
-        ProjectPanel.IsVisible = true;
-        RefreshProjectPanel();
-        LoadFreeformNotes(_activeProject);
-        UpdateNotesPanelVisibility();
+        ModesList.SelectedItem = null;
+        if (project == _activeProject && IsSessionActive) ShowSession();
+        else ShowProject(project);
     }
 
-    private void RefreshProjectPanel()
+    private void SelectProject(Project project)
     {
-        if (_activeProject == null) return;
-
-        ProjectNameText.Text = _activeProject.Name;
-        ProjectProgressBar.Value = _activeProject.Completion;
-        ProjectProgressText.Text = _activeProject.CompletionPercentText;
-        GoalsList.ItemsSource = _activeProject.Goals;
-        NotesList.ItemsSource = _activeProject.Notes.OrderByDescending(n => n.Timestamp).ToList();
+        ModesList.SelectedItem = null;
+        if (ProjectsList.SelectedItem == project) ShowProject(project);
+        else ProjectsList.SelectedItem = project;
     }
 
-    private void NewProject_Click(object? sender, RoutedEventArgs e)
+    // ---------- Notes panel (project notes, shown beside a project or its running session) ----------
+
+    private Project? _notesLoadedFor;
+
+    private void UpdateNotesPanel()
     {
-        var project = new Project { Name = "New Project" };
-        _projects.Add(project);
-        _projectStore.Save(_projects.ToList());
-        ProjectsList.SelectedItem = project;
-    }
-
-    private async void EditProject_Click(object? sender, RoutedEventArgs e)
-    {
-        if (_activeProject == null) return;
-
-        var editor = new ProjectEditorWindow(_activeProject);
-        var saved = await editor.ShowDialog<bool>(this);
-        if (!saved) return;
-
-        SaveProjects();
-        // Force the sidebar list and detail panel to pick up the (possibly renamed) project.
-        var project = _activeProject;
-        ProjectsList.ItemsSource = null;
-        ProjectsList.ItemsSource = _projects;
-        ProjectsList.SelectedItem = project;
-        RefreshProjectPanel();
-    }
-
-    private async void LogTime_Click(object? sender, RoutedEventArgs e)
-    {
-        if (_activeProject == null) return;
-
-        var dlg = new LogTimeWindow();
-        var logged = await dlg.ShowDialog<bool>(this);
-        if (!logged) return;
-
-        var end = DateTime.Now;
-        var start = end.AddMinutes(-dlg.TotalMinutes);
-
-        _sessionLogService.InsertSession(new SessionRecord
+        var project = ProjectPanel.IsVisible ? _detailProject : SessionPanel.IsVisible ? _activeProject : null;
+        var show = _notesVisible && project != null;
+        if (show && _notesLoadedFor != project)
         {
-            ModeName = "Manual",
-            StartTime = start,
-            EndTime = end,
-            ActiveSeconds = dlg.TotalMinutes * 60,
-            IdleSeconds = 0,
-            ProjectId = _activeProject.Id,
-            ProjectName = _activeProject.Name,
-            Note = dlg.Note
-        });
-
-        if (!string.IsNullOrEmpty(dlg.Note))
-        {
-            _activeProject.Notes.Add(new ProjectNote { Timestamp = end, Text = dlg.Note });
-            SaveProjects();
+            NotesBox.Text = project!.NotesPlainText ?? "";
+            _notesLoadedFor = project;
         }
-
-        RefreshProjectPanel();
-        UpdateHomeStats();
-    }
-
-    private void DeleteProject_Click(object? sender, RoutedEventArgs e)
-    {
-        if (_activeProject == null) return;
-
-        _projects.Remove(_activeProject);
-        SaveProjects();
-        _activeProject = null;
-        HomePanel.IsVisible = true;
-        ProjectPanel.IsVisible = false;
-    }
-
-    private void GoalCheck_Click(object? sender, RoutedEventArgs e)
-    {
-        SaveProjects();
-        RefreshProjectPanel();
-    }
-
-    private void SaveProjects() => _projectStore.Save(_projects.ToList());
-
-    // ---------- Freeform notes ----------
-
-    private void UpdateNotesPanelVisibility()
-    {
-        NotesPanel.IsVisible = _notesVisible;
-        NotesToggleButton.Content = _notesVisible ? "Hide Notes" : "Show Notes";
+        NotesPanel.IsVisible = show;
+        var tip = _notesVisible ? "Hide notes" : "Show notes";
+        ToolTip.SetTip(ProjectNotesToggle, tip);
+        ToolTip.SetTip(SessionNotesToggle, tip);
     }
 
     private void NotesToggle_Click(object? sender, RoutedEventArgs e)
     {
-        if (_notesVisible) SaveFreeformNotesIfLoaded();
+        SaveProjectNotes();
         _notesVisible = !_notesVisible;
-        UpdateNotesPanelVisibility();
+        UpdateNotesPanel();
     }
 
-    private void LoadFreeformNotes(Project project)
-    {
-        FreeformNotesBox.Text = project.NotesPlainText ?? "";
-        _notesLoadedFor = project;
-    }
+    private void NotesBox_LostFocus(object? sender, RoutedEventArgs e) => SaveProjectNotes();
 
-    private void SaveFreeformNotesIfLoaded()
+    private void SaveProjectNotes()
     {
         if (_notesLoadedFor == null) return;
-        _notesLoadedFor.NotesPlainText = FreeformNotesBox.Text ?? "";
-        SaveProjects();
+        var text = NotesBox.Text ?? "";
+        if (text == (_notesLoadedFor.NotesPlainText ?? "")) return;
+        _notesLoadedFor.NotesPlainText = text;
+        // The Windows app's rich notes win on Windows; clearing them hands this text over there too.
+        _notesLoadedFor.FreeformNotesXaml = null;
+        _projectStore.Save(_projects.ToList());
     }
 
-    private async void SessionButton_Click(object? sender, RoutedEventArgs e)
+    // ---------- Sidebar tools ----------
+
+    private void RefreshToolStates()
     {
-        if (_sessionStart == null)
-            await StartSession();
-        else
-            await StopSession();
+        var synced = !string.IsNullOrEmpty(_settingsStore.Load().DataFolderPath);
+        SyncFolderButton.Classes.Set("on", synced);
+        ToolTip.SetTip(SyncFolderButton, synced
+            ? $"Syncing projects and history via {_settingsStore.Load().DataFolderPath} — click to change"
+            : "Sync folder: keep projects and history in a folder you sync across devices");
+
+        var login = MacPlatform.StartsAtLogin;
+        LoginItemButton.Classes.Set("on", login);
+        ToolTip.SetTip(LoginItemButton, login ? "Opens at login — click to turn off" : "Open at login");
     }
 
-    private async Task StartSession()
+    private async void SessionLog_Click(object? sender, RoutedEventArgs e)
     {
-        if (_activeProject == null) return;
-
-        var dlg = new StartSessionWindow(_activeProject);
-        var started = await dlg.ShowDialog<bool>(this);
-        if (!started) return;
-
-        _sessionGoal = dlg.SelectedGoal;
-        _sessionTargetMinutes = dlg.TargetMinutes;
-
-        _sessionStart = DateTime.Now;
-        SessionButton.Content = "Stop Session";
-        SessionButton.Classes.Remove("accent");
-        SessionSubtitleText.Text = _sessionGoal != null ? $"// SESSION — {_sessionGoal.Name}" : "// SESSION";
-
-        _tickTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _tickTimer.Tick += (_, _) =>
-        {
-            var elapsed = DateTime.Now - _sessionStart!.Value;
-            ElapsedText.Text = elapsed.ToString(@"hh\:mm\:ss");
-            if (_sessionTargetMinutes is int budget)
-            {
-                var remaining = budget - (int)elapsed.TotalMinutes;
-                SessionSubtitleText.Text = (_sessionGoal != null ? $"// SESSION — {_sessionGoal.Name} — " : "// SESSION — ")
-                    + (remaining >= 0 ? $"{remaining}m left of {budget}m" : $"{-remaining}m over {budget}m budget");
-            }
-        };
-        _tickTimer.Start();
-    }
-
-    private async Task StopSession()
-    {
-        if (_sessionStart == null || _activeProject == null) return;
-
-        _tickTimer?.Stop();
-        var start = _sessionStart.Value;
-        var end = DateTime.Now;
-        var activeSeconds = (int)(end - start).TotalSeconds;
-
-        var finishDlg = new FinishNoteWindow();
-        await finishDlg.ShowDialog<bool>(this);
-        var note = finishDlg.Note;
-
-        _sessionLogService.InsertSession(new SessionRecord
-        {
-            ModeName = "Mac",
-            StartTime = start,
-            EndTime = end,
-            ActiveSeconds = activeSeconds,
-            IdleSeconds = 0,
-            ProjectId = _activeProject.Id,
-            ProjectName = _activeProject.Name,
-            GoalId = _sessionGoal?.Id,
-            GoalName = _sessionGoal?.Name,
-            Note = note
-        });
-
-        if (!string.IsNullOrEmpty(note))
-        {
-            _activeProject.Notes.Add(new ProjectNote { Timestamp = end, Text = note });
-            SaveProjects();
-        }
-
-        _sessionStart = null;
-        _sessionGoal = null;
-        _sessionTargetMinutes = null;
-        SessionButton.Content = "▶ Start Session";
-        SessionButton.Classes.Add("accent");
-        SessionSubtitleText.Text = "// SESSION";
-        ElapsedText.Text = "00:00:00";
-
-        RefreshProjectPanel();
-        UpdateHomeStats();
-    }
-
-    private void UpdateSyncFolderButtonLabel()
-    {
-        var settings = _settingsStore.Load();
-        SyncFolderButton.Content = string.IsNullOrEmpty(settings.DataFolderPath) ? "Sync Folder..." : "🔗 Synced";
+        var window = new SessionLogWindow(_logService, _projects.ToList());
+        await window.ShowDialog(this);
+        if (!window.AssignmentsChanged) return;
+        _boardBuiltAt = DateTime.MinValue;
+        if (ProjectPanel.IsVisible && _detailProject != null) ShowProject(_detailProject);
+        else if (HomePanel.IsVisible) ShowHome();
     }
 
     private async void SyncFolder_Click(object? sender, RoutedEventArgs e)
     {
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel == null) return;
-
-        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            Title = "Choose a folder to sync Projects & session history through",
+            Title = "Choose a folder to sync projects, goals and history through",
             AllowMultiple = false
         });
-        if (folders.Count == 0) return;
-
-        var chosen = folders[0].TryGetLocalPath();
+        var chosen = folders.Count > 0 ? folders[0].TryGetLocalPath() : null;
         if (string.IsNullOrEmpty(chosen)) return;
 
-        var hasExistingSyncedData = File.Exists(Path.Combine(chosen, "projects.json"))
-            || File.Exists(Path.Combine(chosen, "sessions.json"));
-
-        if (!hasExistingSyncedData)
+        var hasData = File.Exists(Path.Combine(chosen, "projects.json")) || File.Exists(Path.Combine(chosen, "sessions.json"));
+        if (!hasData)
         {
-            foreach (var fileName in new[] { "projects.json", "sessions.json" })
+            // First time pointing here: bring the existing data along so nothing's lost.
+            foreach (var file in new[] { "projects.json", "sessions.json", "daily.json" })
             {
-                var source = Path.Combine(DataPaths.SyncDir, fileName);
-                var dest = Path.Combine(chosen, fileName);
-                if (File.Exists(source) && !File.Exists(dest))
-                    File.Copy(source, dest);
+                var source = Path.Combine(DataPaths.SyncDir, file);
+                var target = Path.Combine(chosen, file);
+                if (File.Exists(source) && !File.Exists(target)) File.Copy(source, target);
             }
         }
 
+        _dailyStore.Flush();
         var settings = _settingsStore.Load();
         settings.DataFolderPath = chosen;
         _settingsStore.Save(settings);
 
-        // Re-create the stores so they pick up the new folder immediately, no restart needed.
+        // Re-create the stores so they read the new folder straight away — no restart needed.
         _projectStore = new ProjectStore();
-        _sessionLogService = new SessionLogService();
-
+        _logService = new SessionLogService();
+        _dailyStore = new DailyPlanStore();
+        _today = null;
         _projects = new ObservableCollection<Project>(_projectStore.Load());
         ProjectsList.ItemsSource = _projects;
-        _activeProject = null;
-        _notesLoadedFor = null;
-        HomePanel.IsVisible = true;
-        ProjectPanel.IsVisible = false;
+        InvalidateTodayLogged();
+        RefreshToolStates();
+        ShowHome();
+    }
 
-        UpdateSyncFolderButtonLabel();
-        UpdateHomeStats();
+    private void LoginItem_Click(object? sender, RoutedEventArgs e)
+    {
+        if (!OperatingSystem.IsMacOS()) return;
+        MacPlatform.SetStartsAtLogin(!MacPlatform.StartsAtLogin);
+        RefreshToolStates();
+    }
+
+    private async void Theme_Click(object? sender, RoutedEventArgs e)
+    {
+        await new ThemeWindow(_settingsStore).ShowDialog(this);
+        _boardBuiltAt = DateTime.MinValue; // card colors come from the theme
+        if (HomePanel.IsVisible) ShowBoard();
+    }
+
+    private async void StreamDeck_Click(object? sender, RoutedEventArgs e) =>
+        await new StreamDeckWindow(() => _deckBridge?.ClientCount ?? 0).ShowDialog(this);
+
+    // ---------- Updates ----------
+
+    private MacUpdateInfo? _pendingUpdate;
+    private string? _downloadedUpdate;
+
+    private async Task CheckForUpdateAsync()
+    {
+        try
+        {
+            _pendingUpdate = await MacUpdateService.CheckForUpdateAsync();
+        }
+        catch
+        {
+            return; // offline or rate-limited — try again next launch
+        }
+        if (_pendingUpdate == null) return;
+
+        UpdateButton.Content = $"Update to v{_pendingUpdate.Version}";
+        ToolTip.SetTip(UpdateButton, MacUpdateService.CanSelfUpdate
+            ? "Downloads the update, then restarts BijouHub on the new version"
+            : "Move BijouHub into Applications to update in place");
+        UpdateButton.IsVisible = true;
+    }
+
+    private async void UpdateButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_pendingUpdate == null) return;
+        if (!MacUpdateService.CanSelfUpdate)
+        {
+            await PromptWindow.Notice(this, "Update", "BijouHub can only update itself from your Applications folder. Move it there (drag it in from Finder), open it again, then click Update.");
+            return;
+        }
+
+        if (IsSessionActive && !await PromptWindow.Confirm(this, "Update",
+                "Updating restarts BijouHub, which finishes and logs the session that's running now.", "Finish and update"))
+            return;
+
+        UpdateButton.IsEnabled = false;
+        try
+        {
+            if (_downloadedUpdate == null)
+            {
+                var progress = new Progress<int>(p => UpdateButton.Content = $"Downloading… {p}%");
+                _downloadedUpdate = await MacUpdateService.DownloadAsync(_pendingUpdate, progress);
+            }
+            UpdateButton.Content = "Restarting…";
+            MacUpdateService.InstallAndRelaunch(_downloadedUpdate);
+            Close();
+        }
+        catch (Exception ex)
+        {
+            UpdateButton.IsEnabled = true;
+            UpdateButton.Content = $"Update to v{_pendingUpdate.Version}";
+            await PromptWindow.Notice(this, "Update didn't finish", ex.Message);
+        }
+    }
+
+    // Opened straight from the disk image: offer to move into Applications (then the image can
+    // be ejected, and updates can install themselves).
+    private async Task OfferMoveToApplicationsAsync()
+    {
+        if (!MacUpdateService.RunningFromDiskImage) return;
+        var move = await PromptWindow.Confirm(this, "Move to Applications",
+            "BijouHub is running from the disk image. Move it to your Applications folder? Once it's there, the disk image is ejected and updates install themselves.",
+            "Move to Applications");
+        if (!move) return;
+        try
+        {
+            await MacUpdateService.MoveToApplicationsAsync();
+            Close();
+        }
+        catch (Exception ex)
+        {
+            await PromptWindow.Notice(this, "Couldn't move it", ex.Message + "\n\nDrag BijouHub into Applications in Finder instead.");
+        }
     }
 }

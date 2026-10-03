@@ -4,23 +4,23 @@
         Title="Log Time" Width="420" Height="420"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
-        Background="{StaticResource BgBrush}">
+        Background="{DynamicResource BgBrush}">
     <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,*,Auto">
-        <TextBlock Text="// HOW LONG DID YOU WORK?" Classes="muted" Margin="0,0,0,6"/>
+        <TextBlock Text="HOW LONG DID YOU WORK?" Classes="label" Margin="0,0,0,6"/>
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,16">
             <TextBox Name="HoursBox" Width="60" Text="0"/>
-            <TextBlock Text="hours" VerticalAlignment="Center" Margin="6,0,16,0" Classes="muted"/>
+            <TextBlock Text="hours" VerticalAlignment="Center" Margin="6,0,16,0" Classes="label"/>
             <TextBox Name="MinutesBox" Width="60" Text="0"/>
-            <TextBlock Text="minutes" VerticalAlignment="Center" Margin="6,0,0,0" Classes="muted"/>
+            <TextBlock Text="minutes" VerticalAlignment="Center" Margin="6,0,0,0" Classes="label"/>
         </StackPanel>
 
-        <TextBlock Grid.Row="2" Text="// WHAT DID YOU DO IN THAT TIME?" Classes="muted" Margin="0,0,0,6"/>
+        <TextBlock Grid.Row="2" Text="WHAT DID YOU DO IN THAT TIME?" Classes="label" Margin="0,0,0,6"/>
         <TextBox Name="NoteBox" Grid.Row="3" AcceptsReturn="True" TextWrapping="Wrap"
                   VerticalContentAlignment="Top" Margin="0,0,0,16"/>
 
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Cancel" Width="90" Margin="0,0,8,0" Click="Cancel_Click"/>
-            <Button Classes="accent" Content="Log Time" Width="100" Click="Save_Click"/>
+            <Button Classes="primary" Content="Log Time" Width="100" Click="Save_Click"/>
         </StackPanel>
     </Grid>
 </Window>

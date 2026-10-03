@@ -1,0 +1,24 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="BijouHub.Mac.Views.ThemeWindow"
+        Title="Theme" Width="340" Height="620" WindowStartupLocation="CenterOwner" CanResize="False"
+        Background="{DynamicResource BgBrush}">
+    <Grid Margin="16" RowDefinitions="Auto,*,Auto">
+        <TextBlock Classes="muted" Text="Choose a theme — it applies immediately." Margin="0,0,0,12"/>
+        <ListBox Name="ThemesList" Grid.Row="1" Classes="nav" SelectionChanged="ThemesList_SelectionChanged">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Border Width="30" Height="18" CornerRadius="4" ClipToBounds="True" BorderBrush="#40000000" BorderThickness="1"
+                                Background="{Binding Base}">
+                            <Border Width="11" HorizontalAlignment="Right" Background="{Binding Accent}"/>
+                        </Border>
+                        <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <Button Grid.Row="2" Content="Done" Classes="primary" Width="90" HorizontalAlignment="Right" HorizontalContentAlignment="Center"
+                Margin="0,14,0,0" Click="Done_Click"/>
+    </Grid>
+</Window>

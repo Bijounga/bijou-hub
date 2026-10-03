@@ -1,0 +1,123 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Generated from Themes/Vaporwave.xaml by tools/themes/gen_mac_themes.py — edit the Windows theme and rerun. -->
+    <x:String x:Key="ThemeVariantName">Light</x:String>
+    <Color x:Key="BgColor">#E8D9FF</Color>
+    <SolidColorBrush x:Key="BgBrush" Color="#E8D9FF"/>
+    <Color x:Key="PanelColor">#E8D9FF</Color>
+    <SolidColorBrush x:Key="PanelBrush" Color="#E8D9FF"/>
+    <Color x:Key="CardColor">#F6EDFF</Color>
+    <SolidColorBrush x:Key="CardBrush" Color="#F6EDFF"/>
+    <Color x:Key="CardHoverColor">#FFF6FF</Color>
+    <SolidColorBrush x:Key="CardHoverBrush" Color="#FFF6FF"/>
+    <Color x:Key="TextColor">#2A1A4A</Color>
+    <SolidColorBrush x:Key="TextBrush" Color="#2A1A4A"/>
+    <Color x:Key="MutedTextColor">#4F3D78</Color>
+    <SolidColorBrush x:Key="MutedTextBrush" Color="#4F3D78"/>
+    <Color x:Key="FaintTextColor">#6A5794</Color>
+    <SolidColorBrush x:Key="FaintTextBrush" Color="#6A5794"/>
+    <Color x:Key="BorderColor">#B99BE6</Color>
+    <SolidColorBrush x:Key="BorderBrush" Color="#B99BE6"/>
+    <Color x:Key="SoftBorderColor">#D9C8F3</Color>
+    <SolidColorBrush x:Key="SoftBorderBrush" Color="#D9C8F3"/>
+    <Color x:Key="AccentColor">#C81D92</Color>
+    <SolidColorBrush x:Key="AccentBrush" Color="#C81D92"/>
+    <Color x:Key="HazardColor">#C96F00</Color>
+    <SolidColorBrush x:Key="HazardBrush" Color="#C96F00"/>
+    <Color x:Key="PinkColor">#8A3AD9</Color>
+    <SolidColorBrush x:Key="PinkBrush" Color="#8A3AD9"/>
+    <Color x:Key="DangerColor">#D6204E</Color>
+    <SolidColorBrush x:Key="DangerBrush" Color="#D6204E"/>
+    <Color x:Key="SuccessColor">#0F9D74</Color>
+    <SolidColorBrush x:Key="SuccessBrush" Color="#0F9D74"/>
+    <FontFamily x:Key="HeadingFont">Trebuchet MS, fonts:Inter#Inter</FontFamily>
+    <FontFamily x:Key="BodyFont">Trebuchet MS, fonts:Inter#Inter</FontFamily>
+    <FontFamily x:Key="TimerFont">Trebuchet MS, fonts:Inter#Inter</FontFamily>
+    <CornerRadius x:Key="Radius">4</CornerRadius>
+    <CornerRadius x:Key="PanelRadius">4</CornerRadius>
+    <ImageBrush x:Key="WallpaperBrush" Source="avares://BijouHub.Mac/Assets/Themes/vaporwave.jpg" Stretch="UniformToFill" AlignmentY="Bottom"/>
+    <SolidColorBrush x:Key="SidebarBrush" Color="#F2EAE0FF"/>
+    <SolidColorBrush x:Key="ContentBrush" Color="#EDF4EEFF"/>
+    <SolidColorBrush x:Key="PanelEdgeBrush" Color="#B967FF"/>
+    <Thickness x:Key="ShellPadding">8</Thickness>
+    <Thickness x:Key="PanelGap">0,0,8,0</Thickness>
+    <Thickness x:Key="PanelEdge">1</Thickness>
+    <BoxShadows x:Key="PanelShadow">0 8 28 0 #66000000</BoxShadows>
+    <SolidColorBrush x:Key="ButtonBrush" Color="#FDF3FF"/>
+    <SolidColorBrush x:Key="ButtonEdgeBrush" Color="#FF71CE"/>
+    <SolidColorBrush x:Key="ButtonInkBrush" Color="#2A1A4A"/>
+    <LinearGradientBrush x:Key="PrimaryBrush" StartPoint="0%,0%" EndPoint="100%,0%"><GradientStop Color="#FF71CE" Offset="0"/><GradientStop Color="#B967FF" Offset="1"/></LinearGradientBrush>
+    <SolidColorBrush x:Key="PrimaryEdgeBrush" Color="#B967FF"/>
+    <SolidColorBrush x:Key="PrimaryInkBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ButtonBackground" Color="#FDF3FF"/>
+    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#FDF3FF"/>
+    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#FDF3FF"/>
+    <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="#FDF3FF"/>
+    <SolidColorBrush x:Key="ButtonForeground" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#6A5794"/>
+    <SolidColorBrush x:Key="ButtonBorderBrush" Color="#FF71CE"/>
+    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#C81D92"/>
+    <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#C81D92"/>
+    <SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="#D9C8F3"/>
+    <SolidColorBrush x:Key="TextControlForeground" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="TextControlForegroundPointerOver" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="TextControlForegroundFocused" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="TextControlBackground" Color="#F6EDFF"/>
+    <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#F6EDFF"/>
+    <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#F6EDFF"/>
+    <SolidColorBrush x:Key="TextControlBorderBrush" Color="#B99BE6"/>
+    <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#B99BE6"/>
+    <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#C81D92"/>
+    <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="#6A5794"/>
+    <SolidColorBrush x:Key="TextControlPlaceholderForegroundPointerOver" Color="#6A5794"/>
+    <SolidColorBrush x:Key="TextControlPlaceholderForegroundFocused" Color="#6A5794"/>
+    <SolidColorBrush x:Key="ComboBoxBackground" Color="#F6EDFF"/>
+    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#FFF6FF"/>
+    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#FFF6FF"/>
+    <SolidColorBrush x:Key="ComboBoxBackgroundFocused" Color="#F6EDFF"/>
+    <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#B99BE6"/>
+    <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#B99BE6"/>
+    <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="#C81D92"/>
+    <SolidColorBrush x:Key="ComboBoxForeground" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="ComboBoxPlaceHolderForeground" Color="#6A5794"/>
+    <SolidColorBrush x:Key="ComboBoxDropDownGlyphForeground" Color="#4F3D78"/>
+    <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="#E8D9FF"/>
+    <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="#B99BE6"/>
+    <SolidColorBrush x:Key="ComboBoxItemForeground" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="ComboBoxItemForegroundSelected" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="ComboBoxItemBackgroundPointerOver" Color="#FFF6FF"/>
+    <SolidColorBrush x:Key="ComboBoxItemBackgroundSelected" Color="#FFF6FF"/>
+    <SolidColorBrush x:Key="ComboBoxItemBackgroundSelectedPointerOver" Color="#FFF6FF"/>
+    <SolidColorBrush x:Key="MenuFlyoutPresenterBackground" Color="#E8D9FF"/>
+    <SolidColorBrush x:Key="MenuFlyoutPresenterBorderBrush" Color="#B99BE6"/>
+    <SolidColorBrush x:Key="MenuFlyoutItemForeground" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="MenuFlyoutItemBackgroundPointerOver" Color="#FFF6FF"/>
+    <SolidColorBrush x:Key="MenuFlyoutSubItemForeground" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="ToolTipBackground" Color="#E8D9FF"/>
+    <SolidColorBrush x:Key="ToolTipForeground" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="ToolTipBorderBrush" Color="#B99BE6"/>
+    <SolidColorBrush x:Key="ListBoxItemBackgroundPointerOver" Color="#FFF6FF"/>
+    <SolidColorBrush x:Key="ListBoxItemBackgroundSelected" Color="#FFF6FF"/>
+    <SolidColorBrush x:Key="ListBoxItemBackgroundSelectedPointerOver" Color="#FFF6FF"/>
+    <SolidColorBrush x:Key="ListBoxItemBackgroundPressed" Color="#FFF6FF"/>
+    <SolidColorBrush x:Key="ListBoxItemForeground" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="ListBoxItemForegroundSelected" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="ListBoxItemForegroundPointerOver" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="CheckBoxForegroundUnchecked" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="CheckBoxForegroundChecked" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="CheckBoxForegroundUncheckedPointerOver" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="CheckBoxForegroundCheckedPointerOver" Color="#2A1A4A"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUnchecked" Color="#B99BE6"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedPointerOver" Color="#C81D92"/>
+    <CornerRadius x:Key="ControlCornerRadius">4</CornerRadius>
+    <CornerRadius x:Key="OverlayCornerRadius">4</CornerRadius>
+    <Color x:Key="SystemAccentColor">#C81D92</Color>
+    <Color x:Key="SystemAccentColorLight1">#C81D92</Color>
+    <Color x:Key="SystemAccentColorLight2">#C81D92</Color>
+    <Color x:Key="SystemAccentColorLight3">#C81D92</Color>
+    <Color x:Key="SystemAccentColorDark1">#C81D92</Color>
+    <Color x:Key="SystemAccentColorDark2">#C81D92</Color>
+    <Color x:Key="SystemAccentColorDark3">#C81D92</Color>
+</ResourceDictionary>

@@ -1,0 +1,28 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="BijouHub.Mac.Views.GoogleTasksWindow"
+        Title="Google Tasks" Width="480" Height="440" WindowStartupLocation="CenterOwner" CanResize="False"
+        Background="{DynamicResource BgBrush}">
+    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,*,Auto">
+        <TextBlock Classes="h2" Text="Sync goals with Google Tasks" Margin="0,0,0,6"/>
+        <TextBlock Grid.Row="1" Classes="muted" TextWrapping="Wrap" Margin="0,0,0,14"
+                   Text="BijouHub's goals live in Google Tasks lists named &quot;EDITING - …&quot;: one per project, plus EDITING - General. Lists from your other apps (STUDY - …, LIFE - …) get their own tabs."/>
+        <Border Grid.Row="2" Classes="card" Padding="12,10" Margin="0,0,0,16">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Ellipse Name="StatusDot" Width="9" Height="9" VerticalAlignment="Center"/>
+                <TextBlock Name="StatusText" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="390"/>
+            </StackPanel>
+        </Border>
+        <StackPanel Grid.Row="3" Spacing="8">
+            <TextBlock TextWrapping="Wrap" Text="1.  In Google Cloud, create a Desktop app OAuth client for the Google Tasks API and download its JSON file. (Already did it for Windows? Use the same file.)"/>
+            <Button Name="ImportButton" Content="Import Client JSON…" Margin="18,0,0,8" Click="Import_Click"/>
+            <TextBlock TextWrapping="Wrap" Text="2.  Sign in. Your browser opens; approve access to Google Tasks, then come back here."/>
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="18,0,0,0">
+                <Button Name="SignInButton" Classes="primary" Content="Sign in with Google" Click="SignIn_Click"/>
+                <Button Name="CancelSignInButton" Content="Cancel" IsVisible="False" Click="CancelSignIn_Click"/>
+                <Button Name="DisconnectButton" Content="Disconnect" Click="Disconnect_Click"/>
+            </StackPanel>
+        </StackPanel>
+        <Button Grid.Row="4" Content="Close" Width="90" HorizontalAlignment="Right" HorizontalContentAlignment="Center" Click="Close_Click"/>
+    </Grid>
+</Window>

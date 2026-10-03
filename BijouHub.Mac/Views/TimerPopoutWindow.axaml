@@ -1,0 +1,24 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:BijouHub.Mac.Controls"
+        x:Class="BijouHub.Mac.Views.TimerPopoutWindow"
+        Title="BijouHub Timer" Width="280" Height="130" Topmost="True" CanResize="False"
+        SystemDecorations="BorderOnly" Background="{DynamicResource PanelBrush}">
+    <Grid Margin="14,10" RowDefinitions="Auto,*,Auto" PointerPressed="Drag_PointerPressed" Background="Transparent">
+        <DockPanel>
+            <Button DockPanel.Dock="Right" Classes="ghost" Padding="4" Click="Dock_Click" ToolTip.Tip="Dock the timer">
+                <controls:LineIcon Kind="dock" Width="12" Height="12"/>
+            </Button>
+            <TextBlock Name="TitleText" Classes="muted" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+        </DockPanel>
+        <TextBlock Name="TimeText" Grid.Row="1" FontFamily="{DynamicResource TimerFont}" FontSize="36" FontWeight="SemiBold"
+                   Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
+        <DockPanel Grid.Row="2">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4">
+                <Button Classes="ghost" Padding="6" Click="Pause_Click" ToolTip.Tip="Pause / resume"><controls:LineIcon Kind="pause" Width="13" Height="13"/></Button>
+                <Button Classes="ghost" Padding="6" Click="Finish_Click" ToolTip.Tip="Finish"><controls:LineIcon Kind="stop" Width="13" Height="13"/></Button>
+            </StackPanel>
+            <TextBlock Name="StatusText" Classes="faint" VerticalAlignment="Center"/>
+        </DockPanel>
+    </Grid>
+</Window>

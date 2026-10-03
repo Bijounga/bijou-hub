@@ -67,7 +67,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         DarkTitleBar.Apply(this);
         RefreshThemeChrome();
-        _deckBridge = new StreamDeckBridge(Dispatcher, HandleDeckCommand);
+        _deckBridge = new StreamDeckBridge(command => Dispatcher.InvokeAsync(command).Task, HandleDeckCommand);
         Closing += (_, _) =>
         {
             if (NotesPanel.Visibility == Visibility.Visible) SaveFreeformNotes();

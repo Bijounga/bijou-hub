@@ -1,150 +1,152 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:BijouHub.Mac.Controls"
              x:Class="BijouHub.Mac.App"
              RequestedThemeVariant="Dark">
 
     <Application.Resources>
-        <SolidColorBrush x:Key="BgBrush" Color="#030405"/>
-        <SolidColorBrush x:Key="PanelBrush" Color="#08090B"/>
-        <SolidColorBrush x:Key="CardBrush" Color="#0C0F10"/>
-        <SolidColorBrush x:Key="CardHoverBrush" Color="#121819"/>
-        <SolidColorBrush x:Key="BorderBrushColor" Color="#2E3B3D"/>
-        <SolidColorBrush x:Key="TextBrush" Color="#E8F6FA"/>
-        <SolidColorBrush x:Key="MutedTextBrush" Color="#5C7A80"/>
-        <SolidColorBrush x:Key="AccentBrush" Color="#33E1FF"/>
-        <SolidColorBrush x:Key="HazardBrush" Color="#FF9A2E"/>
-        <SolidColorBrush x:Key="DangerBrush" Color="#FF3B30"/>
-        <SolidColorBrush x:Key="ButtonBgBrush" Color="#1A33E1FF"/>
-        <SolidColorBrush x:Key="AccentButtonBgBrush" Color="#332FE0FF"/>
-
-        <FontFamily x:Key="HeadingFont">avares://BijouHub.Mac/Assets/Fonts#Rajdhani SemiBold</FontFamily>
-        <FontFamily x:Key="BodyFont">avares://BijouHub.Mac/Assets/Fonts#IBM Plex Mono</FontFamily>
+        <ResourceDictionary>
+            <!-- [0] is the active theme (Themes/*.axaml, generated from the Windows themes by
+                 tools/themes/gen_mac_themes.py) and is swapped by Services/MacThemeService. -->
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://BijouHub.Mac/Themes/Dark.axaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 
     <Application.Styles>
-        <FluentTheme />
+        <FluentTheme/>
 
         <Style Selector="Window">
-            <Setter Property="Background" Value="{StaticResource BgBrush}"/>
-            <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource WallpaperBrush}"/>
+            <Setter Property="FontFamily" Value="{DynamicResource BodyFont}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         </Style>
 
-        <Style Selector="TextBlock">
-            <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <!-- Type -->
+        <Style Selector="TextBlock.h1">
+            <Setter Property="FontFamily" Value="{DynamicResource HeadingFont}"/>
+            <Setter Property="FontSize" Value="26"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
-
-        <Style Selector="TextBlock.heading">
-            <Setter Property="FontFamily" Value="{StaticResource HeadingFont}"/>
-            <Setter Property="FontWeight" Value="Bold"/>
+        <Style Selector="TextBlock.h2">
+            <Setter Property="FontFamily" Value="{DynamicResource HeadingFont}"/>
+            <Setter Property="FontSize" Value="17"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
-
-        <Style Selector="TextBlock.muted">
-            <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
+        <Style Selector="TextBlock.label">
             <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+            <Setter Property="LetterSpacing" Value="0.6"/>
+        </Style>
+        <Style Selector="TextBlock.muted">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.faint">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{DynamicResource FaintTextBrush}"/>
         </Style>
 
-        <!-- Buttons: dark glass with cyan border, corner ticks, hover glow -->
+        <!-- Buttons: calm by default (Fluent keys come from the theme); one primary per screen. -->
         <Style Selector="Button">
-            <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
-            <Setter Property="Background" Value="{StaticResource ButtonBgBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Padding" Value="12,7"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="Template">
-                <ControlTemplate>
-                    <Grid>
-                        <Border Name="Bd" Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Padding="{TemplateBinding Padding}"
-                                BoxShadow="0 0 5 0 #7333E1FF">
-                            <Border.Transitions>
-                                <Transitions>
-                                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.15"/>
-                                </Transitions>
-                            </Border.Transitions>
-                            <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <Line StartPoint="0,0" EndPoint="7,0" Stroke="{StaticResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                        <Line StartPoint="0,0" EndPoint="0,7" Stroke="{StaticResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                        <Line StartPoint="0,0" EndPoint="7,0" Stroke="{StaticResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
-                        <Line StartPoint="0,0" EndPoint="0,7" Stroke="{StaticResource AccentBrush}" StrokeThickness="1.5" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
-                    </Grid>
-                </ControlTemplate>
-            </Setter>
+            <Setter Property="FontFamily" Value="{DynamicResource BodyFont}"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}"/>
+            <!-- Icon-only buttons are named by their tooltip, so VoiceOver reads "Theme", not the icon's type. -->
+            <Setter Property="AutomationProperties.Name" Value="{Binding $self.(ToolTip.Tip)}"/>
         </Style>
-        <Style Selector="Button:pointerover /template/ Border#Bd">
-            <Setter Property="BoxShadow" Value="0 0 16 0 #F033E1FF"/>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryEdgeBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryInkBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
-        <Style Selector="Button:disabled">
-            <Setter Property="Opacity" Value="0.4"/>
+        <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryEdgeBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryInkBrush}"/>
+            <Setter Property="Opacity" Value="0.9"/>
+        </Style>
+        <Style Selector="Button.primary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryInkBrush}"/>
         </Style>
 
-        <Style Selector="Button.accent">
-            <Setter Property="Background" Value="{StaticResource AccentButtonBgBrush}"/>
-            <Setter Property="Foreground" Value="#F5FAFF"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-        </Style>
-
-        <!-- TextBox -->
-        <Style Selector="TextBox">
-            <Setter Property="FontFamily" Value="{StaticResource BodyFont}"/>
-            <Setter Property="Background" Value="{StaticResource ButtonBgBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CaretBrush" Value="{StaticResource TextBrush}"/>
-            <Setter Property="SelectionBrush" Value="#4433E1FF"/>
-            <Setter Property="Padding" Value="6,4"/>
-        </Style>
-
-        <!-- ListBox / ListBoxItem: card look -->
-        <Style Selector="ListBox">
+        <!-- Ghost: icon tools in the sidebar and quiet inline actions. -->
+        <Style Selector="Button.ghost">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+            <Setter Property="Padding" Value="7"/>
+            <Setter Property="CornerRadius" Value="6"/>
         </Style>
-        <Style Selector="ListBoxItem">
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="0,0,0,6"/>
-            <Setter Property="Template">
-                <ControlTemplate>
-                    <Border Name="Bd" Background="{StaticResource CardBrush}"
-                            BorderBrush="{StaticResource BorderBrushColor}" BorderThickness="1"
-                            CornerRadius="2" Padding="10,8">
-                        <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"/>
-                    </Border>
-                </ControlTemplate>
-            </Setter>
+        <Style Selector="Button.ghost:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         </Style>
-        <Style Selector="ListBoxItem:pointerover /template/ Border#Bd">
-            <Setter Property="Background" Value="{StaticResource CardHoverBrush}"/>
+        <Style Selector="Button.ghost:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
         </Style>
-        <Style Selector="ListBoxItem:selected /template/ Border#Bd">
-            <Setter Property="Background" Value="{StaticResource CardHoverBrush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+        <Style Selector="Button.ghost.on">
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="Button.icon">
+            <Setter Property="Padding" Value="10,8"/>
         </Style>
 
-        <!-- ProgressBar as a thin accent fill -->
-        <Style Selector="ProgressBar">
-            <Setter Property="Background" Value="{StaticResource CardBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
-            <Setter Property="Height" Value="6"/>
+        <Style Selector="controls|LineIcon">
+            <Setter Property="Width" Value="15"/>
+            <Setter Property="Height" Value="15"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Cards -->
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}"/>
+        </Style>
+
+        <!-- Sidebar lists: cards with a hover lift and an accent edge when selected. -->
+        <Style Selector="ListBox.nav">
+            <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem">
+            <Setter Property="Padding" Value="10,7"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}"/>
+            <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SoftBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <!-- Hover lifts the row one step; the selected row is an accent hairline, not a filled slab. -->
+        <Style Selector="ListBox.nav ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:selected:focus /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
         </Style>
 
-        <!-- CheckBox: cyan box, check glyph -->
-        <Style Selector="CheckBox">
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-            <Setter Property="Cursor" Value="Hand"/>
+        <Style Selector="ProgressBar">
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource SoftBorderBrush}"/>
+            <Setter Property="MinHeight" Value="6"/>
+            <Setter Property="CornerRadius" Value="3"/>
         </Style>
     </Application.Styles>
 </Application>

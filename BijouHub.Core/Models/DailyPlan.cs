@@ -54,6 +54,9 @@ public class DailyGoal : INotifyPropertyChanged
 
     public string Text { get => _text; set => Set(ref _text, value); }
 
+    // What screen readers announce for the goal's row.
+    public override string ToString() => Text;
+
     public bool Done
     {
         get => _done;

@@ -1,0 +1,138 @@
+using System.Text.Json.Nodes;
+using Avalonia.Controls;
+using Avalonia.Threading;
+using BijouHub.Models;
+using BijouHub.Services;
+
+namespace BijouHub.Mac;
+
+// The Stream Deck link — the same protocol as Windows (Core's StreamDeckBridge on 127.0.0.1), so
+// one plugin drives either app: Timer keys, Current Session, Next Goal and Add Time.
+public partial class MainWindow
+{
+    private StreamDeckBridge? _deckBridge;
+
+    private void InitDeck()
+    {
+        _deckBridge = new StreamDeckBridge(command => Dispatcher.UIThread.InvokeAsync(command).GetTask(), HandleDeckCommand);
+        _deckBridge.Start();
+    }
+
+    private DateTime _todayLoggedDay;
+    private int _todayLoggedSeconds;
+
+    private int TodayLoggedSeconds()
+    {
+        if (_todayLoggedDay != DateTime.Today) InvalidateTodayLogged();
+        return _todayLoggedSeconds;
+    }
+
+    private void InvalidateTodayLogged()
+    {
+        _boardBuiltAt = DateTime.MinValue;
+        _todayLoggedDay = DateTime.Today;
+        _todayLoggedSeconds = _logService.GetTodayTotalSeconds();
+    }
+
+    private JsonObject DeckState() => new()
+    {
+        ["type"] = "state",
+        ["active"] = IsSessionActive,
+        ["keyId"] = _deckKeyId,
+        ["title"] = _activeProject?.Name ?? _activeMode?.Name,
+        ["targetSeconds"] = _countDownMode && _targetMinutes is int target ? target * 60 : null,
+        ["activeSeconds"] = _activeSeconds,
+        ["paused"] = _paused,
+        ["idle"] = _isIdle && !_paused,
+        ["todaySeconds"] = TodayLoggedSeconds() + (IsSessionActive ? _activeSeconds : 0)
+    };
+
+    private void BroadcastDeckState() => _deckBridge?.Broadcast(DeckState());
+
+    private JsonObject DeckGoals()
+    {
+        var open = _dailyGoals.Where(g => !g.Done).OrderBy(g => g.Starred ? 0 : 1).Take(30).ToList();
+        return new JsonObject
+        {
+            ["type"] = "goals",
+            ["open"] = _dailyGoals.Count(g => !g.Done),
+            ["done"] = _dailyGoals.Count(g => g.Done),
+            ["items"] = new JsonArray(open.Select(g => (JsonNode)new JsonObject
+            {
+                ["id"] = g.Id,
+                ["text"] = g.Text,
+                ["starred"] = g.Starred,
+                ["label"] = g.ChipText
+            }).ToArray())
+        };
+    }
+
+    private void BroadcastDeckGoals() => _deckBridge?.Broadcast(DeckGoals());
+
+    private JsonObject? HandleDeckCommand(JsonObject request)
+    {
+        switch ((string?)request["type"])
+        {
+            case "catalog":
+                return new JsonObject
+                {
+                    ["modes"] = new JsonArray(_modes.Select(m => (JsonNode)new JsonObject { ["id"] = m.Id, ["name"] = m.Name }).ToArray()),
+                    ["projects"] = new JsonArray(_projects.Select(p => (JsonNode)new JsonObject { ["id"] = p.Id, ["name"] = p.Name }).ToArray())
+                };
+            case "state":
+                return DeckState();
+            case "start":
+                return StartFromDeck(request);
+            case "pause":
+                TogglePause();
+                return DeckState();
+            case "finish":
+                _ = FinishSessionAsync(askForNote: false); // completes synchronously without the note prompt
+                return DeckState();
+            case "extend":
+                var extendBy = request["minutes"] is JsonValue ev && ev.TryGetValue<int>(out var em) ? em : 15;
+                return ExtendSession(extendBy) ? DeckState() : new JsonObject { ["error"] = "No session is running" };
+            case "goals":
+                return DeckGoals();
+            case "completeGoal":
+                var goal = _dailyGoals.FirstOrDefault(g => g.Id == (string?)request["goalId"]);
+                if (goal == null) return new JsonObject { ["error"] = "That goal is gone" };
+                goal.Done = true;
+                return DeckGoals();
+            case "focus":
+                if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+                Show();
+                Activate();
+                return new JsonObject { ["ok"] = true };
+            default:
+                return new JsonObject { ["error"] = "Unknown command" };
+        }
+    }
+
+    private JsonObject StartFromDeck(JsonObject request)
+    {
+        var minutes = request["minutes"] is JsonValue m && m.TryGetValue<int>(out var parsed) && parsed > 0 ? parsed : (int?)null;
+        var mode = _modes.FirstOrDefault(x => x.Id == (string?)request["modeId"])
+                   ?? _modes.FirstOrDefault(x => string.Equals(x.Name, (string?)request["modeName"], StringComparison.OrdinalIgnoreCase));
+        var projectId = (string?)request["projectId"];
+        var project = string.IsNullOrEmpty(projectId) ? null : _projects.FirstOrDefault(x => x.Id == projectId);
+        if (mode == null && project == null) return new JsonObject { ["error"] = "Mode not found — pick one in the key's settings" };
+        if (_sessionStarting) return DeckState();
+
+        _ = StartDeckSessionAsync(mode, project, minutes, (string?)request["keyId"]);
+        return new JsonObject { ["ok"] = true };
+    }
+
+    private async Task StartDeckSessionAsync(WorkMode? mode, Project? project, int? minutes, string? keyId)
+    {
+        _sessionStarting = true;
+        try
+        {
+            await BeginSession(mode, project, null, minutes, countDown: minutes != null, deckKeyId: keyId);
+        }
+        finally
+        {
+            _sessionStarting = false;
+        }
+    }
+}

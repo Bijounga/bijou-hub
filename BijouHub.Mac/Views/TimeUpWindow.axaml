@@ -1,0 +1,14 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="BijouHub.Mac.Views.TimeUpWindow"
+        Title="Time's up" Width="340" Height="120" Topmost="True" CanResize="False" ShowActivated="False"
+        SystemDecorations="BorderOnly" Background="{DynamicResource PanelBrush}">
+    <Grid Margin="16,12" RowDefinitions="Auto,*,Auto" PointerPressed="Drag_PointerPressed" Background="Transparent">
+        <TextBlock Classes="h2" Text="Time's up" Foreground="{DynamicResource HazardBrush}"/>
+        <TextBlock Name="MessageText" Grid.Row="1" Classes="muted" TextWrapping="Wrap" VerticalAlignment="Center"/>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="+15 min" Click="Extend_Click"/>
+            <Button Content="Finish" Classes="primary" Click="Finish_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

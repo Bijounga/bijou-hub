@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { Socket } from "node:net";
+import { homedir } from "node:os";
 import { join } from "node:path";
 
 /** Session state BijouHub pushes every second (see MainWindow.DeckState). */
@@ -85,7 +86,10 @@ export class HubClient {
 		const exePath = readBridgeInfo()?.exePath;
 		if (!exePath || !existsSync(exePath)) return false;
 
-		spawn(exePath, [], { detached: true, stdio: "ignore", windowsHide: false }).unref();
+		// On a Mac the path is the binary inside BijouHub.app: open the bundle, the way Finder would.
+		const bundle = exePath.match(/^(.*?\.app)\/Contents\/MacOS\//)?.[1];
+		if (bundle) spawn("/usr/bin/open", [bundle], { detached: true, stdio: "ignore" }).unref();
+		else spawn(exePath, [], { detached: true, stdio: "ignore", windowsHide: false }).unref();
 
 		const deadline = Date.now() + LAUNCH_TIMEOUT_MS;
 		while (Date.now() < deadline) {
@@ -209,7 +213,9 @@ export class HubClient {
 }
 
 function dataDir(): string {
-	return process.env.BIJOUHUB_DATA_DIR || join(process.env.APPDATA ?? "", "BijouHub");
+	if (process.env.BIJOUHUB_DATA_DIR) return process.env.BIJOUHUB_DATA_DIR;
+	// .NET's ApplicationData folder: %APPDATA% on Windows, ~/.config on a Mac.
+	return process.platform === "win32" ? join(process.env.APPDATA ?? "", "BijouHub") : join(homedir(), ".config", "BijouHub");
 }
 
 function readBridgeInfo(): { port?: number; exePath?: string } | null {

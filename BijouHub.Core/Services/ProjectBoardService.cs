@@ -174,13 +174,20 @@ public static class ProjectBoardService
     private static string Normalize(string? name) =>
         string.Join(' ', (name ?? "").Trim().ToLowerInvariant().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 
+    // Where Electron apps (BijouDocs, BijouMusic) keep their data: %APPDATA% on Windows,
+    // ~/Library/Application Support on a Mac.
+    private static string ElectronAppData() =>
+        OperatingSystem.IsMacOS()
+            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support")
+            : Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+
     // ---------- BijouDocs: one JSON file per script, in its (possibly synced) storage folder ----------
 
     private static string BijouDocsDir()
     {
         try
         {
-            var settingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "bijoudocs", "settings.json");
+            var settingsPath = Path.Combine(ElectronAppData(), "bijoudocs", "settings.json");
             if (File.Exists(settingsPath))
             {
                 using var doc = JsonDocument.Parse(File.ReadAllText(settingsPath));
@@ -245,7 +252,7 @@ public static class ProjectBoardService
     private static List<MusicProject> ReadBijouMusic(out bool found)
     {
         var result = new List<MusicProject>();
-        var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "music-browser", "library.sqlite3");
+        var dbPath = Path.Combine(ElectronAppData(), "music-browser", "library.sqlite3");
         found = File.Exists(dbPath);
         if (!found) return result;
 

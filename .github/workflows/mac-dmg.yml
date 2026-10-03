@@ -119,6 +119,12 @@ jobs:
           rm -f BijouHub-notarize.zip
       # ---------------------------------------------------------------
 
+      # The in-app updater downloads this zip (not the DMG): it unpacks the app next to the
+      # running one, swaps it in place and relaunches, so updates never need a drag to
+      # Applications. ditto keeps the bundle's symlinks, permissions and signature intact.
+      - name: Zip the app for in-place updates
+        run: ditto -c -k --sequesterRsrc --keepParent BijouHub.app "BijouHub-${{ matrix.rid }}.zip"
+
       - name: Create styled DMG
         # A plain `hdiutil create -srcfolder` gives a bare Finder window with small default
         # icons. Build it the way a normal Mac installer looks instead: a read-write image,
@@ -157,7 +163,12 @@ jobs:
           EOF
 
           sync
-          hdiutil detach "$MOUNT_DIR"
+          # Finder sometimes keeps the volume busy for a moment ("Resource busy"): retry, then force.
+          for attempt in 1 2 3 4 5; do
+            hdiutil detach "$MOUNT_DIR" && break
+            sleep 5
+            [ "$attempt" = 5 ] && hdiutil detach -force "$MOUNT_DIR"
+          done
           hdiutil convert rw-temp.dmg -format UDZO -o "BijouHub-${{ matrix.rid }}.dmg"
           rm -f rw-temp.dmg
 
@@ -170,4 +181,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ github.event.inputs.tag || github.event.release.tag_name }}"
-          gh release upload "$TAG" "BijouHub-${{ matrix.rid }}.dmg" --clobber --repo "${{ github.repository }}"
+          gh release upload "$TAG" "BijouHub-${{ matrix.rid }}.dmg" "BijouHub-${{ matrix.rid }}.zip" --clobber --repo "${{ github.repository }}"
