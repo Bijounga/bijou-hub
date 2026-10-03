@@ -160,7 +160,22 @@
                             <Grid ColumnDefinitions="*,20,260" Margin="0,0,0,28">
                                 <StackPanel Grid.Column="0" MaxWidth="720">
                                     <DockPanel Margin="0,0,0,8" LastChildFill="False">
-                                        <TextBlock Name="GoalsLabel" Classes="label" Text="TODAY'S GOALS" VerticalAlignment="Bottom"/>
+                                        <!-- Today's goals, or tomorrow's plan. -->
+                                        <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Bottom">
+                                            <Button Name="DayTodayTab" Classes="ghost" Padding="0" Background="Transparent" Click="DayToday_Click" ToolTip.Tip="Today's goals"
+                                                    AutomationProperties.Name="Today">
+                                                <TextBlock Name="DayTodayText" Classes="label" Text="TODAY" FontWeight="SemiBold"/>
+                                            </Button>
+                                            <Button Name="DayTomorrowTab" Classes="ghost" Padding="0" Background="Transparent" Click="DayTomorrow_Click" ToolTip.Tip="Plan tomorrow"
+                                                    AutomationProperties.Name="Tomorrow">
+                                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                                    <TextBlock Name="DayTomorrowText" Classes="label" Text="TOMORROW" Foreground="{DynamicResource FaintTextBrush}"/>
+                                                    <TextBlock Name="DayTomorrowCount" Classes="label" Foreground="{DynamicResource AccentBrush}"/>
+                                                    <Ellipse Name="PlanNudgeDot" Width="5" Height="5" VerticalAlignment="Center"
+                                                             Fill="{DynamicResource AccentBrush}" IsVisible="False"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
                                         <TextBlock Name="DailyProgressText" DockPanel.Dock="Right" Classes="muted" VerticalAlignment="Bottom"/>
                                         <Button Name="GoogleSyncButton" DockPanel.Dock="Right" Classes="ghost" Padding="6,2" Margin="0,0,10,-3"
                                                 VerticalAlignment="Bottom" Click="GoogleSync_Click">
@@ -229,7 +244,7 @@
                                                 </Grid>
                                             </Border>
 
-                                            <TextBlock Classes="label" Text="NOTES FOR TODAY" Margin="2,14,0,4"/>
+                                            <TextBlock Name="DailyNotesLabel" Classes="label" Text="NOTES FOR TODAY" Margin="2,14,0,4"/>
                                             <TextBox Name="DailyNotesBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="56" MaxHeight="220"
                                                      TextChanged="DailyNotesBox_TextChanged" LostFocus="DailyNotesBox_LostFocus"/>
                                         </StackPanel>
@@ -240,8 +255,22 @@
                                     <TextBlock Classes="label" Text="TODAY" Margin="0,0,0,8"/>
                                     <Border Classes="card" Padding="16,14">
                                         <StackPanel>
-                                            <TextBlock Name="HomeTodayText" FontSize="32" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
-                                            <TextBlock Classes="muted" Text="worked today" Margin="0,0,0,14"/>
+                                            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,14">
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Name="HomeTodayText" FontSize="32" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
+                                                    <TextBlock Name="HomeTargetText" Classes="muted" Text="worked today"/>
+                                                </StackPanel>
+                                                <!-- Fills toward the daily target; click to set it. -->
+                                                <Button Name="DailyTargetButton" Grid.Column="1" Classes="ghost" Padding="0" VerticalAlignment="Center"
+                                                        Click="DailyTarget_Click" ToolTip.Tip="Set a daily target" AutomationProperties.Name="Daily target">
+                                                    <Panel Width="54" Height="54">
+                                                        <Ellipse Stroke="{DynamicResource SoftBorderBrush}" StrokeThickness="5"/>
+                                                        <Path Name="DailyTargetArc" StrokeThickness="5" StrokeLineCap="Round" Stroke="{DynamicResource AccentBrush}"/>
+                                                        <TextBlock Name="DailyTargetLabel" Text="+" FontSize="12" FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Panel>
+                                                </Button>
+                                            </Grid>
                                             <UniformGrid Name="HomeWeekBars" Rows="1"/>
                                             <TextBlock Name="HomeWeekText" Classes="muted" Margin="0,10,0,0"/>
                                         </StackPanel>
@@ -290,7 +319,7 @@
                             <TextBlock Classes="label" Text="TIMERS" Margin="0,0,0,8"/>
                             <WrapPanel Name="ModeTimerTiles"/>
                             <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
-                                <TextBox Name="ModeTimerBox" Width="130" Watermark="45, 1:30, 2h" TextChanged="ModeTimerBox_TextChanged" KeyDown="ModeTimerBox_KeyDown"
+                                <TextBox Name="ModeTimerBox" Width="130" Watermark="45, 2h, 25/5" TextChanged="ModeTimerBox_TextChanged" KeyDown="ModeTimerBox_KeyDown"
                                          ToolTip.Tip="How long: 45, 1:30, 2h. Right-click a saved timer to remove it."/>
                                 <Button Name="ModeTimerStartButton" IsEnabled="False" Click="ModeTimerStart_Click">
                                     <StackPanel Orientation="Horizontal" Spacing="7"><controls:LineIcon Kind="play" Width="12" Height="12"/><TextBlock Text="Start"/></StackPanel>

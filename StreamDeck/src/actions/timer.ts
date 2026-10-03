@@ -22,10 +22,18 @@ export type TimerSettings = {
 	modeName?: string;
 	projectId?: string;
 	projectName?: string;
-	/** As typed: "45", "1:30", "2h". Empty counts up. */
+	/** As typed: "45", "1:30", "2h". Empty counts up (on a Pomodoro key: 25 minutes of focus). */
 	duration?: string;
+	/** Pomodoro keys only: the break, as typed. Empty is 5 minutes. */
+	breakDuration?: string;
 	color?: string;
 };
+
+/** What a key starts: a countdown (or count-up when minutes is null), or a Pomodoro with a break. */
+type Lengths = { minutes: number | null; breakMinutes?: number };
+
+const POMODORO_FOCUS = 25;
+const POMODORO_BREAK = 5;
 
 const DEFAULT_COLOR = "#33E1FF";
 const LOGGED_COLOR = "#4ADE80";
@@ -46,16 +54,28 @@ type KeyEntry = {
 /**
  * A timer key: tap to start a BijouHub session in the key's mode with its duration, tap again
  * to pause/resume, hold to finish and log it. The running key draws a live countdown ring.
+ * The Pomodoro key is the same key with a break: focus, break, repeat.
  */
-@action({ UUID: "com.bijounga.bijouhub.timer" })
-export class TimerAction extends SingletonAction<TimerSettings> {
+class TimerKey extends SingletonAction<TimerSettings> {
 	readonly #hub: HubClient;
+	readonly #pomodoro: boolean;
 	readonly #keys = new Map<string, KeyEntry>();
 
-	constructor(hub: HubClient) {
+	constructor(hub: HubClient, pomodoro: boolean) {
 		super();
 		this.#hub = hub;
+		this.#pomodoro = pomodoro;
 		hub.onChange(() => this.#renderAll());
+	}
+
+	/** Undefined when something typed in the key's settings can't be read. */
+	#lengths(settings: TimerSettings): Lengths | undefined {
+		const minutes = parseDuration(settings.duration);
+		if (!this.#pomodoro) return minutes === undefined ? undefined : { minutes };
+
+		const rest = parseDuration(settings.breakDuration);
+		if (minutes === undefined || rest === undefined) return undefined;
+		return { minutes: minutes ?? POMODORO_FOCUS, breakMinutes: rest ?? POMODORO_BREAK };
 	}
 
 	override async onWillAppear(ev: WillAppearEvent<TimerSettings>): Promise<void> {
@@ -150,8 +170,8 @@ export class TimerAction extends SingletonAction<TimerSettings> {
 			return;
 		}
 
-		const minutes = parseDuration(settings.duration);
-		if (minutes === undefined) {
+		const lengths = this.#lengths(settings);
+		if (lengths === undefined) {
 			await entry.action.showAlert();
 			return;
 		}
@@ -175,7 +195,8 @@ export class TimerAction extends SingletonAction<TimerSettings> {
 				modeId: settings.modeId,
 				modeName: settings.modeName,
 				projectId: settings.projectId,
-				minutes
+				minutes: lengths.minutes,
+				breakMinutes: lengths.breakMinutes
 			});
 			if (reply.error) {
 				streamDeck.logger.warn(`Start refused: ${reply.error}`);
@@ -230,12 +251,15 @@ export class TimerAction extends SingletonAction<TimerSettings> {
 			return { color: NEUTRAL_COLOR, fraction: null, big: "SET UP", caption: "pick a mode" };
 		}
 
-		const minutes = parseDuration(settings.duration);
-		if (minutes === undefined) {
-			return { color: OVER_COLOR, fraction: null, big: "?", label: "DURATION", caption: settings.duration };
+		const lengths = this.#lengths(settings);
+		if (lengths === undefined) {
+			return { color: OVER_COLOR, fraction: null, big: "?", label: "DURATION", caption: settings.duration || settings.breakDuration };
 		}
 
-		const preset = minutes === null ? "0:00" : formatPreset(minutes);
+		const preset =
+			lengths.breakMinutes !== undefined ? `${lengths.minutes}/${lengths.breakMinutes}`
+			: lengths.minutes === null ? "0:00"
+			: formatPreset(lengths.minutes);
 		if (entry.starting) {
 			return { color, fraction: null, label: "STARTING", big: preset, caption: caption(settings) };
 		}
@@ -248,6 +272,20 @@ export class TimerAction extends SingletonAction<TimerSettings> {
 
 		// This key's session is live.
 		return liveSessionArt(state, color, caption(settings));
+	}
+}
+
+@action({ UUID: "com.bijounga.bijouhub.timer" })
+export class TimerAction extends TimerKey {
+	constructor(hub: HubClient) {
+		super(hub, false);
+	}
+}
+
+@action({ UUID: "com.bijounga.bijouhub.pomodoro" })
+export class PomodoroAction extends TimerKey {
+	constructor(hub: HubClient) {
+		super(hub, true);
 	}
 }
 

@@ -12,7 +12,7 @@
             </DockPanel>
         </Border>
         <StackPanel Grid.Row="2" Spacing="8">
-            <TextBlock TextWrapping="Wrap" Text="1.  Install the plugin, then drag BijouHub keys onto your deck: Timer, Current Session, Next Goal, Add Time, Pop Out Timer."/>
+            <TextBlock TextWrapping="Wrap" Text="1.  Install the plugin, then drag BijouHub keys onto your deck: Timer, Pomodoro, Quick Capture, Daily Target, Current Session, Next Goal and more."/>
             <TextBlock TextWrapping="Wrap" Text="2.  In a Timer key's settings, pick a mode and a duration — 45, 1:30, 2h."/>
             <TextBlock TextWrapping="Wrap" Text="3.  Tap to start, tap again to pause, hold to finish."/>
             <TextBlock Classes="muted" TextWrapping="Wrap" Margin="0,6,0,0"

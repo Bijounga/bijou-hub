@@ -67,8 +67,31 @@ public class DailyPlanStore
             .FirstOrDefault();
         if (previous == null) return null;
 
-        var open = previous.Goals.Where(g => !g.Done).ToList();
+        // Goals planned for a later day aren't leftovers: they move over on their own (PlannedFor).
+        var open = previous.Goals.Where(g => !g.Done && !g.IsPlannedAfter(previous.Date)).ToList();
         return open.Count == 0 ? null : (previous.Date, open);
+    }
+
+    // Moves goals an earlier day planned for this day (or later) out of that day: what a new day
+    // starts with. Moved, not copied, so one deleted later doesn't come back.
+    public List<DailyGoal> TakePlannedFor(DateTime day)
+    {
+        var key = Key(day);
+        lock (_gate)
+        {
+            var previous = LoadAll()
+                .Where(p => string.CompareOrdinal(p.Date, key) < 0 && p.Goals.Count > 0)
+                .OrderByDescending(p => p.Date)
+                .FirstOrDefault();
+            var planned = previous?.Goals.Where(g => !g.Done && g.Due != null && string.CompareOrdinal(g.Due, key) >= 0).ToList()
+                ?? new List<DailyGoal>();
+            if (planned.Count > 0)
+            {
+                previous!.Goals.RemoveAll(planned.Contains);
+                SaveDay(previous);
+            }
+            return planned;
+        }
     }
 
     public void SaveDay(DailyPlan plan)

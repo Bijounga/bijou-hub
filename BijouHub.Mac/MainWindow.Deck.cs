@@ -7,7 +7,7 @@ using BijouHub.Services;
 namespace BijouHub.Mac;
 
 // The Stream Deck link — the same protocol as Windows (Core's StreamDeckBridge on 127.0.0.1), so
-// one plugin drives either app: Timer keys, Current Session, Next Goal, Add Time and Pop Out Timer.
+// one plugin drives either app: Timer and Pomodoro keys, Current Session, Next Goal, Add Time, Pop Out Timer, Daily Target and Quick Capture.
 public partial class MainWindow
 {
     private StreamDeckBridge? _deckBridge;
@@ -45,19 +45,22 @@ public partial class MainWindow
         ["paused"] = _paused,
         ["idle"] = _isIdle && !_paused,
         ["todaySeconds"] = TodayLoggedSeconds() + (IsSessionActive ? _activeSeconds : 0),
-        ["poppedOut"] = _popout != null
+        ["poppedOut"] = _popout != null,
+        ["pomodoro"] = DeckPomodoro(),
+        ["dailyTargetSeconds"] = _dailyTargetMinutes * 60
     };
 
     private void BroadcastDeckState() => _deckBridge?.Broadcast(DeckState());
 
     private JsonObject DeckGoals()
     {
-        var open = _dailyGoals.Where(g => !g.Done).OrderBy(g => g.Starred ? 0 : 1).Take(30).ToList();
+        var today = _dailyGoals.Where(g => !g.IsPlannedAfter(TodayKey)).ToList();
+        var open = today.Where(g => !g.Done).OrderBy(g => g.Starred ? 0 : 1).Take(30).ToList();
         return new JsonObject
         {
             ["type"] = "goals",
-            ["open"] = _dailyGoals.Count(g => !g.Done),
-            ["done"] = _dailyGoals.Count(g => g.Done),
+            ["open"] = today.Count(g => !g.Done),
+            ["done"] = today.Count(g => g.Done),
             ["items"] = new JsonArray(open.Select(g => (JsonNode)new JsonObject
             {
                 ["id"] = g.Id,
@@ -105,6 +108,19 @@ public partial class MainWindow
                 Show();
                 Activate();
                 return new JsonObject { ["ok"] = true };
+            case "capture":
+                // After replying, so the plugin isn't left waiting on a window.
+                Dispatcher.UIThread.Post(ShowQuickCapture);
+                return new JsonObject { ["ok"] = true };
+            case "target":
+                Dispatcher.UIThread.Post(async () =>
+                {
+                    if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+                    Show();
+                    Activate();
+                    await PromptDailyTargetAsync();
+                });
+                return new JsonObject { ["ok"] = true };
             case "popout":
                 if (!IsSessionActive) return new JsonObject { ["error"] = "No session is running" };
                 // "show" picks a side; without it the key toggles.
@@ -118,6 +134,10 @@ public partial class MainWindow
     private JsonObject StartFromDeck(JsonObject request)
     {
         var minutes = request["minutes"] is JsonValue m && m.TryGetValue<int>(out var parsed) && parsed > 0 ? parsed : (int?)null;
+        // A Pomodoro key sends its break too: focus for `minutes`, break for `breakMinutes`, repeat.
+        var pomodoro = minutes is int focus && request["breakMinutes"] is JsonValue b && b.TryGetValue<int>(out var rest) && rest > 0
+            ? new PomodoroPlan(focus, rest)
+            : null;
         var mode = _modes.FirstOrDefault(x => x.Id == (string?)request["modeId"])
                    ?? _modes.FirstOrDefault(x => string.Equals(x.Name, (string?)request["modeName"], StringComparison.OrdinalIgnoreCase));
         var projectId = (string?)request["projectId"];
@@ -125,16 +145,16 @@ public partial class MainWindow
         if (mode == null && project == null) return new JsonObject { ["error"] = "Mode not found — pick one in the key's settings" };
         if (_sessionStarting) return DeckState();
 
-        _ = StartDeckSessionAsync(mode, project, minutes, (string?)request["keyId"]);
+        _ = StartDeckSessionAsync(mode, project, minutes, (string?)request["keyId"], pomodoro);
         return new JsonObject { ["ok"] = true };
     }
 
-    private async Task StartDeckSessionAsync(WorkMode? mode, Project? project, int? minutes, string? keyId)
+    private async Task StartDeckSessionAsync(WorkMode? mode, Project? project, int? minutes, string? keyId, PomodoroPlan? pomodoro)
     {
         _sessionStarting = true;
         try
         {
-            await BeginSession(mode, project, null, minutes, countDown: minutes != null, deckKeyId: keyId);
+            await BeginSession(mode, project, null, minutes, countDown: minutes != null, deckKeyId: keyId, pomodoro: pomodoro);
         }
         finally
         {

@@ -108,10 +108,12 @@
             </ListBox>
         </Grid>
 
-        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Content="Cancel" Width="90" Margin="0,0,8,0" Click="Cancel_Click"/>
-            <Button Content="Save" Width="90" Click="Save_Click"/>
-        </StackPanel>
+        <DockPanel Grid.Row="5" Margin="0,16,0,0" LastChildFill="False">
+            <CheckBox x:Name="DoNotDisturbBox" Content="Do Not Disturb while this mode runs" VerticalAlignment="Center"
+                      ToolTip="Turns off Windows notifications for the session, and back on when it ends"/>
+            <Button Content="Save" Width="90" DockPanel.Dock="Right" Click="Save_Click"/>
+            <Button Content="Cancel" Width="90" Margin="0,0,8,0" DockPanel.Dock="Right" Click="Cancel_Click"/>
+        </DockPanel>
     </Grid>
     </Grid>
 </Window>

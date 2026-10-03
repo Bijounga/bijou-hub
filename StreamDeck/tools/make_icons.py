@@ -111,6 +111,31 @@ def popout_icon():
 </svg>"""
 
 
+def pomodoro_icon():
+    # A ring split into a long focus arc and a short break arc.
+    focus, _ = arc(256, 256, 200, 0.78)
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<circle cx="256" cy="256" r="200" fill="none" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="40"/>
+<path d="{focus}" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round"/>
+<path d="M256 150 V262 L330 300" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>"""
+
+
+def target_icon():
+    return """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<circle cx="256" cy="256" r="200" fill="none" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="40"/>
+<circle cx="256" cy="256" r="110" fill="none" stroke="#FFFFFF" stroke-width="40"/>
+<circle cx="256" cy="256" r="34" fill="#FFFFFF"/>
+</svg>"""
+
+
+def capture_icon():
+    return """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect x="76" y="76" width="360" height="360" rx="70" fill="none" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="40"/>
+<path d="M256 168 V344 M168 256 H344" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round"/>
+</svg>"""
+
+
 def key_frame(inner):
     return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144">
 <defs><radialGradient id="glow" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="{CYAN}" stop-opacity="0.24"/>
@@ -148,6 +173,25 @@ def popout_key():
                      + text("timer", 106, 14, opacity=0.72))
 
 
+def pomodoro_key():
+    path, end = arc(72, 72, 60, 0.7)
+    return key_frame(f'<circle cx="72" cy="72" r="60" fill="none" stroke="{CYAN}" stroke-opacity="0.2" stroke-width="7"/>'
+                     + f'<path d="{path}" fill="none" stroke="{CYAN}" stroke-width="7" stroke-linecap="round"/>'
+                     + text("FOCUS · 1", 52, 13, CYAN, 700) + text("24:10", 86, 36) + text("Editing", 106, 14, opacity=0.72))
+
+
+def target_key():
+    path, _ = arc(72, 72, 60, 0.55)
+    return key_frame(f'<circle cx="72" cy="72" r="60" fill="none" stroke="{CYAN}" stroke-opacity="0.2" stroke-width="7"/>'
+                     + f'<path d="{path}" fill="none" stroke="{CYAN}" stroke-width="7" stroke-linecap="round"/>'
+                     + text("55%", 52, 13, CYAN, 700) + text("2h 10m", 86, 28) + text("of 4h", 106, 14, opacity=0.72))
+
+
+def capture_key():
+    return key_frame(f'<circle cx="72" cy="72" r="60" fill="none" stroke="{CYAN}" stroke-opacity="0.2" stroke-width="7"/>'
+                     + text("CAPTURE", 52, 13, CYAN, 700) + text("+", 86, 40) + text("3 to do", 106, 14, opacity=0.72))
+
+
 def render(svg, work):
     html = os.path.join(work, "icon.html")
     with open(html, "w", encoding="utf-8") as f:
@@ -172,10 +216,16 @@ def main():
         ("goal", goal_icon(), 20),
         ("extend", extend_icon(), 20),
         ("popout", popout_icon(), 20),
+        ("pomodoro", pomodoro_icon(), 20),
+        ("target", target_icon(), 20),
+        ("capture", capture_icon(), 20),
         ("session-key", session_key(), 72),
         ("goal-key", goal_key(), 72),
         ("extend-key", extend_key(), 72),
         ("popout-key", popout_key(), 72),
+        ("pomodoro-key", pomodoro_key(), 72),
+        ("target-key", target_key(), 72),
+        ("capture-key", capture_key(), 72),
     ]
     with tempfile.TemporaryDirectory() as work:
         for name, svg, size in targets:

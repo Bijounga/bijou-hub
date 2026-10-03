@@ -445,7 +445,23 @@
 
                         <StackPanel Grid.Column="0">
                             <DockPanel Margin="0,0,0,8" LastChildFill="False">
-                                <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Bottom"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="TODAY'S GOALS"/></TextBlock>
+                                <!-- Today's goals, or tomorrow's plan. -->
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
+                                    <Button x:Name="DayTodayTab" Click="DayToday_Click" Cursor="Hand" AutomationProperties.Name="Today" ToolTip="Today's goals">
+                                        <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                                        <TextBlock x:Name="DayTodayText" FontSize="11" Foreground="{DynamicResource MutedTextBrush}" FontWeight="SemiBold"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="TODAY"/></TextBlock>
+                                    </Button>
+                                    <Button x:Name="DayTomorrowTab" Click="DayTomorrow_Click" Cursor="Hand" Margin="14,0,0,0"
+                                            AutomationProperties.Name="Tomorrow" ToolTip="Plan tomorrow">
+                                        <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock x:Name="DayTomorrowText" Text="TOMORROW" FontSize="11" Foreground="{DynamicResource FaintTextBrush}"/>
+                                            <TextBlock x:Name="DayTomorrowCount" FontSize="11" Margin="5,0,0,0" Foreground="{DynamicResource AccentBrush}"/>
+                                            <Ellipse x:Name="PlanNudgeDot" Width="5" Height="5" Margin="5,0,0,1" VerticalAlignment="Center"
+                                                     Fill="{DynamicResource AccentBrush}" Visibility="Collapsed"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
                                 <TextBlock x:Name="DailyProgressText" DockPanel.Dock="Right" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="12" VerticalAlignment="Bottom"/>
                                 <Button x:Name="GoogleSyncButton" DockPanel.Dock="Right" Margin="0,0,14,0" Click="GoogleSync_Click"
@@ -639,7 +655,7 @@
                                         </Grid>
                                     </Border>
 
-                                    <TextBlock Text="NOTES FOR TODAY" Foreground="{DynamicResource MutedTextBrush}" FontSize="10" Margin="2,14,0,4"/>
+                                    <TextBlock x:Name="DailyNotesLabel" Text="NOTES FOR TODAY" Foreground="{DynamicResource MutedTextBrush}" FontSize="10" Margin="2,14,0,4"/>
                                     <TextBox x:Name="DailyNotesBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="54" MaxHeight="220"
                                              VerticalScrollBarVisibility="Auto" Padding="8,6" TextChanged="DailyNotesBox_TextChanged"
                                              LostKeyboardFocus="DailyNotesBox_LostKeyboardFocus" AutomationProperties.Name="Notes for today"/>
@@ -652,8 +668,28 @@
                             <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                     CornerRadius="{DynamicResource CornerRadiusBase}" Padding="16,14">
                                 <StackPanel>
-                                    <TextBlock x:Name="HomeTodayText" FontSize="32" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
-                                    <TextBlock Text="worked today" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="0,0,0,14"/>
+                                    <Grid Margin="0,0,0,14">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock x:Name="HomeTodayText" FontSize="32" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
+                                            <TextBlock x:Name="HomeTargetText" Text="worked today" Foreground="{DynamicResource MutedTextBrush}" FontSize="12"/>
+                                        </StackPanel>
+                                        <!-- Fills toward the daily target; click to set it. -->
+                                        <Button x:Name="DailyTargetButton" Grid.Column="1" Click="DailyTarget_Click" Cursor="Hand" VerticalAlignment="Center"
+                                                AutomationProperties.Name="Daily target" ToolTip="Set a daily target">
+                                            <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                                            <Grid Width="54" Height="54">
+                                                <Ellipse Stroke="{DynamicResource SoftBorderBrush}" StrokeThickness="5"/>
+                                                <Path x:Name="DailyTargetArc" StrokeThickness="5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                      Stroke="{DynamicResource AccentBrush}"/>
+                                                <TextBlock x:Name="DailyTargetLabel" Text="+" FontSize="12" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Button>
+                                    </Grid>
                                     <ItemsControl x:Name="HomeWeekBars">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>

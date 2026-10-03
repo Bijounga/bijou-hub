@@ -151,6 +151,7 @@ public partial class MainWindow
                     goal.ProjectId = remote.ProjectId;
                     goal.CompletedAt = remote.CompletedAt;
                     goal.Done = remote.Done;
+                    goal.Due = remote.Due;
                 }
                 else
                 {
@@ -230,6 +231,7 @@ public partial class MainWindow
             case nameof(DailyGoal.Text):
             case nameof(DailyGoal.Done):
             case nameof(DailyGoal.Starred):
+            case nameof(DailyGoal.Due):
                 QueueGoogle(sync => sync.UpdateAsync(goal));
                 break;
         }

@@ -88,7 +88,9 @@ public sealed partial class GoogleGoalsSync
                     Starred = starred,
                     ProjectName = isGeneral ? null : (project.Name ?? list.Name),
                     ProjectId = isGeneral ? null : project.Id,
-                    CompletedAt = task.CompletedAt
+                    CompletedAt = task.CompletedAt,
+                    // Only a later day counts as planned; a past or today's due date is just today's list.
+                    Due = task.Due != null && string.CompareOrdinal(task.Due, DateTime.Today.ToString("yyyy-MM-dd")) > 0 ? task.Due : null
                 };
                 goal.Done = task.Completed; // after CompletedAt, so the real completion time is kept
                 goals.Add(goal);
@@ -100,7 +102,7 @@ public sealed partial class GoogleGoalsSync
     public async Task CreateAsync(DailyGoal goal, CancellationToken cancel = default)
     {
         var listId = await EnsureListAsync(TitleFor(GroupOf(goal), goal.ProjectName), cancel);
-        var created = await _client.CreateTaskAsync(listId, TitleOf(goal), null, goal.Done, cancel);
+        var created = await _client.CreateTaskAsync(listId, TitleOf(goal), null, goal.Done, cancel, goal.Due);
         goal.TaskId = created.Id;
         goal.ListId = listId;
     }
@@ -108,7 +110,7 @@ public sealed partial class GoogleGoalsSync
     public Task UpdateAsync(DailyGoal goal, CancellationToken cancel = default) =>
         goal.TaskId == null || goal.ListId == null
             ? Task.CompletedTask
-            : _client.UpdateTaskAsync(goal.ListId, goal.TaskId, TitleOf(goal), goal.Done, cancel);
+            : _client.UpdateTaskAsync(goal.ListId, goal.TaskId, TitleOf(goal), goal.Done, cancel, goal.Due ?? "");
 
     public Task DeleteAsync(DailyGoal goal, CancellationToken cancel = default) =>
         goal.TaskId == null || goal.ListId == null
@@ -123,7 +125,7 @@ public sealed partial class GoogleGoalsSync
         var targetId = await EnsureListAsync(TitleFor(GroupOf(goal), goal.ProjectName), cancel);
         if (targetId == goal.ListId) return;
 
-        var created = await _client.CreateTaskAsync(targetId, TitleOf(goal), null, goal.Done, cancel);
+        var created = await _client.CreateTaskAsync(targetId, TitleOf(goal), null, goal.Done, cancel, goal.Due);
         await _client.DeleteTaskAsync(goal.ListId, goal.TaskId, cancel);
         goal.TaskId = created.Id;
         goal.ListId = targetId;

@@ -133,6 +133,7 @@ public partial class MainWindow
                     goal.ProjectId = remote.ProjectId;
                     goal.CompletedAt = remote.CompletedAt;
                     goal.Done = remote.Done;
+                    goal.Due = remote.Due;
                 }
                 else
                 {
@@ -199,7 +200,7 @@ public partial class MainWindow
     private void PushGoalChange(DailyGoal goal, string? property)
     {
         if (!GoogleMode) return;
-        if (property is nameof(DailyGoal.Text) or nameof(DailyGoal.Done) or nameof(DailyGoal.Starred))
+        if (property is nameof(DailyGoal.Text) or nameof(DailyGoal.Done) or nameof(DailyGoal.Starred) or nameof(DailyGoal.Due))
             QueueGoogle(sync => sync.UpdateAsync(goal));
     }
 

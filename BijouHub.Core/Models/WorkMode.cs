@@ -10,5 +10,11 @@ public class WorkMode
     // Saved countdown lengths, in minutes, shown as one-click timers on the mode's page.
     public List<int> TimerMinutes { get; set; } = new();
 
+    // Saved Pomodoro cycles as typed, "25/5" (focus/break minutes).
+    public List<string> PomodoroTimers { get; set; } = new();
+
+    // Silences notifications while a session in this mode runs.
+    public bool DoNotDisturb { get; set; }
+
     public override string ToString() => Name;
 }

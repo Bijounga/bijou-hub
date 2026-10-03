@@ -19,6 +19,7 @@ public partial class ModeEditorWindow : Window
         Mode = mode;
 
         NameBox.Text = mode.Name;
+        DoNotDisturbBox.IsChecked = mode.DoNotDisturb;
         _launchItems = new ObservableCollection<LaunchItem>(mode.LaunchItems);
         _blockItems = new ObservableCollection<BlockItem>(mode.BlockItems);
         LaunchItemsList.ItemsSource = _launchItems;
@@ -124,6 +125,7 @@ public partial class ModeEditorWindow : Window
         Mode.Name = name;
         Mode.LaunchItems = _launchItems.ToList();
         Mode.BlockItems = _blockItems.ToList();
+        Mode.DoNotDisturb = DoNotDisturbBox.IsChecked == true;
 
         DialogResult = true;
         Close();

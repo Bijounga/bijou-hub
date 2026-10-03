@@ -81,12 +81,15 @@ public partial class MainWindow
                 goal.PropertyChanged += DailyGoal_PropertyChanged;
                 _dailyGoals.Add(goal);
             }
+            TakePlannedGoals();
             DailyNotesBox.Text = _today.Notes ?? "";
+            _viewTomorrow = false; // a new day opens on today
         }
         finally
         {
             _loadingDailyPlan = false;
         }
+        SaveDailyPlan(); // keeps goals moved over from the plan
         RefreshGoalScope();
         RefreshCarryOver();
         UpdateDailyProgress();
@@ -111,7 +114,9 @@ public partial class MainWindow
     {
         var visible = _dailyGoals.Where(InScope).ToList();
         var done = visible.Count(g => g.Done);
-        DailyProgressText.Text = visible.Count == 0 ? "" : done == visible.Count ? $"All {visible.Count} done" : $"{done} of {visible.Count} done";
+        DailyProgressText.Text = visible.Count == 0 ? "" : _viewTomorrow ? $"{visible.Count} planned"
+            : done == visible.Count ? $"All {visible.Count} done" : $"{done} of {visible.Count} done";
+        RefreshDayTabs();
         DailyGoalsList.IsVisible = visible.Count > 0;
         BuildScopeTabs(ScopeGroups());
     }
@@ -231,7 +236,14 @@ public partial class MainWindow
     private DailyGoal NewGoal(string text)
     {
         var target = PickedTarget();
-        return new DailyGoal { Text = text, Group = target.Group, ProjectId = target.ProjectId, ProjectName = target.Name };
+        return new DailyGoal
+        {
+            Text = text,
+            Group = target.Group,
+            ProjectId = target.ProjectId,
+            ProjectName = target.Name,
+            Due = _viewTomorrow ? TomorrowKey : null
+        };
     }
 
     private static readonly object NewListTag = new();
@@ -315,6 +327,11 @@ public partial class MainWindow
         star.Click += (_, _) => goal.Starred = !goal.Starred;
         menu.Items.Add(star);
 
+        var planned = goal.IsPlannedAfter(TodayKey);
+        var move = new MenuItem { Header = planned ? "Move to today" : "Move to tomorrow" };
+        move.Click += (_, _) => MoveGoalToDay(goal, !planned);
+        menu.Items.Add(move);
+
         var link = new MenuItem { Header = GoogleMode ? "Move to list" : "Link to project" };
         var scope = !GoogleMode ? EditingGroup : _goalScope == AllScope ? AllScope : GoogleGoalsSync.GroupOf(goal);
         foreach (var target in TargetsFor(scope))
@@ -382,7 +399,7 @@ public partial class MainWindow
     private void RefreshCarryOver()
     {
         _carryOverCandidates.Clear();
-        if (!GoogleMode && _today is { CarryOverHandled: false } && _dailyStore.LatestUnfinishedBefore(DateTime.Today) is var (date, goals))
+        if (!GoogleMode && !_viewTomorrow && _today is { CarryOverHandled: false } && _dailyStore.LatestUnfinishedBefore(DateTime.Today) is var (date, goals))
         {
             var carried = _dailyGoals.Select(g => g.CarriedFromId).ToHashSet();
             _carryOverCandidates = goals.Where(g => !carried.Contains(g.Id)).ToList();
@@ -416,7 +433,7 @@ public partial class MainWindow
     // ---------- Tabs (one per Google Tasks list group) ----------
 
     private bool InScope(DailyGoal goal) =>
-        !GoogleMode || _goalScope == AllScope || GoogleGoalsSync.GroupOf(goal) == _goalScope;
+        InDay(goal) && (!GoogleMode || _goalScope == AllScope || GoogleGoalsSync.GroupOf(goal) == _goalScope);
 
     private IReadOnlyList<string> ScopeGroups()
     {
@@ -459,7 +476,7 @@ public partial class MainWindow
 
         foreach (var scope in groups.Append(AllScope))
         {
-            var open = _dailyGoals.Count(g => !g.Done && (scope == AllScope || GoogleGoalsSync.GroupOf(g) == scope));
+            var open = _dailyGoals.Count(g => !g.Done && InDay(g) && (scope == AllScope || GoogleGoalsSync.GroupOf(g) == scope));
             var selected = scope == _goalScope;
             var tab = new Button
             {

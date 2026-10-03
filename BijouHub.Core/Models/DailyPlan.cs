@@ -72,6 +72,15 @@ public class DailyGoal : INotifyPropertyChanged
     // Starred goals are pinned above the rest.
     public bool Starred { get => _starred; set => Set(ref _starred, value); }
 
+    private string? _due;
+
+    // The day it's planned for (yyyy-MM-dd), when that's a later day: planning tomorrow. Null
+    // means today's list. Synced as the Google task's due date.
+    public string? Due { get => _due; set => Set(ref _due, value); }
+
+    // Planned for a day after `today` (a yyyy-MM-dd key), so not on that day's list yet.
+    public bool IsPlannedAfter(string today) => _due != null && string.CompareOrdinal(_due, today) > 0;
+
     public string? ProjectId { get => _projectId; set => Set(ref _projectId, value); }
 
     // Copied at link time so the chip still reads right if the project is later deleted.

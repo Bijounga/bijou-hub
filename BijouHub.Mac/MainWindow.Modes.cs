@@ -76,6 +76,54 @@ public partial class MainWindow
         ModeTimerTiles.Children.Clear();
         foreach (var minutes in mode.TimerMinutes.Order())
             ModeTimerTiles.Children.Add(BuildTimerTile(mode, minutes));
+        foreach (var plan in mode.PomodoroTimers.Select(DurationText.TryParsePomodoro).OfType<PomodoroPlan>())
+            ModeTimerTiles.Children.Add(BuildPomodoroTile(mode, plan));
+    }
+
+    // A saved "25/5": focus and break lengths on one tile.
+    private Button BuildPomodoroTile(WorkMode mode, PomodoroPlan plan)
+    {
+        var tile = new Button
+        {
+            Width = 96,
+            Height = 72,
+            Margin = new Thickness(0, 0, 12, 12),
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Content = new StackPanel
+            {
+                Spacing = 5,
+                Children =
+                {
+                    new TextBlock { Text = "POMODORO", FontSize = 9, HorizontalAlignment = HorizontalAlignment.Center, Foreground = Brush("AccentBrush") },
+                    new TextBlock { Text = plan.ToString(), FontSize = 20, HorizontalAlignment = HorizontalAlignment.Center, FontFamily = (Avalonia.Media.FontFamily?)(this.TryFindResource("TimerFont", out var f) ? f : null) ?? Avalonia.Media.FontFamily.Default }
+                }
+            }
+        };
+        ToolTip.SetTip(tile, $"Launch {mode.Name}: {plan.FocusMinutes} min focus, {plan.BreakMinutes} min break, repeating");
+        Avalonia.Automation.AutomationProperties.SetName(tile, $"Pomodoro {plan.FocusMinutes} {plan.BreakMinutes}");
+        tile.Click += async (_, _) => await BeginSession(mode, null, null, plan.FocusMinutes, pomodoro: plan);
+
+        var remove = new MenuItem { Header = "Remove timer" };
+        remove.Click += (_, _) =>
+        {
+            mode.PomodoroTimers.Remove(plan.ToString());
+            _modeStore.Save(_modes.ToList());
+            RefreshModeTimers(mode);
+            UpdateModeTimerInput();
+        };
+        tile.ContextMenu = new ContextMenu { Items = { remove } };
+        return tile;
+    }
+
+    // The timer box takes a length ("45") or a Pomodoro ("25/5").
+    private async Task StartFromTimerBox()
+    {
+        if (_shownMode is not WorkMode mode) return;
+        if (DurationText.TryParsePomodoro(ModeTimerBox.Text) is PomodoroPlan plan)
+            await BeginSession(mode, null, null, plan.FocusMinutes, pomodoro: plan);
+        else if (DurationText.TryParseMinutes(ModeTimerBox.Text) is int minutes)
+            await BeginSession(mode, null, null, minutes, countDown: true);
     }
 
     private Button BuildTimerTile(WorkMode mode, int minutes)
@@ -119,19 +167,24 @@ public partial class MainWindow
     {
         if (e.Key != Key.Enter) return;
         e.Handled = true;
-        if (_shownMode is WorkMode mode && DurationText.TryParseMinutes(ModeTimerBox.Text) is int minutes)
-            await BeginSession(mode, null, null, minutes, countDown: true);
+        await StartFromTimerBox();
     }
 
-    private async void ModeTimerStart_Click(object? sender, RoutedEventArgs e)
-    {
-        if (_shownMode is WorkMode mode && DurationText.TryParseMinutes(ModeTimerBox.Text) is int minutes)
-            await BeginSession(mode, null, null, minutes, countDown: true);
-    }
+    private async void ModeTimerStart_Click(object? sender, RoutedEventArgs e) => await StartFromTimerBox();
 
     private void ModeTimerSave_Click(object? sender, RoutedEventArgs e)
     {
-        if (_shownMode is not WorkMode mode || DurationText.TryParseMinutes(ModeTimerBox.Text) is not int minutes) return;
+        if (_shownMode is not WorkMode mode) return;
+        if (DurationText.TryParsePomodoro(ModeTimerBox.Text) is PomodoroPlan plan)
+        {
+            if (mode.PomodoroTimers.Contains(plan.ToString())) return;
+            mode.PomodoroTimers.Add(plan.ToString());
+            _modeStore.Save(_modes.ToList());
+            RefreshModeTimers(mode);
+            ModeTimerBox.Text = "";
+            return;
+        }
+        if (DurationText.TryParseMinutes(ModeTimerBox.Text) is not int minutes) return;
         if (mode.TimerMinutes.Contains(minutes)) return;
         mode.TimerMinutes.Add(minutes);
         _modeStore.Save(_modes.ToList());
@@ -143,9 +196,12 @@ public partial class MainWindow
     {
         var text = ModeTimerBox.Text ?? "";
         var minutes = DurationText.TryParseMinutes(text);
-        var saved = minutes is int m && _shownMode?.TimerMinutes.Contains(m) == true;
-        ModeTimerStartButton.IsEnabled = minutes != null;
-        ModeTimerSaveButton.IsEnabled = minutes != null && !saved;
+        var pomodoro = DurationText.TryParsePomodoro(text);
+        var saved = pomodoro != null ? _shownMode?.PomodoroTimers.Contains(pomodoro.ToString()) == true
+            : minutes is int m && _shownMode?.TimerMinutes.Contains(m) == true;
+        var valid = minutes != null || pomodoro != null;
+        ModeTimerStartButton.IsEnabled = valid;
+        ModeTimerSaveButton.IsEnabled = valid && !saved;
 
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -153,7 +209,9 @@ public partial class MainWindow
             return;
         }
         ModeTimerHint.IsVisible = true;
-        ModeTimerHint.Text = minutes is int valid ? $"Counts down from {DurationText.Format(valid)}." : "Can't read that — try 45, 1:30 or 2h.";
-        ModeTimerHint.Foreground = Brush(minutes != null ? "MutedTextBrush" : "DangerBrush");
+        ModeTimerHint.Text = pomodoro != null ? $"{pomodoro.FocusMinutes} min focus, {pomodoro.BreakMinutes} min break, on repeat."
+            : minutes is int length ? $"Counts down from {DurationText.Format(length)}."
+            : "Can't read that — try 45, 1:30, 2h, or 25/5 for a Pomodoro.";
+        ModeTimerHint.Foreground = Brush(valid ? "MutedTextBrush" : "DangerBrush");
     }
 }

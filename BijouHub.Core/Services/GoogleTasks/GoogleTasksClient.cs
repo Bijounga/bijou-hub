@@ -26,7 +26,8 @@ public sealed class GoogleTasksClient
 
     public sealed record TaskList(string Id, string Title);
 
-    public sealed record TaskItem(string Id, string Title, string? Notes, bool Completed, DateTime? CompletedAt, string? Position);
+    // Due is the date part of Google's due (yyyy-MM-dd); the API keeps only the day.
+    public sealed record TaskItem(string Id, string Title, string? Notes, bool Completed, DateTime? CompletedAt, string? Position, string? Due = null);
 
     public async Task<List<TaskList>> GetTaskListsAsync(CancellationToken cancel = default)
     {
@@ -59,18 +60,21 @@ public sealed class GoogleTasksClient
         return open.Concat(done.Where(t => t.Completed)).GroupBy(t => t.Id).Select(g => g.First()).ToList();
     }
 
-    public async Task<TaskItem> CreateTaskAsync(string listId, string title, string? notes, bool completed, CancellationToken cancel = default)
+    public async Task<TaskItem> CreateTaskAsync(string listId, string title, string? notes, bool completed, CancellationToken cancel = default, string? due = null)
     {
         var body = new JsonObject { ["title"] = title, ["status"] = completed ? "completed" : "needsAction" };
         if (!string.IsNullOrEmpty(notes)) body["notes"] = notes;
+        if (due != null) body["due"] = DueValue(due);
         var json = await SendAsync(HttpMethod.Post, $"/lists/{Esc(listId)}/tasks", body, cancel);
         return Parse((JsonObject)json!);
     }
 
-    public async Task UpdateTaskAsync(string listId, string taskId, string? title = null, bool? completed = null, CancellationToken cancel = default)
+    // due: null leaves it alone, "" clears it, yyyy-MM-dd sets it.
+    public async Task UpdateTaskAsync(string listId, string taskId, string? title = null, bool? completed = null, CancellationToken cancel = default, string? due = null)
     {
         var body = new JsonObject();
         if (title != null) body["title"] = title;
+        if (due != null) body["due"] = due.Length == 0 ? null : DueValue(due);
         if (completed is bool isDone)
         {
             body["status"] = isDone ? "completed" : "needsAction";
@@ -107,8 +111,12 @@ public sealed class GoogleTasksClient
             (string?)o["notes"],
             (string?)o["status"] == "completed",
             completedAt,
-            (string?)o["position"]);
+            (string?)o["position"],
+            (string?)o["due"] is { Length: >= 10 } due ? due[..10] : null);
     }
+
+    // Google stores only the date; it wants it as midnight UTC.
+    private static string DueValue(string day) => day + "T00:00:00.000Z";
 
     private async Task<JsonNode?> SendAsync(HttpMethod method, string path, JsonObject? body, CancellationToken cancel)
     {

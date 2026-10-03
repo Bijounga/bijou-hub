@@ -16,6 +16,9 @@ public class AppSettings
 
     // The home goal list's selected tab (a Google Tasks list group, or "*" for all).
     public string GoalScope { get; set; } = "EDITING";
+
+    // How much to work each day, for the ring on Home and the Daily Target key. Null: no target.
+    public int? DailyTargetMinutes { get; set; }
 }
 
 public class AppSettingsStore

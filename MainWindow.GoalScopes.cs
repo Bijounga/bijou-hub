@@ -34,7 +34,7 @@ public partial class MainWindow
     }
 
     private bool InScope(DailyGoal goal) =>
-        !GoogleMode || _goalScope == AllScope || GoogleGoalsSync.GroupOf(goal) == _goalScope;
+        InDay(goal) && (!GoogleMode || _goalScope == AllScope || GoogleGoalsSync.GroupOf(goal) == _goalScope);
 
     private IReadOnlyList<string> ScopeGroups()
     {
@@ -83,7 +83,7 @@ public partial class MainWindow
 
         foreach (var scope in groups.Append(AllScope))
         {
-            var open = _dailyGoals.Count(g => !g.Done && (scope == AllScope || GoogleGoalsSync.GroupOf(g) == scope));
+            var open = _dailyGoals.Count(g => !g.Done && InDay(g) && (scope == AllScope || GoogleGoalsSync.GroupOf(g) == scope));
             GoalScopeTabs.Children.Add(BuildScopeTab(scope, open, scope == _goalScope));
         }
     }

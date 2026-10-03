@@ -33,6 +33,16 @@ public static partial class DurationText
         return null;
     }
 
+    // "25/5", "50 / 10", "1h/15" → a focus/break cycle. Null for anything else.
+    public static PomodoroPlan? TryParsePomodoro(string? text)
+    {
+        var parts = (text ?? "").Split('/');
+        if (parts.Length != 2) return null;
+        return TryParseMinutes(parts[0]) is int focus && TryParseMinutes(parts[1]) is int rest && rest <= 120
+            ? new PomodoroPlan(focus, rest)
+            : null;
+    }
+
     // 45 → "45m", 60 → "1h", 90 → "1h 30m".
     public static string Format(int minutes)
     {

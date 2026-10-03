@@ -84,8 +84,10 @@ public partial class MainWindow : Window
         };
 
         RecoverInterruptedSessionIfAny();
+        DoNotDisturb.Restore(); // left on by a session that didn't end cleanly
 
         var settings = _settingsStore.Load();
+        _dailyTargetMinutes = settings.DailyTargetMinutes;
         AppScaleTransform.ScaleX = settings.ZoomLevel;
         AppScaleTransform.ScaleY = settings.ZoomLevel;
 
@@ -809,8 +811,10 @@ public partial class MainWindow : Window
         TypewriterReveal(HomeWelcomeText, DateTime.Today.ToString("dddd, MMMM d"), msPerChar: 8);
         TypewriterReveal(HomeGreetingText, greeting, msPerChar: 8);
 
-        var todaySeconds = _logService.GetTodayTotalSeconds();
-        HomeTodayText.Text = FormatSpan(todaySeconds);
+        // Fresh from the log (another computer may have added time), then kept live by the tick.
+        _todayLoggedDay = DateTime.Today;
+        _todayLoggedSeconds = _logService.GetTodayTotalSeconds();
+        UpdateTodayCard();
         BuildWeekBars(_logService.GetLastNDaysTotals(7));
 
         LoadDailyPlan();
@@ -1099,7 +1103,7 @@ public partial class MainWindow : Window
     }
 
     private async Task BeginSession(WorkMode? mode, Project? project, Goal? goal, int? targetMinutes, bool countDown = false,
-        string? deckKeyId = null)
+        string? deckKeyId = null, PomodoroPlan? pomodoro = null)
     {
         // Starting while another session runs replaces it — log the running one first instead of
         // silently dropping its time.
@@ -1117,11 +1121,14 @@ public partial class MainWindow : Window
             }
         }
 
+        if (mode?.DoNotDisturb == true) DoNotDisturb.TurnOn();
+
         _activeMode = mode;
         _activeProject = project;
         _activeGoal = goal;
-        _targetMinutes = targetMinutes;
-        _countDownMode = countDown && targetMinutes != null;
+        StartPomodoro(pomodoro);
+        _targetMinutes = pomodoro == null ? targetMinutes : null;
+        _countDownMode = countDown && _targetMinutes != null;
         _budgetAlertShown = false;
         _sessionStart = DateTime.Now;
         _activeSeconds = 0;
@@ -1139,9 +1146,9 @@ public partial class MainWindow : Window
         TypewriterReveal(ActiveModeName, project?.Name ?? mode?.Name ?? "Session");
         UpdateSessionContextText();
 
-        ActiveStatus.Text = "Active";
-        TimerDisplay.Text = _countDownMode && targetMinutes is int initialTarget
-            ? TimeSpan.FromMinutes(initialTarget).ToString(@"hh\:mm\:ss")
+        ActiveStatus.Text = _pomodoro != null ? PomodoroStatus : "Active";
+        TimerDisplay.Text = _pomodoro != null ? PomodoroClock
+            : _countDownMode && targetMinutes is int initialTarget ? TimeSpan.FromMinutes(initialTarget).ToString(@"hh\:mm\:ss")
             : "00:00:00";
 
         ShowActiveSessionPanel();
@@ -1156,9 +1163,9 @@ public partial class MainWindow : Window
     {
         var idleTime = IdleTimeService.GetIdleTime();
 
-        if (_paused)
+        if (_paused || _onBreak)
         {
-            // Paused time isn't worked time — it's logged alongside idle time.
+            // Paused time (and a Pomodoro break) isn't worked time — it's logged alongside idle time.
             _idleSeconds++;
         }
         else if (idleTime >= IdleThreshold)
@@ -1180,7 +1187,13 @@ public partial class MainWindow : Window
             }
         }
 
-        if (_countDownMode && _targetMinutes is int countDownTarget)
+        if (_pomodoro != null)
+        {
+            if (!_paused) AdvancePomodoro();
+            TimerDisplay.Text = PomodoroClock;
+            ActiveStatus.Text = _paused ? "Paused" : _onBreak ? PomodoroStatus : _isIdle ? "Idle — timer paused" : PomodoroStatus;
+        }
+        else if (_countDownMode && _targetMinutes is int countDownTarget)
         {
             var remainingSeconds = Math.Max(0, countDownTarget * 60 - _activeSeconds);
             TimerDisplay.Text = TimeSpan.FromSeconds(remainingSeconds).ToString(@"hh\:mm\:ss");
@@ -1206,6 +1219,7 @@ public partial class MainWindow : Window
         if ((_activeSeconds + _idleSeconds) % 10 == 0)
             WriteSessionCheckpoint();
 
+        if (HomePanel.Visibility == Visibility.Visible) UpdateTodayCard();
         BroadcastDeckState();
     }
 
@@ -1241,6 +1255,7 @@ public partial class MainWindow : Window
     private void FinalizeSessionSilently()
     {
         _tickTimer.Stop();
+        DoNotDisturb.Restore();
 
         if (_activeSeconds > 0)
         {
@@ -1319,6 +1334,8 @@ public partial class MainWindow : Window
         if (_activeProject != null && _activeMode != null) contextParts.Add($"via {_activeMode.Name}");
         if (_activeGoal != null) contextParts.Add($"working on: {_activeGoal.Name}");
         if (_targetMinutes is int tm) contextParts.Add(_countDownMode ? $"counting down from {tm} min" : $"budget: {tm} min");
+        if (_pomodoro != null) contextParts.Add($"Pomodoro {_pomodoro.FocusMinutes} / {_pomodoro.BreakMinutes} min");
+        if (_activeMode?.DoNotDisturb == true) contextParts.Add("Do Not Disturb");
         ActiveContextText.Text = string.Join("  •  ", contextParts);
         ActiveContextText.Visibility = contextParts.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
@@ -1328,6 +1345,13 @@ public partial class MainWindow : Window
     private bool ExtendSession(int minutes)
     {
         if (!IsSessionActive || minutes <= 0) return false;
+
+        if (_pomodoro != null)
+        {
+            ExtendPomodoroPhase(minutes);
+            BroadcastDeckState();
+            return true;
+        }
 
         if (_targetMinutes is int target)
         {
@@ -1533,6 +1557,8 @@ public partial class MainWindow : Window
         _countDownMode = false;
         _paused = false;
         _deckKeyId = null;
+        StartPomodoro(null);
+        DoNotDisturb.Restore();
         BroadcastDeckState();
 
         if (finishedProject != null)
@@ -1614,12 +1640,15 @@ public partial class MainWindow : Window
                 goal.PropertyChanged += DailyGoal_PropertyChanged;
                 _dailyGoals.Add(goal);
             }
+            TakePlannedGoals();
             DailyNotesBox.Text = _today.Notes ?? "";
+            _viewTomorrow = false; // a new day opens on today
         }
         finally
         {
             _loadingDailyPlan = false;
         }
+        SaveDailyPlan(); // keeps goals moved over from the plan
 
         RefreshGoalScope();
         RefreshCarryOver();
@@ -1642,7 +1671,8 @@ public partial class MainWindow : Window
         var total = visible.Count;
         var done = visible.Count(g => g.Done);
         BuildScopeTabs(ScopeGroups());
-        DailyProgressText.Text = total == 0 ? "" : done == total ? $"All {total} done" : $"{done} of {total} done";
+        RefreshDayTabs();
+        DailyProgressText.Text = total == 0 ? "" : _viewTomorrow ? $"{total} planned" : done == total ? $"All {total} done" : $"{done} of {total} done";
         DailyGoalsList.Visibility = total == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
@@ -1786,7 +1816,14 @@ public partial class MainWindow : Window
     private DailyGoal NewGoal(string text)
     {
         var target = PickedTarget();
-        return new DailyGoal { Text = text, Group = target.Group, ProjectId = target.ProjectId, ProjectName = target.Name };
+        return new DailyGoal
+        {
+            Text = text,
+            Group = target.Group,
+            ProjectId = target.ProjectId,
+            ProjectName = target.Name,
+            Due = _viewTomorrow ? TomorrowKey : null
+        };
     }
 
     private static DailyGoal? GoalOf(object sender) => (sender as FrameworkElement)?.DataContext as DailyGoal;
@@ -1882,6 +1919,11 @@ public partial class MainWindow : Window
         star.Click += (_, _) => goal.Starred = !goal.Starred;
         menu.Items.Add(star);
 
+        var planned = goal.IsPlannedAfter(TodayKey);
+        var move = new MenuItem { Header = planned ? "Move to today" : "Move to tomorrow" };
+        move.Click += (_, _) => MoveGoalToDay(goal, !planned);
+        menu.Items.Add(move);
+
         var link = new MenuItem { Header = GoogleMode ? "Move to list" : "Link to project" };
         var menuScope = !GoogleMode ? EditingGroup : _goalScope == AllScope ? AllScope : GoogleGoalsSync.GroupOf(goal);
         foreach (var target in TargetsFor(menuScope))
@@ -1916,7 +1958,7 @@ public partial class MainWindow : Window
     private void RefreshCarryOver()
     {
         _carryOverCandidates.Clear();
-        if (!GoogleMode && _today is { CarryOverHandled: false } && _dailyStore.LatestUnfinishedBefore(DateTime.Today) is var (date, goals))
+        if (!GoogleMode && !_viewTomorrow && _today is { CarryOverHandled: false } && _dailyStore.LatestUnfinishedBefore(DateTime.Today) is var (date, goals))
         {
             var carried = _dailyGoals.Select(g => g.CarriedFromId).ToHashSet();
             _carryOverCandidates = goals.Where(g => !carried.Contains(g.Id)).ToList();
@@ -1963,6 +2005,8 @@ public partial class MainWindow : Window
         ModeTimerTiles.Children.Clear();
         foreach (var minutes in mode.TimerMinutes.Order())
             ModeTimerTiles.Children.Add(BuildModeTimerTile(mode, minutes));
+        foreach (var plan in mode.PomodoroTimers.Select(DurationText.TryParsePomodoro).OfType<PomodoroPlan>())
+            ModeTimerTiles.Children.Add(BuildPomodoroTile(mode, plan));
     }
 
     private Button BuildModeTimerTile(WorkMode mode, int minutes)
@@ -2006,25 +2050,78 @@ public partial class MainWindow : Window
     private Task StartModeTimer(WorkMode mode, int minutes) =>
         BeginSession(mode, null, null, minutes, countDown: true);
 
+    private Task StartModePomodoro(WorkMode mode, PomodoroPlan plan) =>
+        BeginSession(mode, null, null, plan.FocusMinutes, pomodoro: plan);
+
+    // A saved "25/5": focus and break lengths on one tile.
+    private Button BuildPomodoroTile(WorkMode mode, PomodoroPlan plan)
+    {
+        var stack = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+
+        var label = new TextBlock { Text = "POMODORO", FontSize = 9, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 4) };
+        label.SetResourceReference(TextBlock.ForegroundProperty, "AccentBrush");
+        stack.Children.Add(label);
+
+        var length = new TextBlock { Text = $"{plan.FocusMinutes}/{plan.BreakMinutes}", FontSize = 20, HorizontalAlignment = HorizontalAlignment.Center };
+        length.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
+        length.SetResourceReference(TextBlock.FontFamilyProperty, "TimerFont");
+        length.SetResourceReference(TextBlock.FontWeightProperty, "TimerFontWeight");
+        stack.Children.Add(length);
+
+        var button = new Button
+        {
+            Content = stack,
+            Height = 72,
+            ToolTip = $"Launch {mode.Name}: {plan.FocusMinutes} min focus, {plan.BreakMinutes} min break, repeating"
+        };
+        System.Windows.Automation.AutomationProperties.SetName(button, $"Pomodoro {plan.FocusMinutes} {plan.BreakMinutes}");
+        button.SetResourceReference(StyleProperty, "QuickLaunchTileStyle");
+        button.Click += async (_, _) => await StartModePomodoro(mode, plan);
+
+        var remove = new MenuItem { Header = "Remove timer" };
+        remove.Click += (_, _) =>
+        {
+            mode.PomodoroTimers.Remove(plan.ToString());
+            _modeStore.Save(_modes);
+            RefreshModeTimers(mode);
+            UpdateModeTimerInput();
+        };
+        button.ContextMenu = new ContextMenu { Items = { remove } };
+        return button;
+    }
+
+    // The timer box takes a length ("45") or a Pomodoro ("25/5").
+    private async Task StartFromTimerBox()
+    {
+        if (ModesList.SelectedItem is not WorkMode mode) return;
+        if (DurationText.TryParsePomodoro(ModeTimerBox.Text) is PomodoroPlan plan) await StartModePomodoro(mode, plan);
+        else if (DurationText.TryParseMinutes(ModeTimerBox.Text) is int minutes) await StartModeTimer(mode, minutes);
+    }
+
     private void ModeTimerBox_TextChanged(object sender, TextChangedEventArgs e) => UpdateModeTimerInput();
 
     private async void ModeTimerBox_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key != Key.Enter) return;
         e.Handled = true;
-        if (ModesList.SelectedItem is WorkMode mode && DurationText.TryParseMinutes(ModeTimerBox.Text) is int minutes)
-            await StartModeTimer(mode, minutes);
+        await StartFromTimerBox();
     }
 
-    private async void ModeTimerStart_Click(object sender, RoutedEventArgs e)
-    {
-        if (ModesList.SelectedItem is WorkMode mode && DurationText.TryParseMinutes(ModeTimerBox.Text) is int minutes)
-            await StartModeTimer(mode, minutes);
-    }
+    private async void ModeTimerStart_Click(object sender, RoutedEventArgs e) => await StartFromTimerBox();
 
     private void ModeTimerSave_Click(object sender, RoutedEventArgs e)
     {
-        if (ModesList.SelectedItem is not WorkMode mode || DurationText.TryParseMinutes(ModeTimerBox.Text) is not int minutes) return;
+        if (ModesList.SelectedItem is not WorkMode mode) return;
+        if (DurationText.TryParsePomodoro(ModeTimerBox.Text) is PomodoroPlan plan)
+        {
+            if (mode.PomodoroTimers.Contains(plan.ToString())) return;
+            mode.PomodoroTimers.Add(plan.ToString());
+            _modeStore.Save(_modes);
+            RefreshModeTimers(mode);
+            ModeTimerBox.Text = "";
+            return;
+        }
+        if (DurationText.TryParseMinutes(ModeTimerBox.Text) is not int minutes) return;
         if (mode.TimerMinutes.Contains(minutes)) return;
 
         mode.TimerMinutes.Add(minutes);
@@ -2037,21 +2134,27 @@ public partial class MainWindow : Window
     {
         var text = ModeTimerBox.Text;
         var minutes = DurationText.TryParseMinutes(text);
-        var alreadySaved = minutes is int m && ModesList.SelectedItem is WorkMode mode && mode.TimerMinutes.Contains(m);
+        var pomodoro = DurationText.TryParsePomodoro(text);
+        var selected = ModesList.SelectedItem as WorkMode;
+        var alreadySaved = selected != null &&
+            (pomodoro != null ? selected.PomodoroTimers.Contains(pomodoro.ToString()) : minutes is int m && selected.TimerMinutes.Contains(m));
+        var valid = minutes != null || pomodoro != null;
 
-        ModeTimerStartButton.IsEnabled = minutes != null;
-        ModeTimerSaveButton.IsEnabled = minutes != null && !alreadySaved;
+        ModeTimerStartButton.IsEnabled = valid;
+        ModeTimerSaveButton.IsEnabled = valid && !alreadySaved;
         ModeTimerSaveButton.ToolTip = alreadySaved ? "Already saved on this mode" : "Save this length as a timer on the mode";
 
         string hint;
         string brush = "MutedTextBrush";
         if (string.IsNullOrWhiteSpace(text))
             hint = "";
-        else if (minutes is int valid)
-            hint = $"Counts down from {DurationText.Format(valid)}.";
+        else if (pomodoro != null)
+            hint = $"{pomodoro.FocusMinutes} min focus, {pomodoro.BreakMinutes} min break, on repeat.";
+        else if (minutes is int length)
+            hint = $"Counts down from {DurationText.Format(length)}.";
         else
         {
-            hint = "Can't read that — try 45, 1:30 or 2h.";
+            hint = "Can't read that — try 45, 1:30, 2h, or 25/5 for a Pomodoro.";
             brush = "DangerBrush";
         }
         ModeTimerHint.Text = hint;
@@ -2069,7 +2172,7 @@ public partial class MainWindow : Window
 
         _paused = !_paused;
         _isIdle = false;
-        ActiveStatus.Text = _paused ? "Paused" : "Active";
+        ActiveStatus.Text = _paused ? "Paused" : _pomodoro != null ? PomodoroStatus : "Active";
         SetIconButton(PauseToggleButton, _paused ? "\uE768" : "\uE769", _paused ? "Resume" : "Pause");
         _timerPopout?.UpdateDisplay(_activeProject?.Name ?? _activeMode?.Name ?? "Session", TimerDisplay.Text, ActiveStatus.Text);
         BroadcastDeckState();
@@ -2088,7 +2191,9 @@ public partial class MainWindow : Window
         ["paused"] = _paused,
         ["idle"] = _isIdle && !_paused,
         ["todaySeconds"] = TodayLoggedSeconds() + (IsSessionActive ? _activeSeconds : 0),
-        ["poppedOut"] = _timerPopout != null
+        ["poppedOut"] = _timerPopout != null,
+        ["pomodoro"] = DeckPomodoro(),
+        ["dailyTargetSeconds"] = _dailyTargetMinutes * 60
     };
 
     private void BroadcastDeckState() => _deckBridge.Broadcast(DeckState());
@@ -2113,12 +2218,13 @@ public partial class MainWindow : Window
     // Open goals for the deck's Next Goal key: every tab, starred first, in the user's order.
     private JsonObject DeckGoals()
     {
-        var open = _dailyGoals.Where(g => !g.Done).OrderBy(g => g.Starred ? 0 : 1).Take(30).ToList();
+        var today = _dailyGoals.Where(g => !g.IsPlannedAfter(TodayKey)).ToList();
+        var open = today.Where(g => !g.Done).OrderBy(g => g.Starred ? 0 : 1).Take(30).ToList();
         return new JsonObject
         {
             ["type"] = "goals",
-            ["open"] = _dailyGoals.Count(g => !g.Done),
-            ["done"] = _dailyGoals.Count(g => g.Done),
+            ["open"] = today.Count(g => !g.Done),
+            ["done"] = today.Count(g => g.Done),
             ["items"] = new JsonArray(open.Select(g => (JsonNode)new JsonObject
             {
                 ["id"] = g.Id,
@@ -2188,6 +2294,19 @@ public partial class MainWindow : Window
                 BringToFront();
                 return new JsonObject { ["ok"] = true };
 
+            case "capture":
+                // After replying, so the plugin isn't left waiting on a window.
+                Dispatcher.BeginInvoke(ShowQuickCapture);
+                return new JsonObject { ["ok"] = true };
+
+            case "target":
+                Dispatcher.BeginInvoke(() =>
+                {
+                    BringToFront();
+                    PromptDailyTarget();
+                });
+                return new JsonObject { ["ok"] = true };
+
             case "popout":
                 if (!IsSessionActive) return new JsonObject { ["error"] = "No session is running" };
                 // "show" picks a side; without it the key toggles.
@@ -2206,6 +2325,10 @@ public partial class MainWindow : Window
         var modeName = (string?)request["modeName"];
         var projectId = (string?)request["projectId"];
         var minutes = request["minutes"] is JsonValue m && m.TryGetValue<int>(out var parsed) && parsed > 0 ? parsed : (int?)null;
+        // A Pomodoro key sends its break too: focus for `minutes`, break for `breakMinutes`, repeat.
+        var pomodoro = minutes is int focus && request["breakMinutes"] is JsonValue b && b.TryGetValue<int>(out var rest) && rest > 0
+            ? new PomodoroPlan(focus, rest)
+            : null;
 
         // Match by id, then by name, so a key still works after its mode is recreated.
         var mode = _modes.FirstOrDefault(x => x.Id == modeId)
@@ -2218,17 +2341,17 @@ public partial class MainWindow : Window
         if (_sessionStarting) return DeckState();
 
         // A session already running (from the app or another key) is logged and replaced by BeginSession.
-        _ = StartDeckSessionAsync(mode, project, minutes, keyId);
+        _ = StartDeckSessionAsync(mode, project, minutes, keyId, pomodoro);
         return new JsonObject { ["ok"] = true };
     }
 
-    private async Task StartDeckSessionAsync(WorkMode? mode, Project? project, int? minutes, string? keyId)
+    private async Task StartDeckSessionAsync(WorkMode? mode, Project? project, int? minutes, string? keyId, PomodoroPlan? pomodoro)
     {
         _sessionStarting = true;
         try
         {
             if (project != null) ProjectsList.SelectedItem = project;
-            await BeginSession(mode, project, null, minutes, countDown: minutes != null, deckKeyId: keyId);
+            await BeginSession(mode, project, null, minutes, countDown: minutes != null, deckKeyId: keyId, pomodoro: pomodoro);
         }
         finally
         {

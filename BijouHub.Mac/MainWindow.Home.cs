@@ -27,7 +27,10 @@ public partial class MainWindow
         HomeDateText.Text = DateTime.Today.ToString("dddd, MMMM d");
         HomeGreetingText.Text = Greetings.Random();
 
-        HomeTodayText.Text = FormatSpan(_logService.GetTodayTotalSeconds());
+        // Fresh from the log (another computer may have added time), then kept live by the tick.
+        _todayLoggedDay = DateTime.Today;
+        _todayLoggedSeconds = _logService.GetTodayTotalSeconds();
+        UpdateTodayCard();
         BuildWeekBars(_logService.GetLastNDaysTotals(7));
 
         LoadDailyPlan();

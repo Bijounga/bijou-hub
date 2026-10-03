@@ -126,7 +126,10 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send_json(200, {"kind": "tasks#tasks", "items": items})
                 if method == "POST":
                     b = self.body()
-                    return self.send_json(200, new_task(lid, b.get("title", ""), b.get("notes"), b.get("status", "needsAction")))
+                    task = new_task(lid, b.get("title", ""), b.get("notes"), b.get("status", "needsAction"))
+                    if b.get("due"):
+                        task["due"] = b["due"]
+                    return self.send_json(200, task)
             if len(parts) == 6:
                 task = next((t for t in TASKS[lid] if t["id"] == parts[5] and not t.get("deleted")), None)
                 if task is None:

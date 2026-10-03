@@ -17,6 +17,17 @@ export type HubState = {
 	todaySeconds: number;
 	/** The always-on-top mini timer is open. */
 	poppedOut: boolean;
+	/** A Pomodoro session's current focus or break. */
+	pomodoro: Pomodoro | null;
+	/** How long the user wants to work each day, if they set a target. */
+	dailyTargetSeconds: number | null;
+};
+
+export type Pomodoro = {
+	phase: "focus" | "break";
+	round: number;
+	remaining: number;
+	phaseSeconds: number;
 };
 
 /** Open goals across every tab, starred first (see MainWindow.DeckGoals). */
@@ -188,7 +199,9 @@ export class HubClient {
 			paused: message.paused === true,
 			idle: message.idle === true,
 			todaySeconds: typeof message.todaySeconds === "number" ? message.todaySeconds : 0,
-			poppedOut: message.poppedOut === true
+			poppedOut: message.poppedOut === true,
+			pomodoro: parsePomodoro(message.pomodoro),
+			dailyTargetSeconds: typeof message.dailyTargetSeconds === "number" && message.dailyTargetSeconds > 0 ? message.dailyTargetSeconds : null
 		};
 		this.#emit();
 	}
@@ -213,6 +226,17 @@ export class HubClient {
 	#emit(): void {
 		for (const listener of this.#listeners) listener();
 	}
+}
+
+function parsePomodoro(value: unknown): Pomodoro | null {
+	if (!value || typeof value !== "object") return null;
+	const p = value as Record<string, unknown>;
+	return {
+		phase: p.phase === "break" ? "break" : "focus",
+		round: typeof p.round === "number" ? p.round : 1,
+		remaining: typeof p.remaining === "number" ? p.remaining : 0,
+		phaseSeconds: typeof p.phaseSeconds === "number" && p.phaseSeconds > 0 ? p.phaseSeconds : 1
+	};
 }
 
 function dataDir(): string {

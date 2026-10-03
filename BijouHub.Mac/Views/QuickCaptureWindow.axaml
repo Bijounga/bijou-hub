@@ -1,0 +1,23 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="BijouHub.Mac.Views.QuickCaptureWindow"
+        Title="Quick Capture" Width="540" SizeToContent="Height" CanResize="False" Topmost="True"
+        SystemDecorations="None" ShowInTaskbar="False" WindowStartupLocation="Manual"
+        Background="{DynamicResource PanelBrush}">
+    <Border BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1" Padding="16,14">
+        <StackPanel Spacing="8">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button Classes="ghost" Padding="4,0" Margin="0,0,10,0" Click="Add_Click" ToolTip.Tip="Add"
+                        AutomationProperties.Name="Add task" VerticalAlignment="Center">
+                    <TextBlock Text="+" FontSize="22" Foreground="{DynamicResource AccentBrush}"/>
+                </Button>
+                <TextBox Name="TaskBox" Grid.Column="1" FontSize="16" Watermark="Capture a task" BorderThickness="0"
+                         Background="Transparent" VerticalAlignment="Center" KeyDown="TaskBox_KeyDown"
+                         AutomationProperties.Name="Task"/>
+                <ComboBox Name="ListCombo" Grid.Column="2" Width="170" Margin="12,0,0,0" VerticalAlignment="Center"
+                          AutomationProperties.Name="List"/>
+            </Grid>
+            <TextBlock Text="Return to add to today  ·  Esc to close" FontSize="11" Foreground="{DynamicResource FaintTextBrush}" Margin="34,0,0,0"/>
+        </StackPanel>
+    </Border>
+</Window>

@@ -33,7 +33,7 @@ function check(condition, message) {
 
 // ---------- Scratch BijouHub data ----------
 const dataDir = mkdtempSync(join(tmpdir(), "bijouhub-deck-test-"));
-writeFileSync(join(dataDir, "settings.json"), JSON.stringify({ ZoomLevel: 1, ThemeName: "Dark" }));
+writeFileSync(join(dataDir, "settings.json"), JSON.stringify({ ZoomLevel: 1, ThemeName: "Dark", DailyTargetMinutes: 60 }));
 writeFileSync(join(dataDir, "modes.json"), JSON.stringify([
 	{ Id: "m-edit", Name: "Editing", LaunchItems: [], BlockItems: [] },
 	{ Id: "m-write", Name: "Writing", LaunchItems: [], BlockItems: [] }
@@ -163,6 +163,9 @@ try {
 	appear("G", {}, "com.bijounga.bijouhub.goal");
 	appear("X", { minutes: "5" }, "com.bijounga.bijouhub.extend");
 	appear("P", {}, "com.bijounga.bijouhub.popout");
+	appear("M", { keyId: "key-m", modeId: "m-edit", modeName: "Editing", duration: "1", breakDuration: "1" }, "com.bijounga.bijouhub.pomodoro");
+	appear("T", {}, "com.bijounga.bijouhub.target");
+	appear("Q", {}, "com.bijounga.bijouhub.capture");
 	await waitFor(() => Object.keys(keys).every((k) => images.has(keys[k].context)), 3000, "first images");
 	snapshot("appeared");
 	check(textOf("A").includes("1m"), "A shows its 1m preset");
@@ -176,6 +179,9 @@ try {
 	check(textOf("G").includes("Open BijouHub"), "Next Goal asks for BijouHub while it's off");
 	check(svgOf("X").includes('opacity="0.42"') && textOf("X").includes("+5"), "Add Time is dimmed with no session");
 	check(svgOf("P").includes('opacity="0.42"') && textOf("P").includes("POP OUT"), "Pop Out Timer is dimmed with no session");
+	check(textOf("M").includes("1/1") && textOf("M").includes("Editing"), "Pomodoro key shows its focus/break");
+	check(textOf("T").includes("TARGET") && svgOf("T").includes('opacity="0.42"'), "Daily Target waits for BijouHub");
+	check(textOf("Q").includes("CAPTURE"), "Quick Capture key appears");
 	await tap("P");
 	await waitFor(() => alerts(keys.P.context) > 0, 2000, "pop out alert");
 	check(alerts(keys.P.context) === 1, "Pop Out Timer alerts instead of acting with no session");
@@ -296,6 +302,24 @@ try {
 	check(textOf("S").includes("TODAY"), "Current Session returns to today's total");
 	check(svgOf("P").includes('opacity="0.42"') && textOf("P").includes("POP OUT"), "finishing the session closes the pop-out and dims the key");
 
+	// ---------- Daily target and Quick Capture ----------
+	check(textOf("T").includes("of 1h"), "Daily Target shows today against the target");
+	const openBefore = Number((textOf("Q").find((t) => /to do$/.test(t)) ?? "0").split(" ")[0]);
+	await tap("Q");
+	if (process.env.CAPTURE_CHECK) {
+		const { spawnSync } = await import("node:child_process");
+		const run = spawnSync("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", process.env.CAPTURE_CHECK, "-Text", "Captured from the deck"], { encoding: "utf8" });
+		const report = (run.stdout || run.stderr).trim();
+		console.log("  capture: " + report);
+		check(report.includes("window=shown"), "tapping Quick Capture opens the capture box");
+		check(report.includes("front=True") && report.includes("focused=True"), "the capture box comes up in front, ready to type");
+		await waitFor(() => textOf("Q").includes(`${openBefore + 1} to do`), 3000, "captured goal counted");
+		snapshot("captured");
+		check(textOf("Q").includes(`${openBefore + 1} to do`), "Quick Capture key counts the new task");
+		const day = JSON.parse(readFileSync(join(dataDir, "daily.json"), "utf8")).find((d) => d.Date === todayKey);
+		check(day?.Goals.some((g) => g.Text === "Captured from the deck"), "the captured task is saved on today's list");
+	}
+
 	// ---------- Countdown into overtime ----------
 	if (RUN_OVERTIME) {
 		await tap("A");
@@ -307,6 +331,20 @@ try {
 		await hold("A");
 		await waitFor(() => textOf("A").includes("LOGGED"), 3000, "logged A");
 		check(textOf("A").includes("LOGGED"), "holding A logs the overtime session");
+
+		// ---------- Pomodoro: 1 minute of focus, then a 1 minute break ----------
+		await sleep(2000);
+		await tap("M");
+		await waitFor(() => textOf("M").includes("FOCUS · 1"), 8000, "pomodoro focus");
+		snapshot("pomodoro focus");
+		check(textOf("M").includes("FOCUS · 1") && textOf("M").some((t) => /^0:5\d$|^1:00$/.test(t)), "Pomodoro key counts down its focus");
+		check(textOf("S").includes("FOCUS · 1"), "Current Session mirrors the Pomodoro");
+		const onBreak = await waitFor(() => textOf("M").includes("BREAK"), 70000, "pomodoro break");
+		await sleep(3500);
+		snapshot("pomodoro break");
+		check(onBreak && svgOf("M").includes("#4ADE80") && textOf("M").some((t) => /^0:5\d$/.test(t)), "after the focus, the key turns green and counts down the break");
+		await hold("M");
+		await waitFor(() => textOf("M").includes("LOGGED"), 3000, "logged M");
 	}
 	await sleep(1000);
 } finally {
@@ -335,10 +373,11 @@ ${tiles.map((f) => `<div style="display:inline-block;margin:4px;text-align:cente
 		sessions = JSON.parse(readFileSync(join(dataDir, "sessions.json"), "utf8"));
 	} catch {}
 	console.log("logged sessions:", sessions.map((s) => `${s.ModeName} ${s.ActiveSeconds}s active/${s.IdleSeconds}s idle project=${s.ProjectName ?? "-"}`));
-	check(sessions.length === (RUN_OVERTIME ? 4 : 3), "every finished or replaced session was logged");
+	check(sessions.length === (RUN_OVERTIME ? 5 : 3), "every finished or replaced session was logged");
 	check(sessions.every((s) => !s.ProjectId), "deck sessions start unassigned");
 	check(sessions[0]?.IdleSeconds >= 2, "paused time is logged as idle, not worked");
 	if (RUN_OVERTIME) check(sessions[3]?.ActiveSeconds >= 60, "overtime session kept counting past the target");
+	if (RUN_OVERTIME) check(sessions[4]?.IdleSeconds >= 3 && sessions[4]?.ActiveSeconds <= 62, "Pomodoro breaks are logged as idle, not worked");
 
 	if (hubPid) {
 		try {
