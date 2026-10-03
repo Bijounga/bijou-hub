@@ -1,0 +1,270 @@
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Input;
+using BijouHub.Models;
+using BijouHub.Services.GoogleTasks;
+
+namespace BijouHub;
+
+// The Tasks page: every list at full size, like Microsoft To Do. Smart lists (Today, Important,
+// Planned, All) and each category's lists on the left; the chosen list's tasks on the right with
+// its own add bar. It shows the same goals as Home, so a change in one is a change in both.
+public partial class MainWindow
+{
+    private sealed record TaskView(string Key, string Title, Func<DailyGoal, bool> Includes, ListTarget? Target);
+
+    private string _taskViewKey = "today";
+    private TaskView? _taskView;
+    private ListCollectionView? _tasksOpen;
+    private ListCollectionView? _tasksDone;
+    private bool _showCompleted;
+
+    private void InitTasksPage()
+    {
+        _tasksOpen = LiveView(g => !g.Done);
+        _tasksDone = LiveView(g => g.Done);
+        TasksOpenList.ItemsSource = _tasksOpen;
+        TasksDoneList.ItemsSource = _tasksDone;
+    }
+
+    // A view of the goals that re-filters itself as goals are ticked, starred, dated or moved.
+    private ListCollectionView LiveView(Func<DailyGoal, bool> state)
+    {
+        var view = new ListCollectionView(_dailyGoals)
+        {
+            Filter = item => item is DailyGoal goal && state(goal) && (_taskView?.Includes(goal) ?? false),
+            IsLiveFiltering = true
+        };
+        foreach (var property in new[] { nameof(DailyGoal.Done), nameof(DailyGoal.Starred), nameof(DailyGoal.Due), nameof(DailyGoal.Group), nameof(DailyGoal.ProjectName) })
+            view.LiveFilteringProperties.Add(property);
+        return view;
+    }
+
+    private void NavHome_Click(object sender, RoutedEventArgs e)
+    {
+        ModesList.SelectedItem = null;
+        ProjectsList.SelectedItem = null;
+        ShowHome();
+    }
+
+    private void NavTasks_Click(object sender, RoutedEventArgs e) => ShowTasks();
+
+    private void ShowTasks()
+    {
+        HideAllPanels();
+        ModesList.SelectedItem = null;
+        ProjectsList.SelectedItem = null;
+        TasksPanel.Visibility = Visibility.Visible;
+        FadeIn(TasksPanel);
+        _detailProject = null;
+        UpdateNotesPanelVisibility();
+        SetNavHighlight();
+
+        LoadDailyPlan();
+        RefreshTasksPage();
+        _ = RefreshGoogleGoalsAsync();
+        Dispatcher.BeginInvoke(() => TasksInput.Focus(), System.Windows.Threading.DispatcherPriority.Input);
+    }
+
+    // The sidebar's Home / Tasks row for the page that's showing is lit.
+    private void SetNavHighlight()
+    {
+        Light(NavHomeButton, HomePanel.Visibility == Visibility.Visible);
+        Light(NavTasksButton, TasksPanel.Visibility == Visibility.Visible);
+
+        static void Light(Button button, bool on)
+        {
+            if (on) button.SetResourceReference(BackgroundProperty, "CardHoverBrush");
+            else button.Background = System.Windows.Media.Brushes.Transparent;
+        }
+    }
+
+    // The lists on the left: the smart ones, then each category (Editing, Study, Life, ...).
+    private IEnumerable<TaskView> TaskViews()
+    {
+        yield return new TaskView("today", "Today", g => !g.IsPlannedAfter(TodayKey), null);
+        yield return new TaskView("important", "Important", g => g.Starred, null);
+        yield return new TaskView("planned", "Planned", g => g.Due != null, null);
+        yield return new TaskView("all", "All tasks", _ => true, null);
+        foreach (var group in ScopeGroups())
+            foreach (var target in TargetsFor(group))
+                yield return new TaskView("list:" + target.Key, target.Name ?? "General", g => IsTargetOf(target, g), target);
+    }
+
+    private static string GlyphFor(string key) => key switch
+    {
+        "today" => "",
+        "important" => "",
+        "planned" => "",
+        "all" => "",
+        _ => ""
+    };
+
+    private void RefreshTasksPage()
+    {
+        NavTasksCount.Text = _dailyGoals.Count(g => !g.Done) is var open and > 0 ? open.ToString() : "";
+        if (TasksPanel.Visibility != Visibility.Visible) return;
+
+        var views = TaskViews().ToList();
+        _taskView = views.FirstOrDefault(v => v.Key == _taskViewKey) ?? views[0];
+        _taskViewKey = _taskView.Key;
+        BuildTaskListsNav(views);
+
+        _tasksOpen?.Refresh();
+        _tasksDone?.Refresh();
+        var openCount = _tasksOpen?.Count ?? 0;
+        var doneCount = _tasksDone?.Count ?? 0;
+        TasksTitle.Text = _taskView.Target is { Group: var group } && group != EditingGroup && GoogleMode
+            ? $"{GroupLabel(group)} · {_taskView.Title}"
+            : _taskView.Title;
+        TasksCountText.Text = openCount == 0 ? "" : $"{openCount} open";
+        TasksEmptyText.Visibility = openCount == 0 ? Visibility.Visible : Visibility.Collapsed;
+        TasksCompletedToggle.Visibility = doneCount > 0 ? Visibility.Visible : Visibility.Collapsed;
+        TasksCompletedText.Text = $"{(_showCompleted ? "▾" : "▸")}  Completed today  {doneCount}";
+        TasksDoneList.Visibility = _showCompleted && doneCount > 0 ? Visibility.Visible : Visibility.Collapsed;
+        TasksInputPlaceholder.Text = _taskView.Key switch
+        {
+            "important" => "Add an important task",
+            "planned" => "Add a task for today",
+            _ when _taskView.Target != null => $"Add a task to {_taskView.Title}",
+            _ => "Add a task"
+        };
+    }
+
+    private void BuildTaskListsNav(List<TaskView> views)
+    {
+        TaskListsNav.Children.Clear();
+        string? lastGroup = "";
+        foreach (var view in views)
+        {
+            var group = view.Target?.Group;
+            if (view.Target != null && group != lastGroup)
+            {
+                var header = new TextBlock
+                {
+                    Text = (GoogleMode ? GroupLabel(group!) : "Projects").ToUpperInvariant(),
+                    FontSize = 10,
+                    Margin = new Thickness(10, 16, 0, 4)
+                };
+                header.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
+                TaskListsNav.Children.Add(header);
+                lastGroup = group;
+            }
+            TaskListsNav.Children.Add(BuildTaskListRow(view));
+        }
+    }
+
+    private Button BuildTaskListRow(TaskView view)
+    {
+        var selected = view.Key == _taskViewKey;
+        var count = _dailyGoals.Count(g => !g.Done && view.Includes(g));
+
+        var glyph = new TextBlock { Text = GlyphFor(view.Key), FontSize = 13, Margin = new Thickness(0, 0, 10, 0) };
+        glyph.SetResourceReference(StyleProperty, "IconGlyph");
+        glyph.SetResourceReference(TextBlock.ForegroundProperty, selected ? "AccentBrush" : "MutedTextBrush");
+        var name = new TextBlock { Text = view.Title, FontSize = 13, TextTrimming = TextTrimming.CharacterEllipsis };
+        if (selected) name.SetResourceReference(TextBlock.ForegroundProperty, "AccentBrush");
+        var number = new TextBlock { Text = count > 0 ? count.ToString() : "", FontSize = 11, VerticalAlignment = VerticalAlignment.Center };
+        number.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
+        DockPanel.SetDock(number, Dock.Right);
+        DockPanel.SetDock(glyph, Dock.Left);
+
+        var row = new Border
+        {
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(10, 7, 10, 7),
+            Child = new DockPanel { Children = { glyph, number, name } }
+        };
+        void Paint(bool lit)
+        {
+            if (lit) row.SetResourceReference(Border.BackgroundProperty, "CardHoverBrush");
+            else row.Background = System.Windows.Media.Brushes.Transparent;
+        }
+        Paint(selected);
+        row.MouseEnter += (_, _) => Paint(true);
+        row.MouseLeave += (_, _) => Paint(selected);
+
+        var button = new Button
+        {
+            Content = row,
+            Cursor = Cursors.Hand,
+            Focusable = false,
+            Margin = new Thickness(0, 0, 0, 2),
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            Template = new ControlTemplate(typeof(Button)) { VisualTree = new FrameworkElementFactory(typeof(ContentPresenter)) }
+        };
+        System.Windows.Automation.AutomationProperties.SetName(button, $"{view.Title} list");
+        button.Click += (_, _) =>
+        {
+            _taskViewKey = view.Key;
+            RefreshTasksPage();
+            TasksInput.Focus();
+        };
+        return button;
+    }
+
+    private void TasksCompletedToggle_Click(object sender, RoutedEventArgs e)
+    {
+        _showCompleted = !_showCompleted;
+        RefreshTasksPage();
+    }
+
+    // ---------- Adding to the open list ----------
+
+    private void TasksAddBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is DependencyObject source && IsInside<Button>(source)) return;
+        TasksInput.Focus();
+        e.Handled = true;
+    }
+
+    private void TasksInput_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        TasksInputPlaceholder.Visibility = TasksInput.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        if (TasksInput.Text.IndexOfAny(new[] { '\n', '\r' }) < 0) return;
+        var lines = TasksInput.Text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        TasksInput.Clear();
+        AddToTaskView(lines.Select(l => l.TrimStart('-', '*', '•', ' ')));
+    }
+
+    private void TasksInput_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            TasksInput.Clear();
+            e.Handled = true;
+            return;
+        }
+        if (e.Key != Key.Enter) return;
+        e.Handled = true;
+        var text = TasksInput.Text.Trim();
+        if (text.Length == 0) return;
+        TasksInput.Clear();
+        AddToTaskView(new[] { text });
+    }
+
+    private void AddToTaskView(IEnumerable<string> texts)
+    {
+        LoadDailyPlan(); // past midnight, it belongs to the new day
+        var target = _taskView?.Target;
+        foreach (var text in texts.Where(t => t.Length > 0))
+        {
+            var goal = new DailyGoal
+            {
+                Text = text,
+                Group = target?.Group ?? EditingGroup,
+                ProjectId = target?.ProjectId,
+                ProjectName = target?.Name,
+                Starred = _taskViewKey == "important",
+                Due = _pendingDue is DateTime d ? Services.DueText.Key(d) : _taskViewKey == "planned" ? TodayKey : null,
+                DueTime = _pendingTime?.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)
+            };
+            AddDailyGoal(goal);
+        }
+        ClearPendingDue();
+        UpdateDailyProgress();
+    }
+
+    private void TasksDue_Click(object sender, RoutedEventArgs e) => OpenDuePicker(TasksDueButton, null);
+}

@@ -121,6 +121,7 @@ public partial class MainWindow
             _ => done == visible.Count ? $"All {visible.Count} done" : $"{done} of {visible.Count} done"
         };
         RefreshDayTabs();
+        RefreshTasksPage();
         DailyGoalsList.IsVisible = visible.Count > 0;
         BuildScopeTabs(ScopeGroups());
     }

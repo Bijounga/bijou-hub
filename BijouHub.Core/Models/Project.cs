@@ -6,6 +6,9 @@ public class Project
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public string Name { get; set; } = "New Project";
+
+    // What screen readers announce for the project's row.
+    public override string ToString() => Name;
     public string? LinkedModeId { get; set; }
     public ObservableCollection<Goal> Goals { get; set; } = new();
     public List<ProjectNote> Notes { get; set; } = new();

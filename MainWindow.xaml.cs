@@ -128,6 +128,7 @@ public partial class MainWindow : Window
         InitNotesToolbar();
         InitDailyGoals();
         InitDue();
+        InitTasksPage();
         InitGoogleTasks();
         InitGoalScopes();
         VersionText.Text = "v" + AppVersion;
@@ -421,6 +422,7 @@ public partial class MainWindow : Window
             SaveFreeformNotes();
 
         EmptyState.Visibility = Visibility.Collapsed;
+        TasksPanel.Visibility = Visibility.Collapsed;
         ModeDetailPanel.Visibility = Visibility.Collapsed;
         ActiveSessionPanel.Visibility = Visibility.Collapsed;
         ProjectDetailPanel.Visibility = Visibility.Collapsed;
@@ -819,6 +821,7 @@ public partial class MainWindow : Window
         HideAllPanels();
         HomePanel.Visibility = Visibility.Visible;
         FadeIn(HomePanel);
+        SetNavHighlight();
 
         _detailProject = null;
         UpdateNotesPanelVisibility();
@@ -1689,6 +1692,7 @@ public partial class MainWindow : Window
         var done = visible.Count(g => g.Done);
         BuildScopeTabs(ScopeGroups());
         RefreshDayTabs();
+        RefreshTasksPage();
         DailyProgressText.Text = total == 0 ? "" : _dayView switch
         {
             DayView.Tomorrow => $"{total} planned",

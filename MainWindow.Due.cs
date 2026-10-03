@@ -28,7 +28,7 @@ public partial class MainWindow
         DuePickerControl.Picked += DuePicker_Picked;
         DuePopup.Closed += (_, _) =>
         {
-            if (_dueTarget == null) DailyGoalInput.Focus();
+            if (_dueTarget == null) (TasksPanel.Visibility == Visibility.Visible ? TasksInput : DailyGoalInput).Focus();
             _dueTarget = null;
             UpdateAddGoalBar();
         };
@@ -90,6 +90,8 @@ public partial class MainWindow
             }.Where(s => s != null))
             : "";
         AddGoalDueText.Visibility = picked ? Visibility.Visible : Visibility.Collapsed;
+        TasksDueText.Text = AddGoalDueText.Text; // the Tasks page's add bar shares the pick
+        TasksDueText.Visibility = AddGoalDueText.Visibility;
         AddGoalDueButton.Visibility = barActive || picked || (DuePopup.IsOpen && _dueTarget == null) ? Visibility.Visible : Visibility.Collapsed;
         AddGoalDueButton.ToolTip = picked ? "Change the date and time" : "Add a date and time";
     }

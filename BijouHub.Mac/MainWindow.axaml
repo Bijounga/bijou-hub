@@ -17,6 +17,43 @@
         <Style Selector="ListBox#DailyGoalsList ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
         </Style>
+        <Style Selector="Button.navrow">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,7"/>
+            <Setter Property="Margin" Value="0,0,0,2"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        </Style>
+        <Style Selector="Button.navrow.on">
+            <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+        </Style>
+        <Style Selector="Button.navrow.on TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="Border.taskcard">
+            <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SoftBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="Border.taskcard:pointerover">
+            <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+        </Style>
+        <Style Selector="Border.taskadd">
+            <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        </Style>
+        <Style Selector="TextBox#TasksInput">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+        </Style>
+        <Style Selector="TextBox#TasksInput:focus /template/ Border#PART_BorderElement, TextBox#TasksInput:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
         <Style Selector="FlyoutPresenter.bare">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -96,7 +133,8 @@
                 BorderBrush="{DynamicResource PanelEdgeBrush}" BorderThickness="{DynamicResource PanelEdge}"
                 CornerRadius="{DynamicResource PanelRadius}" BoxShadow="{DynamicResource PanelShadow}">
             <Grid RowDefinitions="Auto,Auto,*,Auto,*,Auto,Auto" Margin="14,16,14,12">
-                <StackPanel Orientation="Horizontal" Margin="4,0,0,18" Cursor="Hand" Background="Transparent" PointerPressed="Logo_PointerPressed">
+                <StackPanel Grid.Row="0">
+                <StackPanel Orientation="Horizontal" Margin="4,0,0,14" Cursor="Hand" Background="Transparent" PointerPressed="Logo_PointerPressed">
                     <Polygon Points="6,0 18,0 24,8 18,16 6,16 0,8" Width="24" Height="16" Margin="0,0,10,0" VerticalAlignment="Center"
                              Stroke="#071018" StrokeThickness="1.2">
                         <Polygon.Fill>
@@ -109,6 +147,23 @@
                     </Polygon>
                     <TextBlock Text="BijouHub" Classes="h2" VerticalAlignment="Center"/>
                     <TextBlock Name="VersionText" Classes="faint" VerticalAlignment="Bottom" Margin="8,0,0,2"/>
+                </StackPanel>
+                <!-- Home and the full task list. -->
+                <Button Name="NavHomeButton" Classes="navrow" Click="NavHome_Click" AutomationProperties.Name="Home">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <controls:LineIcon Kind="home" Width="15" Height="15" Foreground="{DynamicResource MutedTextBrush}"/>
+                        <TextBlock Text="Home" FontSize="13"/>
+                    </StackPanel>
+                </Button>
+                <Button Name="NavTasksButton" Classes="navrow" Click="NavTasks_Click" AutomationProperties.Name="Tasks" Margin="0,0,0,12">
+                    <DockPanel>
+                        <TextBlock Name="NavTasksCount" DockPanel.Dock="Right" FontSize="11" Classes="muted" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <controls:LineIcon Kind="tasks" Width="15" Height="15" Foreground="{DynamicResource MutedTextBrush}"/>
+                            <TextBlock Text="Tasks" FontSize="13"/>
+                        </StackPanel>
+                    </DockPanel>
+                </Button>
                 </StackPanel>
 
                 <DockPanel Grid.Row="1" Margin="4,0,0,6">
@@ -211,6 +266,10 @@
                                             </Button>
                                         </StackPanel>
                                         <TextBlock Name="DailyProgressText" DockPanel.Dock="Right" Classes="muted" VerticalAlignment="Bottom"/>
+                                        <Button DockPanel.Dock="Right" Classes="ghost" Padding="5,2" Margin="0,0,8,-3" VerticalAlignment="Bottom"
+                                                Click="NavTasks_Click" ToolTip.Tip="Open every list, full size" AutomationProperties.Name="Open all tasks">
+                                            <controls:LineIcon Kind="expand" Width="13" Height="13"/>
+                                        </Button>
                                         <Button Name="GoogleSyncButton" DockPanel.Dock="Right" Classes="ghost" Padding="6,2" Margin="0,0,10,-3"
                                                 VerticalAlignment="Bottom" Click="GoogleSync_Click">
                                             <StackPanel Orientation="Horizontal" Spacing="6">
@@ -461,6 +520,135 @@
                             </ItemsControl>
                         </StackPanel>
                     </ScrollViewer>
+
+
+                    <!-- Tasks: every list, full size, like Microsoft To Do. -->
+                    <Grid Name="TasksPanel" ColumnDefinitions="230,*" Margin="28,26,28,20" IsVisible="False">
+                        <ScrollViewer Grid.Column="0" Margin="0,0,18,0">
+                            <StackPanel Name="TaskListsNav"/>
+                        </ScrollViewer>
+                        <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+                            <DockPanel Margin="0,0,0,16">
+                                <TextBlock Name="TasksCountText" DockPanel.Dock="Right" VerticalAlignment="Bottom" Classes="muted" Margin="0,0,0,6"/>
+                                <TextBlock Name="TasksTitle" Classes="h1" Foreground="{DynamicResource AccentBrush}"/>
+                            </DockPanel>
+                            <ScrollViewer Grid.Row="1" Padding="0,0,6,0">
+                                <StackPanel>
+                                    <ItemsControl Name="TasksOpenList">
+                                        <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Classes="taskcard" Padding="12,10" Margin="0,0,0,4" CornerRadius="6">
+                                            <Border.ContextMenu>
+                                                <ContextMenu Opening="GoalMenu_Opening"/>
+                                            </Border.ContextMenu>
+                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                                <CheckBox IsChecked="{Binding Done}" MinWidth="0" Margin="0,0,10,0" VerticalAlignment="Center"
+                                                          AutomationProperties.Name="{Binding Text}"/>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <Panel>
+                                                        <TextBlock Text="{Binding Text}" Classes.done="{Binding Done}" FontSize="15" TextWrapping="Wrap"
+                                                                   IsVisible="{Binding !IsEditing}" DoubleTapped="GoalText_DoubleTapped"/>
+                                                        <TextBox Text="{Binding Text, Mode=OneWay}" IsVisible="{Binding IsEditing}" Padding="4,2" MinHeight="0"
+                                                                 KeyDown="GoalEditor_KeyDown" LostFocus="GoalEditor_LostFocus"
+                                                                 PropertyChanged="GoalEditor_PropertyChanged"/>
+                                                    </Panel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,3,0,0">
+                                                        <TextBlock Text="{Binding ChipText}" FontSize="11" Classes="muted"
+                                                                   IsVisible="{Binding ChipText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                                        <Border Classes="duechip" Classes.overdue="{Binding DueOverdue}" Background="Transparent" Cursor="Hand"
+                                                                PointerPressed="GoalDueChip_PointerPressed"
+                                                                IsVisible="{Binding DueChip, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                                <controls:LineIcon Kind="calendar" Width="10" Height="10"/>
+                                                                <TextBlock Text="{Binding DueChip}" FontSize="11"/>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Classes="ghost" Padding="5" Margin="8,0,2,0" Click="GoalDue_Click" ToolTip.Tip="Date and time"
+                                                        VerticalAlignment="Center">
+                                                    <controls:LineIcon Kind="calendar" Width="14" Height="14"/>
+                                                </Button>
+                                                <Button Grid.Column="3" Classes="ghost star" Classes.starred="{Binding Starred}" Padding="5"
+                                                        Click="GoalStar_Click" ToolTip.Tip="Important" VerticalAlignment="Center">
+                                                    <controls:LineIcon Kind="star" Width="16" Height="16" Filled="{Binding Starred}"/>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock Name="TasksEmptyText" Text="Nothing here. Add a task below." Classes="muted" Margin="2,6,0,0" IsVisible="False"/>
+                                    <Button Name="TasksCompletedToggle" Classes="ghost" Padding="0" Margin="0,14,0,8" Click="TasksCompletedToggle_Click"
+                                            AutomationProperties.Name="Completed">
+                                        <TextBlock Name="TasksCompletedText" FontSize="12" Classes="muted"/>
+                                    </Button>
+                                    <ItemsControl Name="TasksDoneList" IsVisible="False">
+                                        <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Classes="taskcard" Padding="12,10" Margin="0,0,0,4" CornerRadius="6">
+                                            <Border.ContextMenu>
+                                                <ContextMenu Opening="GoalMenu_Opening"/>
+                                            </Border.ContextMenu>
+                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                                <CheckBox IsChecked="{Binding Done}" MinWidth="0" Margin="0,0,10,0" VerticalAlignment="Center"
+                                                          AutomationProperties.Name="{Binding Text}"/>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <Panel>
+                                                        <TextBlock Text="{Binding Text}" Classes.done="{Binding Done}" FontSize="15" TextWrapping="Wrap"
+                                                                   IsVisible="{Binding !IsEditing}" DoubleTapped="GoalText_DoubleTapped"/>
+                                                        <TextBox Text="{Binding Text, Mode=OneWay}" IsVisible="{Binding IsEditing}" Padding="4,2" MinHeight="0"
+                                                                 KeyDown="GoalEditor_KeyDown" LostFocus="GoalEditor_LostFocus"
+                                                                 PropertyChanged="GoalEditor_PropertyChanged"/>
+                                                    </Panel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,3,0,0">
+                                                        <TextBlock Text="{Binding ChipText}" FontSize="11" Classes="muted"
+                                                                   IsVisible="{Binding ChipText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                                        <Border Classes="duechip" Classes.overdue="{Binding DueOverdue}" Background="Transparent" Cursor="Hand"
+                                                                PointerPressed="GoalDueChip_PointerPressed"
+                                                                IsVisible="{Binding DueChip, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                                <controls:LineIcon Kind="calendar" Width="10" Height="10"/>
+                                                                <TextBlock Text="{Binding DueChip}" FontSize="11"/>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Classes="ghost" Padding="5" Margin="8,0,2,0" Click="GoalDue_Click" ToolTip.Tip="Date and time"
+                                                        VerticalAlignment="Center">
+                                                    <controls:LineIcon Kind="calendar" Width="14" Height="14"/>
+                                                </Button>
+                                                <Button Grid.Column="3" Classes="ghost star" Classes.starred="{Binding Starred}" Padding="5"
+                                                        Click="GoalStar_Click" ToolTip.Tip="Important" VerticalAlignment="Center">
+                                                    <controls:LineIcon Kind="star" Width="16" Height="16" Filled="{Binding Starred}"/>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </ScrollViewer>
+                            <Border Grid.Row="2" Classes="taskadd" CornerRadius="6" BorderThickness="1" Padding="14,0" MinHeight="46" Margin="0,10,6,0">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <controls:LineIcon Kind="add" Width="16" Height="16" Margin="0,0,12,0" Foreground="{DynamicResource AccentBrush}"/>
+                                    <Panel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBox Name="TasksInput" FontSize="14" KeyDown="TasksInput_KeyDown" TextChanged="TasksInput_TextChanged"
+                                                 AutomationProperties.Name="Add a task to this list"/>
+                                        <TextBlock Name="TasksInputPlaceholder" Text="Add a task" FontSize="14" IsHitTestVisible="False"
+                                                   Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
+                                    </Panel>
+                                    <Button Name="TasksDueButton" Grid.Column="2" Classes="ghost" Padding="6,4" Margin="8,0,0,0" VerticalAlignment="Center"
+                                            Click="TasksDue_Click" AutomationProperties.Name="Date and time for the new task">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <controls:LineIcon Kind="calendar" Width="15" Height="15" Foreground="{DynamicResource AccentBrush}"/>
+                                            <TextBlock Name="TasksDueText" FontSize="12" VerticalAlignment="Center" Foreground="{DynamicResource AccentBrush}" IsVisible="False"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Grid>
 
                     <!-- Active session -->
                     <ScrollViewer Name="SessionPanel" Padding="28,26" IsVisible="False">

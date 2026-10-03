@@ -109,13 +109,53 @@
                 <Grid Grid.Row="1" Margin="{DynamicResource SidebarBodyMargin}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="2*"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="2*"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <DockPanel Grid.Row="0" Margin="4,0,0,6">
+
+                <!-- Home and the full task list. -->
+                <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                    <StackPanel.Resources>
+                        <Style x:Key="NavRow" TargetType="Button">
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Setter Property="Focusable" Value="False"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Row" Background="{TemplateBinding Background}" CornerRadius="6" Padding="10,7" Margin="0,0,0,2">
+                                            <ContentPresenter/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Row" Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </StackPanel.Resources>
+                    <Button x:Name="NavHomeButton" Style="{StaticResource NavRow}" Background="Transparent" Click="NavHome_Click" AutomationProperties.Name="Home">
+                        <DockPanel>
+                            <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE80F;" FontSize="14" Margin="0,0,10,0" Foreground="{DynamicResource MutedTextBrush}"/>
+                            <TextBlock x:Name="NavHomeText" Text="Home" FontSize="13"/>
+                        </DockPanel>
+                    </Button>
+                    <Button x:Name="NavTasksButton" Style="{StaticResource NavRow}" Background="Transparent" Click="NavTasks_Click" AutomationProperties.Name="Tasks">
+                        <DockPanel>
+                            <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE73A;" FontSize="14" Margin="0,0,10,0" Foreground="{DynamicResource MutedTextBrush}"/>
+                            <TextBlock x:Name="NavTasksCount" DockPanel.Dock="Right" FontSize="11" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="NavTasksText" Text="Tasks" FontSize="13"/>
+                        </DockPanel>
+                    </Button>
+                </StackPanel>
+
+                <DockPanel Grid.Row="1" Margin="4,0,0,6">
                     <Button DockPanel.Dock="Right" Style="{DynamicResource GhostIconButton}" Padding="6,4" Click="NewMode_Click"
                             ToolTip="New mode" AutomationProperties.Name="New mode">
                         <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE710;" FontSize="12"/>
@@ -123,7 +163,7 @@
                     <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Center"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="MODES"/></TextBlock>
                 </DockPanel>
 
-                <ListBox x:Name="ModesList" Grid.Row="1"
+                <ListBox x:Name="ModesList" Grid.Row="2"
                          AlternationCount="3"
                          SelectionChanged="ModesList_SelectionChanged">
                     <ListBox.ItemTemplate>
@@ -141,7 +181,7 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <DockPanel Grid.Row="2" Margin="4,16,0,6">
+                <DockPanel Grid.Row="3" Margin="4,16,0,6">
                     <Button DockPanel.Dock="Right" Style="{DynamicResource GhostIconButton}" Padding="6,4" Click="NewProject_Click"
                             ToolTip="New project" AutomationProperties.Name="New project">
                         <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE710;" FontSize="12"/>
@@ -149,7 +189,7 @@
                     <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Center"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="PROJECTS"/></TextBlock>
                 </DockPanel>
 
-                <ListBox x:Name="ProjectsList" Grid.Row="3"
+                <ListBox x:Name="ProjectsList" Grid.Row="4"
                          AlternationCount="3"
                          SelectionChanged="ProjectsList_SelectionChanged">
                     <ListBox.ItemTemplate>
@@ -168,7 +208,7 @@
                 </ListBox>
 
                 <!-- Everything that isn't daily work lives in one quiet row of tools. -->
-                <UniformGrid Grid.Row="4" Rows="1" Margin="0,12,0,0">
+                <UniformGrid Grid.Row="5" Rows="1" Margin="0,12,0,0">
                     <Button Style="{DynamicResource GhostIconButton}" Click="SessionLog_Click" ToolTip="Session log"
                             AutomationProperties.Name="Session Log">
                         <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE81C;" FontSize="16"/>
@@ -199,7 +239,7 @@
                         <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE718;" FontSize="16"/>
                     </Button>
                 </UniformGrid>
-                <Button x:Name="UpdateButton" Grid.Row="5" Style="{DynamicResource AccentButton}" Margin="0,10,0,0" Padding="10,8"
+                <Button x:Name="UpdateButton" Grid.Row="6" Style="{DynamicResource AccentButton}" Margin="0,10,0,0" Padding="10,8"
                         Click="UpdateButton_Click" Visibility="Collapsed"/>
                 </Grid>
             </Grid>
@@ -482,6 +522,11 @@
                                 </StackPanel>
                                 <TextBlock x:Name="DailyProgressText" DockPanel.Dock="Right" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="12" VerticalAlignment="Bottom"/>
+                                <Button DockPanel.Dock="Right" Margin="0,0,12,0" Click="NavTasks_Click" Cursor="Hand" VerticalAlignment="Bottom"
+                                        ToolTip="Open every list, full size" AutomationProperties.Name="Open all tasks">
+                                    <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                                    <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE740;" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"/>
+                                </Button>
                                 <Button x:Name="GoogleSyncButton" DockPanel.Dock="Right" Margin="0,0,14,0" Click="GoogleSync_Click"
                                         Cursor="Hand" VerticalAlignment="Bottom" AutomationProperties.Name="Google Tasks sync">
                                     <Button.Template>
@@ -695,10 +740,6 @@
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <!-- The date-and-time picker, opened from a calendar icon (here or on a goal). -->
-                                            <Popup x:Name="DuePopup" StaysOpen="False" AllowsTransparency="True" Placement="Bottom" PopupAnimation="Fade">
-                                                <views:DuePicker x:Name="DuePickerControl"/>
-                                            </Popup>
                                             <!-- "+" at rest; an empty circle while typing, like To Do. -->
                                             <TextBlock x:Name="AddGoalGlyph" Text="+" FontSize="22" Width="22" Margin="0,0,10,2"
                                                        VerticalAlignment="Center" TextAlignment="Center" Foreground="{DynamicResource AccentBrush}"/>
@@ -883,6 +924,287 @@
                     <WrapPanel x:Name="QuickLaunchPanel" Margin="0,0,0,24"/>
                 </StackPanel>
             </ScrollViewer>
+
+            <!-- Tasks: every list, full size, like Microsoft To Do. -->
+            <Grid x:Name="TasksPanel" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="230"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,18,0">
+                    <StackPanel x:Name="TaskListsNav"/>
+                </ScrollViewer>
+                <Grid Grid.Column="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <DockPanel Margin="0,0,0,16">
+                        <TextBlock x:Name="TasksCountText" DockPanel.Dock="Right" VerticalAlignment="Bottom" FontSize="12" Margin="0,0,0,6"
+                                   Foreground="{DynamicResource MutedTextBrush}"/>
+                        <TextBlock x:Name="TasksTitle" Style="{StaticResource HeadingText}" FontSize="28" Foreground="{DynamicResource AccentBrush}"/>
+                    </DockPanel>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,6,0">
+                        <StackPanel>
+                            <ItemsControl x:Name="TasksOpenList" Focusable="False">
+                                <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border x:Name="Card" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource SoftBorderBrush}" BorderThickness="1"
+                                        CornerRadius="6" Padding="12,10" Margin="0,0,0,4" ContextMenuOpening="DailyGoalRow_ContextMenuOpening">
+                                    <Border.ContextMenu>
+                                        <ContextMenu/>
+                                    </Border.ContextMenu>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox IsChecked="{Binding Done, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,12,0"
+                                                  AutomationProperties.Name="{Binding Text}"/>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <Grid>
+                                                <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="15"
+                                                           MouseLeftButtonDown="DailyGoalText_MouseLeftButtonDown" ToolTip="Double-click to edit">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Done}" Value="True">
+                                                                    <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                                                    <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Hidden"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBox Text="{Binding Text, Mode=OneWay}" Padding="4,2" Margin="-5,-3,0,-3"
+                                                         Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                         IsVisibleChanged="DailyGoalEditor_IsVisibleChanged"
+                                                         KeyDown="DailyGoalEditor_KeyDown" LostKeyboardFocus="DailyGoalEditor_LostKeyboardFocus"/>
+                                            </Grid>
+                                            <!-- Under the task: its list (on the cross-list views) and when it's due. -->
+                                            <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                                <StackPanel.Resources>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                        <Setter Property="FontSize" Value="11"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+                                                    </Style>
+                                                </StackPanel.Resources>
+                                                <TextBlock Text="{Binding ChipText}" Margin="0,0,12,0"
+                                                           Visibility="{Binding ChipText, Converter={StaticResource EmptyToCollapsedConverter}}"/>
+                                                <StackPanel Orientation="Horizontal" Cursor="Hand" MouseLeftButtonUp="DailyGoalDueChip_Click" ToolTip="Change the date and time"
+                                                            Visibility="{Binding DueChip, Converter={StaticResource EmptyToCollapsedConverter}}" Background="Transparent">
+                                                    <TextBlock Text="&#xE787;" FontFamily="{StaticResource IconFont}" FontSize="10" Margin="0,1,5,0"/>
+                                                    <TextBlock Text="{Binding DueChip}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                                <Setter Property="FontSize" Value="11"/>
+                                                                <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding DueOverdue}" Value="True">
+                                                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <Button Grid.Column="2" Click="DailyGoalDue_Click" Focusable="False" Cursor="Hand" Margin="8,0,4,0"
+                                                VerticalAlignment="Center" ToolTip="Date and time" AutomationProperties.Name="Date and time">
+                                            <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                                            <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE787;" FontSize="14" Margin="4"
+                                                       Foreground="{DynamicResource FaintTextBrush}"/>
+                                        </Button>
+                                        <Button Grid.Column="3" Click="DailyGoalStar_Click" Focusable="False" Cursor="Hand" VerticalAlignment="Center"
+                                                ToolTip="Important" AutomationProperties.Name="Star">
+                                            <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                                            <TextBlock FontSize="17" Margin="4,0">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="☆"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource FaintTextBrush}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Starred}" Value="True">
+                                                                <Setter Property="Text" Value="★"/>
+                                                                <Setter Property="Foreground" Value="{DynamicResource HazardBrush}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                                <DataTemplate.Triggers>
+                                    <Trigger SourceName="Card" Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Card" Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+                                    </Trigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock x:Name="TasksEmptyText" Text="Nothing here. Add a task below." Margin="2,6,0,0"
+                                       Foreground="{DynamicResource MutedTextBrush}" FontSize="13" Visibility="Collapsed"/>
+                            <Button x:Name="TasksCompletedToggle" Click="TasksCompletedToggle_Click" Cursor="Hand" Margin="0,14,0,8"
+                                    HorizontalAlignment="Left" Focusable="False" AutomationProperties.Name="Completed">
+                                <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                                <TextBlock x:Name="TasksCompletedText" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"/>
+                            </Button>
+                            <ItemsControl x:Name="TasksDoneList" Focusable="False" Visibility="Collapsed">
+                                <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border x:Name="Card" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource SoftBorderBrush}" BorderThickness="1"
+                                        CornerRadius="6" Padding="12,10" Margin="0,0,0,4" ContextMenuOpening="DailyGoalRow_ContextMenuOpening">
+                                    <Border.ContextMenu>
+                                        <ContextMenu/>
+                                    </Border.ContextMenu>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox IsChecked="{Binding Done, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,12,0"
+                                                  AutomationProperties.Name="{Binding Text}"/>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <Grid>
+                                                <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="15"
+                                                           MouseLeftButtonDown="DailyGoalText_MouseLeftButtonDown" ToolTip="Double-click to edit">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Done}" Value="True">
+                                                                    <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                                                    <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Hidden"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBox Text="{Binding Text, Mode=OneWay}" Padding="4,2" Margin="-5,-3,0,-3"
+                                                         Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                         IsVisibleChanged="DailyGoalEditor_IsVisibleChanged"
+                                                         KeyDown="DailyGoalEditor_KeyDown" LostKeyboardFocus="DailyGoalEditor_LostKeyboardFocus"/>
+                                            </Grid>
+                                            <!-- Under the task: its list (on the cross-list views) and when it's due. -->
+                                            <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                                <StackPanel.Resources>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                        <Setter Property="FontSize" Value="11"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+                                                    </Style>
+                                                </StackPanel.Resources>
+                                                <TextBlock Text="{Binding ChipText}" Margin="0,0,12,0"
+                                                           Visibility="{Binding ChipText, Converter={StaticResource EmptyToCollapsedConverter}}"/>
+                                                <StackPanel Orientation="Horizontal" Cursor="Hand" MouseLeftButtonUp="DailyGoalDueChip_Click" ToolTip="Change the date and time"
+                                                            Visibility="{Binding DueChip, Converter={StaticResource EmptyToCollapsedConverter}}" Background="Transparent">
+                                                    <TextBlock Text="&#xE787;" FontFamily="{StaticResource IconFont}" FontSize="10" Margin="0,1,5,0"/>
+                                                    <TextBlock Text="{Binding DueChip}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                                <Setter Property="FontSize" Value="11"/>
+                                                                <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding DueOverdue}" Value="True">
+                                                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <Button Grid.Column="2" Click="DailyGoalDue_Click" Focusable="False" Cursor="Hand" Margin="8,0,4,0"
+                                                VerticalAlignment="Center" ToolTip="Date and time" AutomationProperties.Name="Date and time">
+                                            <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                                            <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE787;" FontSize="14" Margin="4"
+                                                       Foreground="{DynamicResource FaintTextBrush}"/>
+                                        </Button>
+                                        <Button Grid.Column="3" Click="DailyGoalStar_Click" Focusable="False" Cursor="Hand" VerticalAlignment="Center"
+                                                ToolTip="Important" AutomationProperties.Name="Star">
+                                            <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                                            <TextBlock FontSize="17" Margin="4,0">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="☆"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource FaintTextBrush}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Starred}" Value="True">
+                                                                <Setter Property="Text" Value="★"/>
+                                                                <Setter Property="Foreground" Value="{DynamicResource HazardBrush}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                                <DataTemplate.Triggers>
+                                    <Trigger SourceName="Card" Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Card" Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+                                    </Trigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                    <!-- Add a task to this list. -->
+                    <Border Grid.Row="2" Background="{DynamicResource CardHoverBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                            CornerRadius="6" Padding="14,0" MinHeight="48" Margin="0,10,6,0" Cursor="IBeam"
+                            MouseLeftButtonDown="TasksAddBar_MouseLeftButtonDown">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="+" FontSize="22" Margin="0,0,12,2" VerticalAlignment="Center" Foreground="{DynamicResource AccentBrush}"/>
+                            <Grid Grid.Column="1" VerticalAlignment="Center">
+                                <TextBox x:Name="TasksInput" FontSize="14" Background="Transparent" BorderThickness="0" Padding="0"
+                                         Foreground="{DynamicResource TextBrush}" CaretBrush="{DynamicResource TextBrush}"
+                                         KeyDown="TasksInput_KeyDown" TextChanged="TasksInput_TextChanged" AutomationProperties.Name="Add a task to this list">
+                                    <TextBox.Template>
+                                        <ControlTemplate TargetType="TextBox">
+                                            <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
+                                                          HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                                        </ControlTemplate>
+                                    </TextBox.Template>
+                                </TextBox>
+                                <TextBlock x:Name="TasksInputPlaceholder" Text="Add a task" FontSize="14" Margin="2,0,0,0"
+                                           Foreground="{DynamicResource AccentBrush}" IsHitTestVisible="False" VerticalAlignment="Center"/>
+                            </Grid>
+                            <Button x:Name="TasksDueButton" Grid.Column="2" Click="TasksDue_Click" Cursor="Hand" Margin="10,0,0,0"
+                                    VerticalAlignment="Center" Focusable="False" AutomationProperties.Name="Date and time for the new task">
+                                <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE787;" FontSize="14" Foreground="{DynamicResource AccentBrush}"/>
+                                    <TextBlock x:Name="TasksDueText" FontSize="12" Margin="6,0,0,0" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource AccentBrush}" Visibility="Collapsed"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- The date-and-time picker, opened from a calendar icon (Home, Tasks, or a task). -->
+            <Popup x:Name="DuePopup" StaysOpen="False" AllowsTransparency="True" Placement="Bottom" PopupAnimation="Fade">
+                <views:DuePicker x:Name="DuePickerControl"/>
+            </Popup>
             </Grid>
 
             <!-- Shared notes panel: toggleable, shown alongside Project Detail or Active Session -->

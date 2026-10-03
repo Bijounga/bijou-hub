@@ -43,6 +43,7 @@ public partial class MainWindow : Window
         InitSession();
         InitDue();
         InitGoals();
+        InitTasksPage();
         InitGoogleTasks();
         InitDeck();
         InitTray();
@@ -87,6 +88,9 @@ public partial class MainWindow : Window
     {
         SaveProjectNotes();
         HomePanel.IsVisible = panel == HomePanel;
+        TasksPanel.IsVisible = panel == TasksPanel;
+        NavHomeButton.Classes.Set("on", panel == HomePanel);
+        NavTasksButton.Classes.Set("on", panel == TasksPanel);
         ModePanel.IsVisible = panel == ModePanel;
         ProjectPanel.IsVisible = panel == ProjectPanel;
         SessionPanel.IsVisible = panel == SessionPanel;

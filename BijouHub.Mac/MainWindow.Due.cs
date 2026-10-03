@@ -33,7 +33,7 @@ public partial class MainWindow
         _dueFlyout.FlyoutPresenterClasses.Add("bare");
         _dueFlyout.Closed += (_, _) =>
         {
-            if (_dueTarget == null) DailyGoalInput.Focus();
+            if (_dueTarget == null) (TasksPanel.IsVisible ? TasksInput : DailyGoalInput).Focus();
             _dueTarget = null;
             UpdateAddGoalBar();
         };
@@ -94,6 +94,8 @@ public partial class MainWindow
             }.Where(s => s != null))
             : "";
         AddGoalDueText.IsVisible = picked;
+        TasksDueText.Text = AddGoalDueText.Text; // the Tasks page's add bar shares the pick
+        TasksDueText.IsVisible = picked;
         AddGoalDueButton.IsVisible = barActive || picked || DuePickerOpenForBar;
         ToolTip.SetTip(AddGoalDueButton, picked ? "Change the date and time" : "Add a date and time");
     }

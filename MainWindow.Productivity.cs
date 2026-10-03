@@ -175,8 +175,10 @@ public partial class MainWindow
         }
 
         LoadDailyPlan(); // past midnight, it belongs to the new day
-        var lists = TargetsFor(_goalScope).Select(t => (t.Label, (object)t)).ToList();
-        _capture = new QuickCaptureWindow(lists, PickedTarget());
+        var targets = TargetsFor(AllScope).ToList();
+        var lists = targets.Select(t => (t.Label, (object)t)).ToList();
+        var picked = PickedTarget();
+        _capture = new QuickCaptureWindow(lists, targets.FirstOrDefault(t => t.Key == picked.Key));
         _capture.Captured += (text, tag) =>
         {
             var target = tag as ListTarget ?? PickedTarget();
