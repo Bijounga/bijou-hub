@@ -36,18 +36,23 @@ public partial class QuickCaptureWindow : Window
             Activate(); // on a Mac this also brings BijouHub forward, so the box gets the keyboard
             TaskBox.Focus();
         };
+        // Closing hands focus back to the app underneath, which deactivates this box mid-close;
+        // don't close it a second time.
+        Closing += (_, _) => _closing = true;
         Deactivated += (_, _) =>
         {
-            if (!ListCombo.IsDropDownOpen) Close();
+            if (!_closing && !ListCombo.IsDropDownOpen) Close();
         };
     }
+
+    private bool _closing;
 
     private void TaskBox_KeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape)
         {
             e.Handled = true;
-            Close();
+            if (!_closing) Close();
         }
         else if (e.Key == Key.Enter)
         {
@@ -67,6 +72,6 @@ public partial class QuickCaptureWindow : Window
             return;
         }
         Captured?.Invoke(text, (ListCombo.SelectedItem as ComboBoxItem)?.Tag);
-        Close();
+        if (!_closing) Close();
     }
 }

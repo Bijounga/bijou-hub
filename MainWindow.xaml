@@ -188,6 +188,15 @@
                             AutomationProperties.Name="Stream Deck">
                         <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8A9;" FontSize="16"/>
                     </Button>
+                    <Button x:Name="KeepRunningButton" Style="{DynamicResource GhostIconButton}" Click="KeepRunning_Click"
+                            AutomationProperties.Name="Keep running when closed">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Quit BijouHub" Click="Quit_Click"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                        <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE718;" FontSize="16"/>
+                    </Button>
                 </UniformGrid>
                 <Button x:Name="UpdateButton" Grid.Row="5" Style="{DynamicResource AccentButton}" Margin="0,10,0,0" Padding="10,8"
                         Click="UpdateButton_Click" Visibility="Collapsed"/>

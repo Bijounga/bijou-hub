@@ -31,11 +31,16 @@ public partial class QuickCaptureWindow : Window
             Top = area.Top + area.Height * 0.26;
             TakeFocus();
         };
+        // Closing hands focus back to the app underneath, which deactivates this box mid-close;
+        // closing it a second time then would throw (and take BijouHub down with it).
+        Closing += (_, _) => _closing = true;
         Deactivated += (_, _) =>
         {
-            if (!ListCombo.IsDropDownOpen) Close();
+            if (!_closing && !ListCombo.IsDropDownOpen) Close();
         };
     }
+
+    private bool _closing;
 
     private void TaskBox_TextChanged(object sender, TextChangedEventArgs e) =>
         Placeholder.Visibility = TaskBox.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -45,7 +50,7 @@ public partial class QuickCaptureWindow : Window
         if (e.Key == Key.Escape)
         {
             e.Handled = true;
-            Close();
+            if (!_closing) Close();
         }
         else if (e.Key == Key.Enter)
         {
@@ -65,7 +70,7 @@ public partial class QuickCaptureWindow : Window
             return;
         }
         Captured?.Invoke(text, (ListCombo.SelectedItem as ComboBoxItem)?.Tag);
-        Close();
+        if (!_closing) Close();
     }
 
     // The key press happens on the Stream Deck, so another app is in front: borrow its input

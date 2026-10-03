@@ -44,6 +44,7 @@ public partial class MainWindow : Window
         InitGoals();
         InitGoogleTasks();
         InitDeck();
+        _keepRunning = _settingsStore.Load().KeepRunningWhenClosed;
         RefreshToolStates();
         ShowHome();
 
@@ -57,8 +58,17 @@ public partial class MainWindow : Window
             updateTimer.Start();
             _ = Task.Run(MacUpdateService.TidyOnLaunch);
         };
-        Closing += (_, _) =>
+        Closing += (_, e) =>
         {
+            // Kept running for the Stream Deck: the close button minimizes to the Dock. Quit
+            // (Cmd+Q), an update or a logout still close it.
+            if (_keepRunning && !_quitting && e.CloseReason == WindowCloseReason.WindowClosing && !e.IsProgrammatic)
+            {
+                e.Cancel = true;
+                WindowState = WindowState.Minimized;
+                return;
+            }
+
             SaveProjectNotes();
             SaveDailyPlanNow();
             _dailyStore.Flush();
@@ -159,8 +169,33 @@ public partial class MainWindow : Window
 
     // ---------- Sidebar tools ----------
 
+    // ---------- Keep running when closed ----------
+
+    private bool _keepRunning;
+    private bool _quitting;
+
+    private void KeepRunning_Click(object? sender, RoutedEventArgs e)
+    {
+        _keepRunning = !_keepRunning;
+        var settings = _settingsStore.Load();
+        settings.KeepRunningWhenClosed = _keepRunning;
+        _settingsStore.Save(settings);
+        RefreshToolStates();
+    }
+
+    private void Quit_Click(object? sender, RoutedEventArgs e)
+    {
+        _quitting = true;
+        Close();
+    }
+
     private void RefreshToolStates()
     {
+        KeepRunningButton.Classes.Set("on", _keepRunning);
+        ToolTip.SetTip(KeepRunningButton, _keepRunning
+            ? "Closing minimizes BijouHub, so the Stream Deck keeps working. Click to turn off; right-click to quit."
+            : "Keep running when closed (for the Stream Deck)");
+
         var synced = !string.IsNullOrEmpty(_settingsStore.Load().DataFolderPath);
         SyncFolderButton.Classes.Set("on", synced);
         ToolTip.SetTip(SyncFolderButton, synced

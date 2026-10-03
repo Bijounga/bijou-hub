@@ -91,6 +91,7 @@ public static class UpdateService
             WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden
         });
 
+        App.Quitting = true;
         System.Windows.Application.Current.Shutdown();
     }
 }

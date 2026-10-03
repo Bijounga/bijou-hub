@@ -68,8 +68,16 @@ public partial class MainWindow : Window
         DarkTitleBar.Apply(this);
         RefreshThemeChrome();
         _deckBridge = new StreamDeckBridge(command => Dispatcher.InvokeAsync(command).Task, HandleDeckCommand);
-        Closing += (_, _) =>
+        Closing += (_, e) =>
         {
+            // Kept running for the Stream Deck: the close button just tucks it away.
+            if (_keepRunning && !App.Quitting)
+            {
+                e.Cancel = true;
+                WindowState = WindowState.Minimized;
+                return;
+            }
+
             if (NotesPanel.Visibility == Visibility.Visible) SaveFreeformNotes();
             _timerPopout?.Close();
             _deckBridge.Dispose();
@@ -88,6 +96,7 @@ public partial class MainWindow : Window
 
         var settings = _settingsStore.Load();
         _dailyTargetMinutes = settings.DailyTargetMinutes;
+        _keepRunning = settings.KeepRunningWhenClosed;
         AppScaleTransform.ScaleX = settings.ZoomLevel;
         AppScaleTransform.ScaleY = settings.ZoomLevel;
 
@@ -124,6 +133,7 @@ public partial class MainWindow : Window
         RefreshQuickLaunchPanel();
         UpdateSyncFolderButtonLabel();
         UpdateStartupButtonLabel();
+        UpdateKeepRunningButton();
         ShowHome();
         _ = CheckForUpdateAsync();
     }
@@ -2388,6 +2398,33 @@ public partial class MainWindow : Window
         var on = StartupService.IsEnabled;
         StartupToggleButton.ToolTip = on ? "Starts with Windows — click to turn off" : "Start with Windows";
         SetToolActive(StartupToggleButton, on);
+    }
+
+    // ---------- Keep running when closed ----------
+
+    private bool _keepRunning;
+
+    private void KeepRunning_Click(object sender, RoutedEventArgs e)
+    {
+        _keepRunning = !_keepRunning;
+        var settings = _settingsStore.Load();
+        settings.KeepRunningWhenClosed = _keepRunning;
+        _settingsStore.Save(settings);
+        UpdateKeepRunningButton();
+    }
+
+    private void UpdateKeepRunningButton()
+    {
+        KeepRunningButton.ToolTip = _keepRunning
+            ? "Closing minimizes BijouHub, so the Stream Deck keeps working. Click to turn off; right-click to quit."
+            : "Keep running when closed (for the Stream Deck)";
+        SetToolActive(KeepRunningButton, _keepRunning);
+    }
+
+    private void Quit_Click(object sender, RoutedEventArgs e)
+    {
+        App.Quitting = true;
+        Close();
     }
 
     // A sidebar tool that's switched on shows in the accent color.
