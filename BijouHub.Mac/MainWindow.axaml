@@ -139,7 +139,7 @@
                         <controls:LineIcon Kind="deck" Width="17" Height="17"/>
                     </Button>
                     <Button Name="KeepRunningButton" Classes="ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                            Click="KeepRunning_Click" AutomationProperties.Name="Keep running when closed">
+                            Click="KeepRunning_Click" AutomationProperties.Name="Keep running in the background">
                         <Button.ContextMenu>
                             <ContextMenu>
                                 <MenuItem Header="Quit BijouHub" Click="Quit_Click"/>

@@ -35,7 +35,11 @@ public partial class App : Application
         var settings = new AppSettingsStore().Load();
         ThemeService.Apply(settings.ThemeName);
 
-        new MainWindow().Show();
+        StartupService.UpgradeEntry();
+        var window = new MainWindow();
+        // Started at sign-in with "keep running in the background" on: straight to the tray.
+        if (e.Args.Contains(StartupService.TrayArgument) && settings.KeepRunningWhenClosed) window.StartInTray();
+        else window.Show();
     }
 
     protected override void OnSessionEnding(SessionEndingCancelEventArgs e)

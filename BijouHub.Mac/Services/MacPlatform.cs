@@ -113,6 +113,22 @@ public static class MacPlatform
 
     public static bool StartsAtLogin => OperatingSystem.IsMacOS() && File.Exists(LaunchAgentPath);
 
+    // Launched at login: start in the menu bar when "keep running in the background" is on.
+    public const string TrayArgument = "--tray";
+
+    // Login items from older versions open the app without the argument; rewrite them once.
+    public static void UpgradeLoginItem()
+    {
+        try
+        {
+            if (StartsAtLogin && !File.ReadAllText(LaunchAgentPath).Contains(TrayArgument)) SetStartsAtLogin(true);
+        }
+        catch
+        {
+            // leave it as it was
+        }
+    }
+
     public static void SetStartsAtLogin(bool on)
     {
         if (!OperatingSystem.IsMacOS()) return;
@@ -130,7 +146,7 @@ public static class MacPlatform
             <plist version="1.0">
             <dict>
                 <key>Label</key><string>com.bijounga.bijouhub</string>
-                <key>ProgramArguments</key><array><string>/usr/bin/open</string><string>-a</string><string>{System.Security.SecurityElement.Escape(bundle)}</string></array>
+                <key>ProgramArguments</key><array><string>/usr/bin/open</string><string>-a</string><string>{System.Security.SecurityElement.Escape(bundle)}</string><string>--args</string><string>{TrayArgument}</string></array>
                 <key>RunAtLoad</key><true/>
             </dict>
             </plist>

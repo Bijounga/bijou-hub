@@ -148,6 +148,7 @@ public partial class MainWindow
         SessionTimerText.Text = TimerDisplay;
         _popout?.Update(SessionTitleText.Text ?? "", TimerDisplay, SessionStatusText.Text ?? "");
         if (HomePanel.IsVisible) UpdateTodayCard();
+        UpdateTrayToolTip();
 
         if (_targetMinutes is int target && !_timeUpShown && _activeSeconds >= target * 60) ShowTimeUp(target);
         if ((_activeSeconds + _idleSeconds) % 10 == 0) WriteCheckpoint();

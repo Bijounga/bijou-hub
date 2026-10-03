@@ -10,6 +10,26 @@ public static class StartupService
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private const string ValueName = "BijouHub";
 
+    // Launched at sign-in: start in the tray when "keep running in the background" is on.
+    public const string TrayArgument = "--tray";
+
+    // Older versions registered the exe without the argument; add it, but only for this same exe
+    // (a test build must never take over the user's startup entry).
+    public static void UpgradeEntry()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: true);
+            if (key?.GetValue(ValueName) is not string value || value.Contains(TrayArgument)) return;
+            if (!string.Equals(value.Trim().Trim('"'), Environment.ProcessPath, StringComparison.OrdinalIgnoreCase)) return;
+            key.SetValue(ValueName, $"\"{Environment.ProcessPath}\" {TrayArgument}");
+        }
+        catch
+        {
+            // leave it as it was
+        }
+    }
+
     public static bool IsEnabled
     {
         get
@@ -28,7 +48,7 @@ public static class StartupService
         {
             var exePath = Environment.ProcessPath;
             if (string.IsNullOrEmpty(exePath)) return;
-            key.SetValue(ValueName, $"\"{exePath}\"");
+            key.SetValue(ValueName, $"\"{exePath}\" {TrayArgument}");
         }
         else
         {

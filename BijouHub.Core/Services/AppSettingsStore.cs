@@ -20,8 +20,12 @@ public class AppSettings
     // How much to work each day, for the ring on Home and the Daily Target key. Null: no target.
     public int? DailyTargetMinutes { get; set; }
 
-    // Closing the window minimizes it instead, so the Stream Deck keys keep working.
+    // Closing the window hides it to the notification area instead, so the Stream Deck keys
+    // keep working.
     public bool KeepRunningWhenClosed { get; set; }
+
+    // The one-time "still running in the hidden icons" notice has been shown.
+    public bool TrayHintShown { get; set; }
 }
 
 public class AppSettingsStore

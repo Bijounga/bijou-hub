@@ -104,9 +104,7 @@ public partial class MainWindow
                 goal.Done = true;
                 return DeckGoals();
             case "focus":
-                if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
-                Show();
-                Activate();
+                BringToFront();
                 return new JsonObject { ["ok"] = true };
             case "capture":
                 // After replying, so the plugin isn't left waiting on a window.
@@ -115,9 +113,7 @@ public partial class MainWindow
             case "target":
                 Dispatcher.UIThread.Post(async () =>
                 {
-                    if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
-                    Show();
-                    Activate();
+                    BringToFront();
                     await PromptDailyTargetAsync();
                 });
                 return new JsonObject { ["ok"] = true };

@@ -189,7 +189,7 @@
                         <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8A9;" FontSize="16"/>
                     </Button>
                     <Button x:Name="KeepRunningButton" Style="{DynamicResource GhostIconButton}" Click="KeepRunning_Click"
-                            AutomationProperties.Name="Keep running when closed">
+                            AutomationProperties.Name="Keep running in the background">
                         <Button.ContextMenu>
                             <ContextMenu>
                                 <MenuItem Header="Quit BijouHub" Click="Quit_Click"/>

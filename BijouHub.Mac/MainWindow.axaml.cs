@@ -44,7 +44,8 @@ public partial class MainWindow : Window
         InitGoals();
         InitGoogleTasks();
         InitDeck();
-        _keepRunning = _settingsStore.Load().KeepRunningWhenClosed;
+        InitTray();
+        MacPlatform.UpgradeLoginItem();
         RefreshToolStates();
         ShowHome();
 
@@ -60,14 +61,15 @@ public partial class MainWindow : Window
         };
         Closing += (_, e) =>
         {
-            // Kept running for the Stream Deck: the close button minimizes to the Dock. Quit
-            // (Cmd+Q), an update or a logout still close it.
+            // Kept running for the Stream Deck: the close button hides it to the menu bar. Quit
+            // (Cmd+Q or the menu), an update or a logout still close it.
             if (_keepRunning && !_quitting && e.CloseReason == WindowCloseReason.WindowClosing && !e.IsProgrammatic)
             {
                 e.Cancel = true;
-                WindowState = WindowState.Minimized;
+                HideToTray();
                 return;
             }
+            if (_tray != null) _tray.IsVisible = false;
 
             SaveProjectNotes();
             SaveDailyPlanNow();
@@ -169,32 +171,27 @@ public partial class MainWindow : Window
 
     // ---------- Sidebar tools ----------
 
-    // ---------- Keep running when closed ----------
-
-    private bool _keepRunning;
-    private bool _quitting;
-
-    private void KeepRunning_Click(object? sender, RoutedEventArgs e)
+    // Launched at login with "keep running in the background" on: straight to the menu bar.
+    public void StartInTray()
     {
-        _keepRunning = !_keepRunning;
-        var settings = _settingsStore.Load();
-        settings.KeepRunningWhenClosed = _keepRunning;
-        _settingsStore.Save(settings);
-        RefreshToolStates();
-    }
-
-    private void Quit_Click(object? sender, RoutedEventArgs e)
-    {
-        _quitting = true;
-        Close();
+        ShowTrayIcon();
+        Opacity = 0;
+        EventHandler? hide = null;
+        hide = (_, _) =>
+        {
+            Opened -= hide;
+            Hide();
+            Opacity = 1;
+        };
+        Opened += hide;
     }
 
     private void RefreshToolStates()
     {
         KeepRunningButton.Classes.Set("on", _keepRunning);
         ToolTip.SetTip(KeepRunningButton, _keepRunning
-            ? "Closing minimizes BijouHub, so the Stream Deck keeps working. Click to turn off; right-click to quit."
-            : "Keep running when closed (for the Stream Deck)");
+            ? "Closing hides BijouHub in the menu bar, so the Stream Deck keeps working. Click to turn off; right-click to quit."
+            : "Keep running in the background when closed (for the Stream Deck)");
 
         var synced = !string.IsNullOrEmpty(_settingsStore.Load().DataFolderPath);
         SyncFolderButton.Classes.Set("on", synced);

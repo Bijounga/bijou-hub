@@ -37,7 +37,10 @@ public partial class App : Application
         {
             // Closing the main window quits, even with the timer popout open (an update relies on it).
             desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
-            desktop.MainWindow = new MainWindow();
+            var window = new MainWindow();
+            if (desktop.Args?.Contains(MacPlatform.TrayArgument) == true && new AppSettingsStore().Load().KeepRunningWhenClosed)
+                window.StartInTray();
+            desktop.MainWindow = window;
         }
 
         base.OnFrameworkInitializationCompleted();
