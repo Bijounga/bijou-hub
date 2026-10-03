@@ -75,7 +75,7 @@ public partial class MainWindow
     private void BuildScopeTabs(IReadOnlyList<string> groups)
     {
         GoalScopeTabs.Children.Clear();
-        if (!GoogleMode || groups.Count < 2)
+        if (!GoogleMode)
         {
             GoalScopeTabs.Visibility = Visibility.Collapsed;
             return;
@@ -87,6 +87,67 @@ public partial class MainWindow
             var open = _dailyGoals.Count(g => !g.Done && InDay(g) && (scope == AllScope || GoogleGoalsSync.GroupOf(g) == scope));
             GoalScopeTabs.Children.Add(BuildScopeTab(scope, open, scope == _goalScope));
         }
+        GoalScopeTabs.Children.Add(BuildAddCategoryTab());
+    }
+
+    // "+": a new category (a Google Tasks list group, e.g. LIFE).
+    private Button BuildAddCategoryTab()
+    {
+        var plus = new TextBlock { Text = "+", FontSize = 14, Margin = new Thickness(0, -2, 0, 0) };
+        plus.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
+        var pill = new Border
+        {
+            CornerRadius = new CornerRadius(14),
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(11, 3, 11, 3),
+            Child = plus
+        };
+        pill.SetResourceReference(Border.BackgroundProperty, "CardBrush");
+        pill.SetResourceReference(Border.BorderBrushProperty, "BorderBrush");
+
+        var tab = new Button
+        {
+            Content = pill,
+            Cursor = Cursors.Hand,
+            Margin = new Thickness(0, 0, 6, 6),
+            Focusable = false,
+            Template = new ControlTemplate(typeof(Button)) { VisualTree = new FrameworkElementFactory(typeof(ContentPresenter)) },
+            ToolTip = "New category, like Life or Work"
+        };
+        System.Windows.Automation.AutomationProperties.SetName(tab, "New category");
+        tab.Click += (_, _) => AddCategory();
+        return tab;
+    }
+
+    private async void AddCategory()
+    {
+        var dialog = new TextPromptWindow("New category",
+            "Name it, like Life or Work. It's added to Google Tasks as a \"LIFE - General\"-style list, so it shows on your phone too.") { Owner = this };
+        if (dialog.ShowDialog() != true || _googleSync == null) return;
+
+        var group = dialog.Value.Trim().Trim('-').Trim().ToUpperInvariant();
+        if (group.Length == 0) return;
+        if (!ScopeGroups().Contains(group))
+        {
+            await _googleLock.WaitAsync();
+            try
+            {
+                await _googleSync.CreateListAsync(GoogleGoalsSync.TitleFor(group, null));
+                SetSyncState(SyncState.Synced);
+            }
+            catch (Exception ex)
+            {
+                ReportGoogleError(ex);
+                return;
+            }
+            finally
+            {
+                _googleLock.Release();
+            }
+        }
+        SetGoalScope(group);
+        RefreshGoalScope();
+        DailyGoalInput.Focus();
     }
 
     private Button BuildScopeTab(string scope, int open, bool selected)

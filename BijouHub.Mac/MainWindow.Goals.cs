@@ -486,7 +486,7 @@ public partial class MainWindow
     private void BuildScopeTabs(IReadOnlyList<string> groups)
     {
         GoalScopeTabs.Children.Clear();
-        GoalScopeTabs.IsVisible = GoogleMode && groups.Count >= 2;
+        GoalScopeTabs.IsVisible = GoogleMode;
         if (!GoalScopeTabs.IsVisible) return;
 
         foreach (var scope in groups.Append(AllScope))
@@ -519,6 +519,44 @@ public partial class MainWindow
             tab.Click += (_, _) => SetGoalScope(scope);
             GoalScopeTabs.Children.Add(tab);
         }
+
+        // "+": a new category (a Google Tasks list group, e.g. LIFE).
+        var add = new Button { Padding = new Thickness(11, 3), Margin = new Thickness(0, 0, 6, 6), CornerRadius = new CornerRadius(14), Content = "+", FontSize = 14 };
+        ToolTip.SetTip(add, "New category, like Life or Work");
+        Avalonia.Automation.AutomationProperties.SetName(add, "New category");
+        add.Click += async (_, _) => await AddCategoryAsync();
+        GoalScopeTabs.Children.Add(add);
+    }
+
+    private async Task AddCategoryAsync()
+    {
+        var name = await PromptWindow.Ask(this, "New category",
+            "Name it, like Life or Work. It's added to Google Tasks as a \"LIFE - General\"-style list, so it shows on your phone too.");
+        if (name == null || _googleSync == null) return;
+
+        var group = name.Trim().Trim('-').Trim().ToUpperInvariant();
+        if (group.Length == 0) return;
+        if (!ScopeGroups().Contains(group))
+        {
+            await _googleLock.WaitAsync();
+            try
+            {
+                await _googleSync.CreateListAsync(GoogleGoalsSync.TitleFor(group, null));
+                SetSyncState(SyncState.Synced);
+            }
+            catch (Exception ex)
+            {
+                ReportGoogleError(ex);
+                return;
+            }
+            finally
+            {
+                _googleLock.Release();
+            }
+        }
+        SetGoalScope(group);
+        RefreshGoalScope();
+        DailyGoalInput.Focus();
     }
 
     private void SetGoalScope(string scope)
