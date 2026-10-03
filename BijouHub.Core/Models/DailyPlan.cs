@@ -73,10 +73,29 @@ public class DailyGoal : INotifyPropertyChanged
     public bool Starred { get => _starred; set => Set(ref _starred, value); }
 
     private string? _due;
+    private string? _dueTime;
+    private string? _dueChip;
+    private bool _dueOverdue;
 
-    // The day it's planned for (yyyy-MM-dd), when that's a later day: planning tomorrow. Null
-    // means today's list. Synced as the Google task's due date.
+    // The day it's due (yyyy-MM-dd). A later day keeps it off today's list until then (planning
+    // tomorrow); null means today's list with no date. Synced as the Google task's due date.
     public string? Due { get => _due; set => Set(ref _due, value); }
+
+    // Time of day it's due (HH:mm), with a reminder. Google Tasks keeps only the date, so the
+    // time lives in BijouHub's own copy.
+    public string? DueTime { get => _dueTime; set => Set(ref _dueTime, value); }
+
+    // UI-only: the date/time label shown on the goal ("Tomorrow 3:00 PM", "Oct 9"), and whether
+    // it's past due.
+    [JsonIgnore] public string? DueChip { get => _dueChip; set => Set(ref _dueChip, value); }
+    [JsonIgnore] public bool DueOverdue { get => _dueOverdue; set => Set(ref _dueOverdue, value); }
+
+    // When it's due, if it has a time.
+    [JsonIgnore]
+    public DateTime? DueAt =>
+        _dueTime != null && TimeOnly.TryParse(_dueTime, System.Globalization.CultureInfo.InvariantCulture, out var time)
+            ? (_due != null && DateOnly.TryParse(_due, System.Globalization.CultureInfo.InvariantCulture, out var day) ? day : DateOnly.FromDateTime(DateTime.Today)).ToDateTime(time)
+            : null;
 
     // Planned for a day after `today` (a yyyy-MM-dd key), so not on that day's list yet.
     public bool IsPlannedAfter(string today) => _due != null && string.CompareOrdinal(_due, today) > 0;

@@ -61,6 +61,7 @@ public partial class MainWindow
 
         CollectionViewSource.GetDefaultView(_dailyGoals).Refresh();
         foreach (var goal in _dailyGoals) goal.ChipText = ChipFor(goal);
+        RefreshDueChips();
         BuildScopeTabs(groups);
     }
 

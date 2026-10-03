@@ -24,6 +24,7 @@ public class LineIcon : Control
         ["history"] = Parse("M2.6 8a5.4 5.4 0 1 0 1.6-3.8M2.6 2.6v2.9h2.9M8 5.2V8l2 1.4"),
         ["folder"] = Parse("M2 4.6h4.2l1.4 1.4H14v7.4H2z"),
         ["power"] = Parse("M8 2.2v5.6M4.7 4.4a5 5 0 1 0 6.6 0"),
+        ["calendar"] = Parse("M3 4.5h10v8.5H3zM3 7.5h10M5.5 3v3M10.5 3v3"),
         ["pin"] = Parse("M5.5 2.5h5M7 2.5v3.6L4.6 9h6.8L9 6.1V2.5M8 9v4.8"),
         ["palette"] = Parse("M8 2.2a5.8 5.8 0 1 0 0 11.6c1.2 0 1.4-1 .9-1.8-.5-.9.1-1.8 1.1-1.8h1.8a2 2 0 0 0 2-2A6 6 0 0 0 8 2.2zM5 7.3h.1M7.2 4.9h.1M10.2 5.4h.1"),
         ["deck"] = Parse("M3 3h4v4H3zM9 3h4v4H9zM3 9h4v4H3zM9 9h4v4H9z"),

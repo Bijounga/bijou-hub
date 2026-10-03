@@ -1,0 +1,25 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:BijouHub.Mac.Controls"
+        x:Class="BijouHub.Mac.Views.ReminderWindow"
+        Title="Reminder" Width="340" SizeToContent="Height" Topmost="True" CanResize="False" ShowActivated="False"
+        SystemDecorations="BorderOnly" ShowInTaskbar="False" Background="{DynamicResource PanelBrush}">
+    <Border BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1" Padding="16,12,12,12">
+        <StackPanel Spacing="8">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Classes="ghost" Padding="4" Click="Close_Click" ToolTip.Tip="Dismiss" VerticalAlignment="Top">
+                    <controls:LineIcon Kind="close" Width="10" Height="10"/>
+                </Button>
+                <StackPanel Orientation="Horizontal" Spacing="7">
+                    <controls:LineIcon Kind="clock" Width="13" Height="13" Foreground="{DynamicResource AccentBrush}"/>
+                    <TextBlock Name="WhenText" FontSize="12" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center"/>
+                </StackPanel>
+            </DockPanel>
+            <TextBlock Name="TaskText" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,4"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                <Button Content="Snooze 10 min" Click="Snooze_Click"/>
+                <Button Content="Done" Classes="primary" Click="Done_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

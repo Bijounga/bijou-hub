@@ -1,0 +1,30 @@
+<Window x:Class="BijouHub.Views.ReminderWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Reminder" WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True"
+        ShowActivated="False" Width="340" SizeToContent="Height" Background="{DynamicResource PanelBrush}">
+    <Border BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1" Padding="16,12,12,12">
+        <StackPanel>
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Click="Close_Click" Cursor="Hand" ToolTip="Dismiss" AutomationProperties.Name="Dismiss"
+                        VerticalAlignment="Top">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="Transparent" Padding="4,0"><ContentPresenter/></Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <TextBlock Text="✕" FontSize="11" Foreground="{DynamicResource FaintTextBrush}"/>
+                </Button>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE823;" FontSize="12" Foreground="{DynamicResource AccentBrush}" Margin="0,0,7,0"/>
+                    <TextBlock x:Name="WhenText" FontSize="12" Foreground="{DynamicResource AccentBrush}"/>
+                </StackPanel>
+            </DockPanel>
+            <TextBlock x:Name="TaskText" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,6,0,12"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Snooze 10 min" Padding="10,5" Margin="0,0,8,0" Click="Snooze_Click"/>
+                <Button Content="Done" Padding="14,5" Style="{DynamicResource AccentButton}" Click="Done_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

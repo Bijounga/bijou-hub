@@ -41,6 +41,7 @@ public partial class MainWindow : Window
 
         VersionText.Text = "v" + MacUpdateService.GetCurrentVersion();
         InitSession();
+        InitDue();
         InitGoals();
         InitGoogleTasks();
         InitDeck();

@@ -1,0 +1,90 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:BijouHub.Mac.Controls"
+             x:Class="BijouHub.Mac.Views.DuePicker">
+    <UserControl.Styles>
+        <Style Selector="Button.pick">
+            <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="11"/>
+            <Setter Property="Padding" Value="10,3"/>
+            <Setter Property="Margin" Value="0,0,6,6"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Focusable" Value="False"/>
+        </Style>
+        <Style Selector="Button.day">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Focusable" Value="False"/>
+        </Style>
+        <Style Selector="Button.day.other">
+            <Setter Property="Foreground" Value="{DynamicResource FaintTextBrush}"/>
+        </Style>
+        <Style Selector="Button.day.today">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="Button.day.selected">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource BgBrush}"/>
+        </Style>
+        <Style Selector="Button.day.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource BgBrush}"/>
+        </Style>
+        <!-- Past days: just faded, not Fluent's filled disabled look. -->
+        <Style Selector="Button.day:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.day:disabled">
+            <Setter Property="Opacity" Value="0.35"/>
+        </Style>
+        <Style Selector="ListBox#TimeList ListBoxItem">
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+            CornerRadius="8" Padding="12,12,12,10" Width="264">
+        <StackPanel>
+            <WrapPanel Name="QuickPicks" Margin="0,0,0,4"/>
+
+            <DockPanel Margin="2,4,2,6">
+                <Button Name="PrevMonth" Classes="pick" Margin="0" DockPanel.Dock="Left" Click="PrevMonth_Click" ToolTip.Tip="Previous month" Content="‹"/>
+                <Button Name="NextMonth" Classes="pick" Margin="0" DockPanel.Dock="Right" Click="NextMonth_Click" ToolTip.Tip="Next month" Content="›"/>
+                <TextBlock Name="MonthText" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"/>
+            </DockPanel>
+            <UniformGrid Name="DayNames" Columns="7" Margin="0,0,0,2"/>
+            <UniformGrid Name="DayGrid" Columns="7" Rows="6"/>
+
+            <!-- Time: type it ("3pm", "15:30") or pick from the list. -->
+            <Border Margin="0,8,0,0" BorderBrush="{DynamicResource SoftBorderBrush}" BorderThickness="0,1,0,0" Padding="0,8,0,0">
+                <StackPanel>
+                    <DockPanel>
+                        <controls:LineIcon Kind="clock" Width="15" Height="15" Margin="2,0,8,0" DockPanel.Dock="Left"
+                                           Foreground="{DynamicResource MutedTextBrush}"/>
+                        <Button Name="ClearTimeButton" Classes="pick" Margin="6,0,0,0" DockPanel.Dock="Right" Click="ClearTime_Click"
+                                ToolTip.Tip="No time" AutomationProperties.Name="Clear time" Content="✕" IsVisible="False"/>
+                        <TextBox Name="TimeBox" Watermark="Add a time" AutomationProperties.Name="Time"
+                                 GotFocus="TimeBox_GotFocus" LostFocus="TimeBox_LostFocus" KeyDown="TimeBox_KeyDown"/>
+                    </DockPanel>
+                    <ListBox Name="TimeList" Height="150" Margin="0,6,0,0" IsVisible="False" Padding="2"
+                             Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource SoftBorderBrush}" BorderThickness="1"
+                             SelectionChanged="TimeList_SelectionChanged" AutomationProperties.Name="Times"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Border>
+</UserControl>

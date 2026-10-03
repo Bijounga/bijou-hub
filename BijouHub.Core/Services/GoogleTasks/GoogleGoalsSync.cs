@@ -89,8 +89,7 @@ public sealed partial class GoogleGoalsSync
                     ProjectName = isGeneral ? null : (project.Name ?? list.Name),
                     ProjectId = isGeneral ? null : project.Id,
                     CompletedAt = task.CompletedAt,
-                    // Only a later day counts as planned; a past or today's due date is just today's list.
-                    Due = task.Due != null && string.CompareOrdinal(task.Due, DateTime.Today.ToString("yyyy-MM-dd")) > 0 ? task.Due : null
+                    Due = task.Due
                 };
                 goal.Done = task.Completed; // after CompletedAt, so the real completion time is kept
                 goals.Add(goal);

@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BijouHub"
+        xmlns:views="clr-namespace:BijouHub.Views"
         mc:Ignorable="d"
         Title="BijouHub" Height="820" Width="1280" MinHeight="520" MinWidth="760"
         WindowStartupLocation="CenterScreen"
@@ -470,6 +471,14 @@
                                                      Fill="{DynamicResource AccentBrush}" Visibility="Collapsed"/>
                                         </StackPanel>
                                     </Button>
+                                    <Button x:Name="DayUpcomingTab" Click="DayUpcoming_Click" Cursor="Hand" Margin="14,0,0,0"
+                                            AutomationProperties.Name="Upcoming" ToolTip="Everything dated after tomorrow">
+                                        <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock x:Name="DayUpcomingText" Text="UPCOMING" FontSize="11" Foreground="{DynamicResource FaintTextBrush}"/>
+                                            <TextBlock x:Name="DayUpcomingCount" FontSize="11" Margin="5,0,0,0" Foreground="{DynamicResource AccentBrush}"/>
+                                        </StackPanel>
+                                    </Button>
                                 </StackPanel>
                                 <TextBlock x:Name="DailyProgressText" DockPanel.Dock="Right" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="12" VerticalAlignment="Bottom"/>
@@ -534,7 +543,52 @@
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                         <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
+                                                    <!-- When it's due: a chip once dated (red when past), or a calendar on hover. -->
+                                                    <Grid Grid.Column="4" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                        <Border CornerRadius="9" Padding="7,2" BorderThickness="1" Cursor="Hand"
+                                                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                                                                MouseLeftButtonUp="DailyGoalDueChip_Click" ToolTip="Change the date and time"
+                                                                Visibility="{Binding DueChip, Converter={StaticResource EmptyToCollapsedConverter}}">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <StackPanel.Resources>
+                                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                                        <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+                                                                        <Setter Property="FontSize" Value="11"/>
+                                                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding DueOverdue}" Value="True">
+                                                                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </StackPanel.Resources>
+                                                                <TextBlock Text="&#xE787;" FontFamily="{StaticResource IconFont}" FontSize="10" Margin="0,1,5,0"/>
+                                                                <TextBlock Text="{Binding DueChip}"/>
+                                                            </StackPanel>
+                                                        </Border>
+                                                        <Button Click="DailyGoalDue_Click" Focusable="False" Cursor="Hand" ToolTip="Add a date and time"
+                                                                AutomationProperties.Name="Add a date and time">
+                                                            <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                                                            <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE787;" FontSize="12" Margin="4,0"
+                                                                       Foreground="{DynamicResource FaintTextBrush}"/>
+                                                            <Button.Style>
+                                                                <Style TargetType="Button">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    <Style.Triggers>
+                                                                        <MultiDataTrigger>
+                                                                            <MultiDataTrigger.Conditions>
+                                                                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True"/>
+                                                                                <Condition Binding="{Binding DueChip}" Value="{x:Null}"/>
+                                                                            </MultiDataTrigger.Conditions>
+                                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                                        </MultiDataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Button.Style>
+                                                        </Button>
+                                                    </Grid>
                                                     <TextBlock Text="⠿" Foreground="{DynamicResource FaintTextBrush}" VerticalAlignment="Center"
                                                                HorizontalAlignment="Center" Cursor="SizeAll" ToolTip="Drag to reorder"/>
                                                     <CheckBox Grid.Column="1" IsChecked="{Binding Done, Mode=TwoWay}" VerticalAlignment="Center"
@@ -586,13 +640,13 @@
                                                                  IsVisibleChanged="DailyGoalEditor_IsVisibleChanged"
                                                                  KeyDown="DailyGoalEditor_KeyDown" LostKeyboardFocus="DailyGoalEditor_LostKeyboardFocus"/>
                                                     </Grid>
-                                                    <Border Grid.Column="4" CornerRadius="9" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                    <Border Grid.Column="5" CornerRadius="9" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center"
                                                             Background="{DynamicResource CardHoverBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                                             Cursor="Hand" MouseLeftButtonUp="DailyGoalChip_Click" ToolTip="Change the linked project"
                                                             Visibility="{Binding ChipText, Converter={StaticResource EmptyToCollapsedConverter}}">
                                                         <TextBlock Text="{Binding ChipText}" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
                                                     </Border>
-                                                    <Button Grid.Column="5" Click="DailyGoalDelete_Click" Focusable="False" Cursor="Hand"
+                                                    <Button Grid.Column="6" Click="DailyGoalDelete_Click" Focusable="False" Cursor="Hand"
                                                             Margin="6,0,2,0" VerticalAlignment="Center" ToolTip="Delete" AutomationProperties.Name="Delete goal">
                                                         <Button.Template>
                                                             <ControlTemplate TargetType="Button">
@@ -639,7 +693,12 @@
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
+                                            <!-- The date-and-time picker, opened from a calendar icon (here or on a goal). -->
+                                            <Popup x:Name="DuePopup" StaysOpen="False" AllowsTransparency="True" Placement="Bottom" PopupAnimation="Fade">
+                                                <views:DuePicker x:Name="DuePickerControl"/>
+                                            </Popup>
                                             <!-- "+" at rest; an empty circle while typing, like To Do. -->
                                             <TextBlock x:Name="AddGoalGlyph" Text="+" FontSize="22" Width="22" Margin="0,0,10,2"
                                                        VerticalAlignment="Center" TextAlignment="Center" Foreground="{DynamicResource AccentBrush}"/>
@@ -658,7 +717,16 @@
                                                 <TextBlock x:Name="DailyGoalPlaceholder" Text="Add a task" FontSize="14" Margin="2,0,0,0"
                                                            Foreground="{DynamicResource AccentBrush}" IsHitTestVisible="False" VerticalAlignment="Center"/>
                                             </Grid>
-                                            <ComboBox x:Name="DailyGoalProjectCombo" Grid.Column="2" Width="150" Margin="10,6,0,6"
+                                            <Button x:Name="AddGoalDueButton" Grid.Column="2" Click="AddGoalDue_Click" Cursor="Hand" Margin="10,0,0,0"
+                                                    VerticalAlignment="Center" Focusable="False" Visibility="Collapsed" AutomationProperties.Name="Date and time">
+                                                <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE787;" FontSize="14" Foreground="{DynamicResource AccentBrush}"/>
+                                                    <TextBlock x:Name="AddGoalDueText" FontSize="12" Margin="6,0,0,0" VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource AccentBrush}" Visibility="Collapsed"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <ComboBox x:Name="DailyGoalProjectCombo" Grid.Column="3" Width="150" Margin="10,6,0,6"
                                                       Visibility="Collapsed" SelectionChanged="DailyGoalProjectCombo_SelectionChanged"
                                                       ToolTip="Link new tasks to a project (optional)"/>
                                         </Grid>

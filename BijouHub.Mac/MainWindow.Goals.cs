@@ -83,7 +83,7 @@ public partial class MainWindow
             }
             TakePlannedGoals();
             DailyNotesBox.Text = _today.Notes ?? "";
-            _viewTomorrow = false; // a new day opens on today
+            _dayView = DayView.Today; // a new day opens on today
         }
         finally
         {
@@ -114,8 +114,12 @@ public partial class MainWindow
     {
         var visible = _dailyGoals.Where(InScope).ToList();
         var done = visible.Count(g => g.Done);
-        DailyProgressText.Text = visible.Count == 0 ? "" : _viewTomorrow ? $"{visible.Count} planned"
-            : done == visible.Count ? $"All {visible.Count} done" : $"{done} of {visible.Count} done";
+        DailyProgressText.Text = visible.Count == 0 ? "" : _dayView switch
+        {
+            DayView.Tomorrow => $"{visible.Count} planned",
+            DayView.Upcoming => $"{visible.Count} upcoming",
+            _ => done == visible.Count ? $"All {visible.Count} done" : $"{done} of {visible.Count} done"
+        };
         RefreshDayTabs();
         DailyGoalsList.IsVisible = visible.Count > 0;
         BuildScopeTabs(ScopeGroups());
@@ -124,7 +128,8 @@ public partial class MainWindow
     private void DailyGoal_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (_applyingRemote || _relinking) return;
-        if (e.PropertyName is nameof(DailyGoal.IsEditing) or nameof(DailyGoal.HasProject) or nameof(DailyGoal.ChipText)) return;
+        if (e.PropertyName is nameof(DailyGoal.IsEditing) or nameof(DailyGoal.HasProject) or nameof(DailyGoal.ChipText)
+            or nameof(DailyGoal.DueChip) or nameof(DailyGoal.DueOverdue)) return;
         if (e.PropertyName == nameof(DailyGoal.Starred)) PinStarredGoals();
         SaveDailyPlan();
         if (sender is DailyGoal goal) PushGoalChange(goal, e.PropertyName);
@@ -198,7 +203,8 @@ public partial class MainWindow
     // The list picker stays out of the way until the bar is in use or something is picked.
     private void UpdateAddGoalBar()
     {
-        var active = DailyGoalInput.IsFocused || DailyGoalProjectCombo.IsDropDownOpen || DailyGoalProjectCombo.IsFocused;
+        var active = DailyGoalInput.IsFocused || DailyGoalProjectCombo.IsDropDownOpen || DailyGoalProjectCombo.IsFocused || DuePickerOpenForBar;
+        UpdateAddGoalDue(active);
         DailyGoalProjectCombo.IsVisible = active || PickedTarget().Name != null;
         AddGoalIcon.Kind = active ? "check" : "add";
     }
@@ -219,6 +225,7 @@ public partial class MainWindow
         LoadDailyPlan(); // past midnight, the new goal belongs to the new day
         AddDailyGoal(NewGoal(text));
         DailyGoalInput.Text = "";
+        ClearPendingDue();
     }
 
     private void DailyGoalInput_TextChanged(object? sender, TextChangedEventArgs e)
@@ -231,18 +238,21 @@ public partial class MainWindow
         DailyGoalInput.Text = "";
         LoadDailyPlan();
         foreach (var line in lines) AddDailyGoal(NewGoal(line.TrimStart('-', '*', '•', ' ')));
+        ClearPendingDue(); // a pasted list all gets the date that was picked
     }
 
     private DailyGoal NewGoal(string text)
     {
         var target = PickedTarget();
+        var (due, time) = NewGoalDue();
         return new DailyGoal
         {
             Text = text,
             Group = target.Group,
             ProjectId = target.ProjectId,
             ProjectName = target.Name,
-            Due = _viewTomorrow ? TomorrowKey : null
+            Due = due,
+            DueTime = time
         };
     }
 
@@ -332,6 +342,10 @@ public partial class MainWindow
         move.Click += (_, _) => MoveGoalToDay(goal, !planned);
         menu.Items.Add(move);
 
+        var due = new MenuItem { Header = "Date and time…" };
+        due.Click += (_, _) => OpenDuePicker((menu.PlacementTarget as Control) ?? DailyGoalsList, goal);
+        menu.Items.Add(due);
+
         var link = new MenuItem { Header = GoogleMode ? "Move to list" : "Link to project" };
         var scope = !GoogleMode ? EditingGroup : _goalScope == AllScope ? AllScope : GoogleGoalsSync.GroupOf(goal);
         foreach (var target in TargetsFor(scope))
@@ -399,7 +413,7 @@ public partial class MainWindow
     private void RefreshCarryOver()
     {
         _carryOverCandidates.Clear();
-        if (!GoogleMode && !_viewTomorrow && _today is { CarryOverHandled: false } && _dailyStore.LatestUnfinishedBefore(DateTime.Today) is var (date, goals))
+        if (!GoogleMode && _dayView == DayView.Today && _today is { CarryOverHandled: false } && _dailyStore.LatestUnfinishedBefore(DateTime.Today) is var (date, goals))
         {
             var carried = _dailyGoals.Select(g => g.CarriedFromId).ToHashSet();
             _carryOverCandidates = goals.Where(g => !carried.Contains(g.Id)).ToList();
@@ -458,6 +472,7 @@ public partial class MainWindow
         if (_goalScope != AllScope && !groups.Contains(_goalScope)) _goalScope = EditingGroup;
         SyncVisibleGoals();
         foreach (var goal in _dailyGoals) goal.ChipText = ChipFor(goal);
+        RefreshDueChips();
         BuildScopeTabs(groups);
     }
 

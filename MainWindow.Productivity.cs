@@ -13,20 +13,37 @@ public partial class MainWindow
 {
     // ---------- Plan tomorrow ----------
 
-    // The goal list shows today (goals planned for a later day hidden) or tomorrow's plan.
-    private bool _viewTomorrow;
+    // The goal list shows today (plus anything past due; later days hidden), tomorrow's plan, or
+    // everything dated after tomorrow.
+    private enum DayView { Today, Tomorrow, Upcoming }
+
+    private DayView _dayView = DayView.Today;
 
     private static string TodayKey => DailyPlanStore.Key(DateTime.Today);
     private static string TomorrowKey => DailyPlanStore.Key(DateTime.Today.AddDays(1));
 
-    private bool InDay(DailyGoal goal) => _viewTomorrow ? goal.Due == TomorrowKey : !goal.IsPlannedAfter(TodayKey);
-
-    private void DayToday_Click(object sender, RoutedEventArgs e) => SetDayView(false);
-    private void DayTomorrow_Click(object sender, RoutedEventArgs e) => SetDayView(true);
-
-    private void SetDayView(bool tomorrow)
+    private bool InDay(DailyGoal goal) => _dayView switch
     {
-        _viewTomorrow = tomorrow;
+        DayView.Tomorrow => goal.Due == TomorrowKey,
+        DayView.Upcoming => goal.IsPlannedAfter(TomorrowKey),
+        _ => !goal.IsPlannedAfter(TodayKey)
+    };
+
+    // A goal added while looking at Tomorrow or Upcoming lands on that day.
+    private string? DayViewDefault() => _dayView switch
+    {
+        DayView.Tomorrow => TomorrowKey,
+        DayView.Upcoming => DailyPlanStore.Key(DateTime.Today.AddDays(2)),
+        _ => null
+    };
+
+    private void DayToday_Click(object sender, RoutedEventArgs e) => SetDayView(DayView.Today);
+    private void DayTomorrow_Click(object sender, RoutedEventArgs e) => SetDayView(DayView.Tomorrow);
+    private void DayUpcoming_Click(object sender, RoutedEventArgs e) => SetDayView(DayView.Upcoming);
+
+    private void SetDayView(DayView view)
+    {
+        _dayView = view;
         RefreshGoalScope();
         RefreshCarryOver();
         UpdateDailyProgress();
@@ -35,18 +52,26 @@ public partial class MainWindow
 
     private void RefreshDayTabs()
     {
-        DayTodayText.SetResourceReference(ForegroundProperty, _viewTomorrow ? "FaintTextBrush" : "MutedTextBrush");
-        DayTomorrowText.SetResourceReference(ForegroundProperty, _viewTomorrow ? "MutedTextBrush" : "FaintTextBrush");
-        DayTodayText.FontWeight = _viewTomorrow ? FontWeights.Normal : FontWeights.SemiBold;
-        DayTomorrowText.FontWeight = _viewTomorrow ? FontWeights.SemiBold : FontWeights.Normal;
+        foreach (var (tab, view) in new[] { (DayTodayText, DayView.Today), (DayTomorrowText, DayView.Tomorrow), (DayUpcomingText, DayView.Upcoming) })
+        {
+            tab.SetResourceReference(ForegroundProperty, view == _dayView ? "MutedTextBrush" : "FaintTextBrush");
+            tab.FontWeight = view == _dayView ? FontWeights.SemiBold : FontWeights.Normal;
+        }
 
         var planned = _dailyGoals.Count(g => g.Due == TomorrowKey && !g.Done);
+        var later = _dailyGoals.Count(g => g.IsPlannedAfter(TomorrowKey) && !g.Done);
         DayTomorrowCount.Text = planned > 0 ? planned.ToString() : "";
+        DayUpcomingCount.Text = later > 0 ? later.ToString() : "";
         // Evenings, a dot nudges toward planning tomorrow while nothing's planned yet.
-        PlanNudgeDot.Visibility = !_viewTomorrow && planned == 0 && DateTime.Now.Hour >= 17 ? Visibility.Visible : Visibility.Collapsed;
+        PlanNudgeDot.Visibility = _dayView == DayView.Today && planned == 0 && DateTime.Now.Hour >= 17 ? Visibility.Visible : Visibility.Collapsed;
 
-        DailyGoalPlaceholder.Text = _viewTomorrow ? "Plan a task for tomorrow" : "Add a task";
-        DailyNotesLabel.Visibility = DailyNotesBox.Visibility = _viewTomorrow ? Visibility.Collapsed : Visibility.Visible;
+        DailyGoalPlaceholder.Text = _dayView switch
+        {
+            DayView.Tomorrow => "Plan a task for tomorrow",
+            DayView.Upcoming => "Add a task for later",
+            _ => "Add a task"
+        };
+        DailyNotesLabel.Visibility = DailyNotesBox.Visibility = _dayView == DayView.Today ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void MoveGoalToDay(DailyGoal goal, bool tomorrow)
