@@ -164,6 +164,7 @@ try {
 	appear("X", { minutes: "5" }, "com.bijounga.bijouhub.extend");
 	appear("P", {}, "com.bijounga.bijouhub.popout");
 	appear("M", { keyId: "key-m", modeId: "m-edit", modeName: "Editing", duration: "1", breakDuration: "1" }, "com.bijounga.bijouhub.pomodoro");
+	appear("R", { keyId: "key-r", modeId: "m-write", modeName: "Writing", duration: "1", breakDuration: "1", rounds: "1" }, "com.bijounga.bijouhub.pomodoro");
 	appear("T", {}, "com.bijounga.bijouhub.target");
 	appear("Q", {}, "com.bijounga.bijouhub.capture");
 	await waitFor(() => Object.keys(keys).every((k) => images.has(keys[k].context)), 3000, "first images");
@@ -180,6 +181,7 @@ try {
 	check(svgOf("X").includes('opacity="0.42"') && textOf("X").includes("+5"), "Add Time is dimmed with no session");
 	check(svgOf("P").includes('opacity="0.42"') && textOf("P").includes("POP OUT"), "Pop Out Timer is dimmed with no session");
 	check(textOf("M").includes("1/1") && textOf("M").includes("Editing"), "Pomodoro key shows its focus/break");
+	check(textOf("R").includes("1 ROUND") && textOf("R").includes("1/1"), "a Pomodoro key with rounds says how many");
 	check(textOf("T").includes("TARGET") && svgOf("T").includes('opacity="0.42"'), "Daily Target waits for BijouHub");
 	check(textOf("Q").includes("CAPTURE"), "Quick Capture key appears");
 	await tap("P");
@@ -345,6 +347,16 @@ try {
 		check(onBreak && svgOf("M").includes("#4ADE80") && textOf("M").some((t) => /^0:5\d$/.test(t)), "after the focus, the key turns green and counts down the break");
 		await hold("M");
 		await waitFor(() => textOf("M").includes("LOGGED"), 3000, "logged M");
+
+		// ---------- Pomodoro with 1 round: finishes and logs itself after the focus ----------
+		await sleep(2000);
+		await tap("R");
+		await waitFor(() => textOf("R").includes("FOCUS · 1/1"), 8000, "rounds focus");
+		snapshot("rounds focus");
+		check(textOf("R").includes("FOCUS · 1/1"), "the key shows the round out of how many");
+		const finished = await waitFor(() => !textOf("R").some((t) => t.startsWith("FOCUS")) && textOf("S").includes("TODAY"), 72000, "rounds done");
+		snapshot("rounds done");
+		check(finished, "after its last round the Pomodoro finishes by itself (no break)");
 	}
 	await sleep(1000);
 } finally {
@@ -373,11 +385,12 @@ ${tiles.map((f) => `<div style="display:inline-block;margin:4px;text-align:cente
 		sessions = JSON.parse(readFileSync(join(dataDir, "sessions.json"), "utf8"));
 	} catch {}
 	console.log("logged sessions:", sessions.map((s) => `${s.ModeName} ${s.ActiveSeconds}s active/${s.IdleSeconds}s idle project=${s.ProjectName ?? "-"}`));
-	check(sessions.length === (RUN_OVERTIME ? 5 : 3), "every finished or replaced session was logged");
+	check(sessions.length === (RUN_OVERTIME ? 6 : 3), "every finished or replaced session was logged");
 	check(sessions.every((s) => !s.ProjectId), "deck sessions start unassigned");
 	check(sessions[0]?.IdleSeconds >= 2, "paused time is logged as idle, not worked");
 	if (RUN_OVERTIME) check(sessions[3]?.ActiveSeconds >= 60, "overtime session kept counting past the target");
 	if (RUN_OVERTIME) check(sessions[4]?.IdleSeconds >= 3 && sessions[4]?.ActiveSeconds <= 62, "Pomodoro breaks are logged as idle, not worked");
+	if (RUN_OVERTIME) check(sessions[5]?.ModeName === "Writing" && sessions[5]?.ActiveSeconds >= 55, "the finished Pomodoro was logged");
 
 	if (hubPid) {
 		try {

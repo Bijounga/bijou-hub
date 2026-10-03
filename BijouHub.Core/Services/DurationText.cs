@@ -33,13 +33,29 @@ public static partial class DurationText
         return null;
     }
 
-    // "25/5", "50 / 10", "1h/15" → a focus/break cycle. Null for anything else.
+    // "25/5", "50 / 10", "1h/15" → a focus/break cycle; "25/5x4" (or "25/5/4") adds a number of
+    // rounds. Null for anything else.
     public static PomodoroPlan? TryParsePomodoro(string? text)
     {
-        var parts = (text ?? "").Split('/');
+        var value = (text ?? "").Trim().ToLowerInvariant();
+        int? rounds = null;
+        var times = value.LastIndexOfAny(new[] { 'x', '×' });
+        if (times > 0)
+        {
+            if (!int.TryParse(value[(times + 1)..].Trim(), out var r) || r is < 1 or > 24) return null;
+            rounds = r;
+            value = value[..times];
+        }
+
+        var parts = value.Split('/');
+        if (parts.Length == 3 && rounds == null && int.TryParse(parts[2].Trim(), out var third) && third is >= 1 and <= 24)
+        {
+            rounds = third;
+            parts = parts[..2];
+        }
         if (parts.Length != 2) return null;
         return TryParseMinutes(parts[0]) is int focus && TryParseMinutes(parts[1]) is int rest && rest <= 120
-            ? new PomodoroPlan(focus, rest)
+            ? new PomodoroPlan(focus, rest, rounds)
             : null;
     }
 

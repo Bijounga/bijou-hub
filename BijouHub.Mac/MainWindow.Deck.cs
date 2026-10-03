@@ -131,8 +131,9 @@ public partial class MainWindow
     {
         var minutes = request["minutes"] is JsonValue m && m.TryGetValue<int>(out var parsed) && parsed > 0 ? parsed : (int?)null;
         // A Pomodoro key sends its break too: focus for `minutes`, break for `breakMinutes`, repeat.
+        var rounds = request["rounds"] is JsonValue rv && rv.TryGetValue<int>(out var r) && r > 0 ? r : (int?)null;
         var pomodoro = minutes is int focus && request["breakMinutes"] is JsonValue b && b.TryGetValue<int>(out var rest) && rest > 0
-            ? new PomodoroPlan(focus, rest)
+            ? new PomodoroPlan(focus, rest, rounds)
             : null;
         var mode = _modes.FirstOrDefault(x => x.Id == (string?)request["modeId"])
                    ?? _modes.FirstOrDefault(x => string.Equals(x.Name, (string?)request["modeName"], StringComparison.OrdinalIgnoreCase));

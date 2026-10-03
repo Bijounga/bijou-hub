@@ -26,6 +26,8 @@ export type HubState = {
 export type Pomodoro = {
 	phase: "focus" | "break";
 	round: number;
+	/** How many rounds it runs for; null until stopped. */
+	rounds: number | null;
 	remaining: number;
 	phaseSeconds: number;
 };
@@ -234,6 +236,7 @@ function parsePomodoro(value: unknown): Pomodoro | null {
 	return {
 		phase: p.phase === "break" ? "break" : "focus",
 		round: typeof p.round === "number" ? p.round : 1,
+		rounds: typeof p.rounds === "number" && p.rounds > 0 ? p.rounds : null,
 		remaining: typeof p.remaining === "number" ? p.remaining : 0,
 		phaseSeconds: typeof p.phaseSeconds === "number" && p.phaseSeconds > 0 ? p.phaseSeconds : 1
 	};

@@ -22,22 +22,41 @@ public partial class MainWindow
         _phaseLeft = _phaseLength = plan == null ? 0 : plan.FocusMinutes * 60;
     }
 
-    // One second of a running (unpaused) Pomodoro; switches between focus and break at zero.
+    private bool _pomodoroFinishing;
+
+    // One second of a running (unpaused) Pomodoro; switches between focus and break at zero, and
+    // after the last round's focus finishes the session (no break after the last one).
     private void AdvancePomodoro()
     {
-        if (_pomodoro == null || --_phaseLeft > 0) return;
+        if (_pomodoro == null || _pomodoroFinishing || --_phaseLeft > 0) return;
+
+        if (!_onBreak && _pomodoro.Rounds is int rounds && _pomodoroRound >= rounds)
+        {
+            _phaseLeft = 0;
+            _pomodoroFinishing = true;
+            Mac.Services.SoundFx.Play(Mac.Services.SoundFx.Complete);
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                _pomodoroFinishing = false;
+                _ = FinishSessionAsync(askForNote: false);
+            });
+            return;
+        }
 
         _onBreak = !_onBreak;
         if (!_onBreak) _pomodoroRound++;
         _phaseLeft = _phaseLength = (_onBreak ? _pomodoro.BreakMinutes : _pomodoro.FocusMinutes) * 60;
-        Chime(_onBreak ? "Glass" : "Hero");
+        Mac.Services.SoundFx.Play(_onBreak ? Mac.Services.SoundFx.Break : Mac.Services.SoundFx.Focus);
         UpdateSessionContext();
     }
 
     private string PomodoroClock =>
         _phaseLeft >= 3600 ? TimeSpan.FromSeconds(_phaseLeft).ToString(@"h\:mm\:ss") : TimeSpan.FromSeconds(_phaseLeft).ToString(@"mm\:ss");
 
-    private string PomodoroStatus => _onBreak ? "Break" : $"Focus · round {_pomodoroRound}";
+    private string PomodoroStatus =>
+        _onBreak ? "Break"
+        : _pomodoro?.Rounds is int rounds ? $"Focus · round {_pomodoroRound} of {rounds}"
+        : $"Focus · round {_pomodoroRound}";
 
     // Add Time on a Pomodoro stretches the current focus or break.
     private void ExtendPomodoroPhase(int minutes)
@@ -50,6 +69,7 @@ public partial class MainWindow
     {
         ["phase"] = _onBreak ? "break" : "focus",
         ["round"] = _pomodoroRound,
+        ["rounds"] = _pomodoro.Rounds,
         ["remaining"] = _phaseLeft,
         ["phaseSeconds"] = _phaseLength
     };

@@ -145,7 +145,7 @@ public partial class MainWindow
 
     private void ShowReminder(DailyGoal goal)
     {
-        System.Media.SystemSounds.Asterisk.Play();
+        SoundFx.Play(SoundFx.Reminder);
         var when = goal.DueTime is { } t && DueText.Time(t) is TimeOnly time ? DueText.Time12(time) : "Now";
         var card = new ReminderWindow(goal.Text, $"Reminder · {when}");
         card.DoneRequested += () => goal.Done = true;

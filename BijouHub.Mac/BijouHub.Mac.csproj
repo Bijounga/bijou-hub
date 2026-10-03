@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.22.1</Version>
+    <Version>1.23.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,5 +25,7 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+    <!-- The chimes are shared with the Windows app. -->
+    <AvaloniaResource Include="..\Assets\Sounds\*.wav" Link="Assets\Sounds\%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

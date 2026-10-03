@@ -95,13 +95,13 @@ public partial class MainWindow
                 Spacing = 5,
                 Children =
                 {
-                    new TextBlock { Text = "POMODORO", FontSize = 9, HorizontalAlignment = HorizontalAlignment.Center, Foreground = Brush("AccentBrush") },
-                    new TextBlock { Text = plan.ToString(), FontSize = 20, HorizontalAlignment = HorizontalAlignment.Center, FontFamily = (Avalonia.Media.FontFamily?)(this.TryFindResource("TimerFont", out var f) ? f : null) ?? Avalonia.Media.FontFamily.Default }
+                    new TextBlock { Text = plan.Rounds is int r ? $"POMODORO ×{r}" : "POMODORO", FontSize = 9, HorizontalAlignment = HorizontalAlignment.Center, Foreground = Brush("AccentBrush") },
+                    new TextBlock { Text = $"{plan.FocusMinutes}/{plan.BreakMinutes}", FontSize = 20, HorizontalAlignment = HorizontalAlignment.Center, FontFamily = (Avalonia.Media.FontFamily?)(this.TryFindResource("TimerFont", out var f) ? f : null) ?? Avalonia.Media.FontFamily.Default }
                 }
             }
         };
-        ToolTip.SetTip(tile, $"Launch {mode.Name}: {plan.FocusMinutes} min focus, {plan.BreakMinutes} min break, repeating");
-        Avalonia.Automation.AutomationProperties.SetName(tile, $"Pomodoro {plan.FocusMinutes} {plan.BreakMinutes}");
+        ToolTip.SetTip(tile, $"Launch {mode.Name}: {plan.FocusMinutes} min focus, {plan.BreakMinutes} min break, " + (plan.Rounds is int n ? $"{n} rounds" : "repeating"));
+        Avalonia.Automation.AutomationProperties.SetName(tile, $"Pomodoro {plan.FocusMinutes} {plan.BreakMinutes}" + (plan.Rounds is int count ? $" x{count}" : ""));
         tile.Click += async (_, _) => await BeginSession(mode, null, null, plan.FocusMinutes, pomodoro: plan);
 
         var remove = new MenuItem { Header = "Remove timer" };
@@ -209,9 +209,9 @@ public partial class MainWindow
             return;
         }
         ModeTimerHint.IsVisible = true;
-        ModeTimerHint.Text = pomodoro != null ? $"{pomodoro.FocusMinutes} min focus, {pomodoro.BreakMinutes} min break, on repeat."
+        ModeTimerHint.Text = pomodoro != null ? $"{pomodoro.FocusMinutes} min focus, {pomodoro.BreakMinutes} min break, " + (pomodoro.Rounds is int rounds ? $"{rounds} rounds." : "on repeat. Add x4 for 4 rounds.")
             : minutes is int length ? $"Counts down from {DurationText.Format(length)}."
-            : "Can't read that — try 45, 1:30, 2h, or 25/5 for a Pomodoro.";
+            : "Can't read that — try 45, 1:30, 2h, or 25/5 (25/5x4) for a Pomodoro.";
         ModeTimerHint.Foreground = Brush(valid ? "MutedTextBrush" : "DangerBrush");
     }
 }

@@ -1175,6 +1175,8 @@ public partial class MainWindow : Window
         if (mode != null)
             _blockWatcher.Start(mode);
         _tickTimer.Start();
+        SoundFx.Play(SoundFx.Start);
+        UpdateTaskbarProgress();
         BroadcastDeckState();
     }
 
@@ -1240,6 +1242,7 @@ public partial class MainWindow : Window
 
         if (HomePanel.Visibility == Visibility.Visible) UpdateTodayCard();
         UpdateTrayToolTip();
+        UpdateTaskbarProgress();
         BroadcastDeckState();
     }
 
@@ -1354,7 +1357,8 @@ public partial class MainWindow : Window
         if (_activeProject != null && _activeMode != null) contextParts.Add($"via {_activeMode.Name}");
         if (_activeGoal != null) contextParts.Add($"working on: {_activeGoal.Name}");
         if (_targetMinutes is int tm) contextParts.Add(_countDownMode ? $"counting down from {tm} min" : $"budget: {tm} min");
-        if (_pomodoro != null) contextParts.Add($"Pomodoro {_pomodoro.FocusMinutes} / {_pomodoro.BreakMinutes} min");
+        if (_pomodoro != null)
+            contextParts.Add($"Pomodoro {_pomodoro.FocusMinutes} / {_pomodoro.BreakMinutes} min" + (_pomodoro.Rounds is int r ? $" × {r}" : ""));
         if (_activeMode?.DoNotDisturb == true) contextParts.Add("Do Not Disturb");
         ActiveContextText.Text = string.Join("  •  ", contextParts);
         ActiveContextText.Visibility = contextParts.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -1395,7 +1399,7 @@ public partial class MainWindow : Window
 
     private void ShowBudgetAlert(int targetMinutes)
     {
-        System.Media.SystemSounds.Exclamation.Play();
+        SoundFx.Play(SoundFx.End);
 
         _budgetAlertWindow?.Close();
         var alert = new BudgetAlertWindow(_activeProject?.Name ?? _activeMode?.Name ?? "session", targetMinutes);
@@ -1579,6 +1583,7 @@ public partial class MainWindow : Window
         _deckKeyId = null;
         StartPomodoro(null);
         DoNotDisturb.Restore();
+        UpdateTaskbarProgress();
         BroadcastDeckState();
 
         if (finishedProject != null)
@@ -2094,7 +2099,7 @@ public partial class MainWindow : Window
     {
         var stack = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
 
-        var label = new TextBlock { Text = "POMODORO", FontSize = 9, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 4) };
+        var label = new TextBlock { Text = plan.Rounds is int r ? $"POMODORO ×{r}" : "POMODORO", FontSize = 9, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 4) };
         label.SetResourceReference(TextBlock.ForegroundProperty, "AccentBrush");
         stack.Children.Add(label);
 
@@ -2108,9 +2113,9 @@ public partial class MainWindow : Window
         {
             Content = stack,
             Height = 72,
-            ToolTip = $"Launch {mode.Name}: {plan.FocusMinutes} min focus, {plan.BreakMinutes} min break, repeating"
+            ToolTip = $"Launch {mode.Name}: {plan.FocusMinutes} min focus, {plan.BreakMinutes} min break, " + (plan.Rounds is int n ? $"{n} rounds" : "repeating")
         };
-        System.Windows.Automation.AutomationProperties.SetName(button, $"Pomodoro {plan.FocusMinutes} {plan.BreakMinutes}");
+        System.Windows.Automation.AutomationProperties.SetName(button, $"Pomodoro {plan.FocusMinutes} {plan.BreakMinutes}" + (plan.Rounds is int count ? $" x{count}" : ""));
         button.SetResourceReference(StyleProperty, "QuickLaunchTileStyle");
         button.Click += async (_, _) => await StartModePomodoro(mode, plan);
 
@@ -2185,12 +2190,12 @@ public partial class MainWindow : Window
         if (string.IsNullOrWhiteSpace(text))
             hint = "";
         else if (pomodoro != null)
-            hint = $"{pomodoro.FocusMinutes} min focus, {pomodoro.BreakMinutes} min break, on repeat.";
+            hint = $"{pomodoro.FocusMinutes} min focus, {pomodoro.BreakMinutes} min break, " + (pomodoro.Rounds is int rounds ? $"{rounds} rounds." : "on repeat. Add x4 for 4 rounds.");
         else if (minutes is int length)
             hint = $"Counts down from {DurationText.Format(length)}.";
         else
         {
-            hint = "Can't read that — try 45, 1:30, 2h, or 25/5 for a Pomodoro.";
+            hint = "Can't read that — try 45, 1:30, 2h, or 25/5 (25/5x4) for a Pomodoro.";
             brush = "DangerBrush";
         }
         ModeTimerHint.Text = hint;
@@ -2362,8 +2367,9 @@ public partial class MainWindow : Window
         var projectId = (string?)request["projectId"];
         var minutes = request["minutes"] is JsonValue m && m.TryGetValue<int>(out var parsed) && parsed > 0 ? parsed : (int?)null;
         // A Pomodoro key sends its break too: focus for `minutes`, break for `breakMinutes`, repeat.
+        var rounds = request["rounds"] is JsonValue rv && rv.TryGetValue<int>(out var r) && r > 0 ? r : (int?)null;
         var pomodoro = minutes is int focus && request["breakMinutes"] is JsonValue b && b.TryGetValue<int>(out var rest) && rest > 0
-            ? new PomodoroPlan(focus, rest)
+            ? new PomodoroPlan(focus, rest, rounds)
             : null;
 
         // Match by id, then by name, so a key still works after its mode is recreated.

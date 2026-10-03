@@ -26,11 +26,13 @@ export type TimerSettings = {
 	duration?: string;
 	/** Pomodoro keys only: the break, as typed. Empty is 5 minutes. */
 	breakDuration?: string;
+	/** Pomodoro keys only: how many rounds before it finishes. Empty runs until it's stopped. */
+	rounds?: string;
 	color?: string;
 };
 
 /** What a key starts: a countdown (or count-up when minutes is null), or a Pomodoro with a break. */
-type Lengths = { minutes: number | null; breakMinutes?: number };
+type Lengths = { minutes: number | null; breakMinutes?: number; rounds?: number };
 
 const POMODORO_FOCUS = 25;
 const POMODORO_BREAK = 5;
@@ -74,8 +76,9 @@ class TimerKey extends SingletonAction<TimerSettings> {
 		if (!this.#pomodoro) return minutes === undefined ? undefined : { minutes };
 
 		const rest = parseDuration(settings.breakDuration);
-		if (minutes === undefined || rest === undefined) return undefined;
-		return { minutes: minutes ?? POMODORO_FOCUS, breakMinutes: rest ?? POMODORO_BREAK };
+		const rounds = parseRounds(settings.rounds);
+		if (minutes === undefined || rest === undefined || rounds === null) return undefined;
+		return { minutes: minutes ?? POMODORO_FOCUS, breakMinutes: rest ?? POMODORO_BREAK, rounds };
 	}
 
 	override async onWillAppear(ev: WillAppearEvent<TimerSettings>): Promise<void> {
@@ -196,7 +199,8 @@ class TimerKey extends SingletonAction<TimerSettings> {
 				modeName: settings.modeName,
 				projectId: settings.projectId,
 				minutes: lengths.minutes,
-				breakMinutes: lengths.breakMinutes
+				breakMinutes: lengths.breakMinutes,
+				rounds: lengths.rounds
 			});
 			if (reply.error) {
 				streamDeck.logger.warn(`Start refused: ${reply.error}`);
@@ -267,6 +271,10 @@ class TimerKey extends SingletonAction<TimerSettings> {
 		const state = this.#hub.state;
 		if (!state || !this.#ownsSession(entry)) {
 			const otherRunning = this.#hub.connected && !!state?.active;
+			// A Pomodoro with a set number of rounds says so where the play arrow would be.
+			if (lengths.rounds) {
+				return { color, fraction: 1, label: `${lengths.rounds} ROUND${lengths.rounds === 1 ? "" : "S"}`, big: preset, caption: caption(settings), dim: otherRunning };
+			}
 			return { color, fraction: 1, play: true, big: preset, caption: caption(settings), dim: otherRunning };
 		}
 
@@ -287,6 +295,14 @@ export class PomodoroAction extends TimerKey {
 	constructor(hub: HubClient) {
 		super(hub, true);
 	}
+}
+
+/** "4" → 4; empty → undefined (until stopped); anything else → null (can't read it). */
+function parseRounds(text: string | undefined): number | undefined | null {
+	const value = (text ?? "").trim();
+	if (value === "" || value === "∞") return undefined;
+	const rounds = Number(value);
+	return Number.isInteger(rounds) && rounds >= 1 && rounds <= 24 ? rounds : null;
 }
 
 function caption(settings: TimerSettings): string {

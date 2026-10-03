@@ -19,7 +19,7 @@ export function liveSessionArt(state: HubState, color: string, caption: string):
 		return {
 			color: state.paused ? PAUSED_COLOR : onBreak ? BREAK_COLOR : status?.color ?? color,
 			fraction: Math.min(1, pomodoro.remaining / pomodoro.phaseSeconds),
-			label: state.paused ? "PAUSED" : onBreak ? "BREAK" : status?.label ?? `FOCUS · ${pomodoro.round}`,
+			label: state.paused ? "PAUSED" : onBreak ? "BREAK" : status?.label ?? `FOCUS · ${pomodoro.rounds ? `${pomodoro.round}/${pomodoro.rounds}` : pomodoro.round}`,
 			labelColor: state.paused || (!onBreak && status) ? undefined : phaseColor,
 			big: formatClock(pomodoro.remaining),
 			caption

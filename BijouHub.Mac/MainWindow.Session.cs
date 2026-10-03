@@ -86,6 +86,7 @@ public partial class MainWindow
         SessionTimerText.Text = TimerDisplay;
         ShowSession();
         _tick!.Start();
+        Mac.Services.SoundFx.Play(Mac.Services.SoundFx.Start);
         WriteCheckpoint();
         BroadcastDeckState();
     }
@@ -102,7 +103,7 @@ public partial class MainWindow
         if (_activeProject != null && _activeMode != null) parts.Add($"via {_activeMode.Name}");
         if (_activeGoal != null) parts.Add($"working on: {_activeGoal.Name}");
         if (_targetMinutes is int t) parts.Add(_countDownMode ? $"counting down from {DurationText.Format(t)}" : $"budget: {DurationText.Format(t)}");
-        if (_pomodoro != null) parts.Add($"Pomodoro {_pomodoro.FocusMinutes} / {_pomodoro.BreakMinutes} min");
+        if (_pomodoro != null) parts.Add($"Pomodoro {_pomodoro.FocusMinutes} / {_pomodoro.BreakMinutes} min" + (_pomodoro.Rounds is int r ? $" × {r}" : ""));
         if (_activeMode?.DoNotDisturb == true) parts.Add("Do Not Disturb");
         SessionContextText.Text = string.Join("  •  ", parts);
         SessionContextText.IsVisible = parts.Count > 0;
@@ -161,7 +162,7 @@ public partial class MainWindow
         var title = SessionTitleText.Text ?? "the session";
         TimeUpText.Text = $"Time's up — {DurationText.Format(target)} on {title}.";
         TimeUpBanner.IsVisible = true;
-        Chime();
+        Mac.Services.SoundFx.Play(Mac.Services.SoundFx.End);
 
         // Also a small always-on-top alert, so it's seen while another app (Premiere…) is in front.
         _timeUpWindow?.Close();
@@ -169,19 +170,6 @@ public partial class MainWindow
         _timeUpWindow.Extended += () => ExtendSession(15);
         _timeUpWindow.FinishRequested += () => _ = FinishSessionAsync(askForNote: true);
         _timeUpWindow.Show();
-    }
-
-    private static void Chime(string sound = "Glass")
-    {
-        try
-        {
-            if (OperatingSystem.IsMacOS())
-                Process.Start(new ProcessStartInfo("/usr/bin/afplay", $"/System/Library/Sounds/{sound}.aiff") { UseShellExecute = false });
-        }
-        catch
-        {
-            // No sound is fine.
-        }
     }
 
     // Adds time: more countdown (or budget), or a countdown from now for a count-up session.

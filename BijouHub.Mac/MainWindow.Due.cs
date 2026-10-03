@@ -143,7 +143,7 @@ public partial class MainWindow
 
     private void ShowReminder(DailyGoal goal)
     {
-        Chime("Glass");
+        Mac.Services.SoundFx.Play(Mac.Services.SoundFx.Reminder);
         var when = DueText.Time(goal.DueTime) is TimeOnly time ? DueText.Time12(time) : "Now";
         var card = new ReminderWindow(goal.Text, $"Reminder · {when}");
         card.DoneRequested += () => goal.Done = true;

@@ -136,6 +136,14 @@
 	</div>
 
 	<!-- Pomodoro keys only. -->
+	<div class="row" id="roundsRow" hidden>
+		<label for="rounds">Rounds</label>
+		<div>
+			<input type="text" id="rounds" placeholder="Until I stop" spellcheck="false" autocomplete="off">
+			<div class="chips" id="roundsChips"></div>
+			<div class="hint" id="roundsHint"></div>
+		</div>
+	</div>
 	<div class="row" id="breakRow" hidden>
 		<label for="break">Break</label>
 		<div>
@@ -278,6 +286,8 @@
 		if (pomodoro) {
 			if (document.activeElement !== $("break")) $("break").value = settings.breakDuration ?? "";
 			renderBreakHint();
+			if (document.activeElement !== $("rounds")) $("rounds").value = settings.rounds ?? "";
+			renderRoundsHint();
 		}
 
 		$("swatches").replaceChildren(...COLORS.map((color) => {
@@ -335,6 +345,8 @@
 		$("durationLabel").textContent = "Focus";
 		$("duration").placeholder = "25";
 		$("breakRow").hidden = false;
+		$("roundsRow").hidden = false;
+		buildChips("roundsChips", [["2", "2"], ["4", "4"], ["6", "6"], ["Until I stop", ""]], "rounds", "rounds", renderRoundsHint);
 		$("modeHint").textContent = "Launches the mode's apps and blocks. Breaks aren't counted as worked time.";
 		$("howto").innerHTML = "<b>Tap</b> to start · <b>tap</b> again to pause<br><b>Hold</b> to finish and log the time";
 		PRESETS = [["25m", "25"], ["45m", "45"], ["50m", "50"], ["90m", "90"]];
@@ -353,6 +365,31 @@
 			chip.classList.toggle("on", parseDuration(chip.dataset.value) === (minutes ?? 5));
 		}
 	}
+
+	// Same rules as the plugin's parseRounds (src/actions/timer.ts).
+	function parseRounds(text) {
+		const value = (text ?? "").trim();
+		if (value === "") return undefined;
+		const rounds = Number(value);
+		return Number.isInteger(rounds) && rounds >= 1 && rounds <= 24 ? rounds : null;
+	}
+
+	function renderRoundsHint() {
+		const text = $("rounds").value;
+		const rounds = parseRounds(text);
+		const hint = $("roundsHint");
+		$("rounds").classList.toggle("invalid", rounds === null);
+		hint.classList.toggle("bad", rounds === null);
+		hint.textContent = rounds === null ? "A number from 1 to 24, or empty to keep going."
+			: rounds === undefined ? "Keeps going until you finish it." : `${rounds} rounds, then it finishes and logs the time.`;
+		for (const chip of $("roundsChips").children) chip.classList.toggle("on", chip.dataset.value === text.trim());
+	}
+
+	$("rounds").addEventListener("input", () => {
+		settings.rounds = $("rounds").value;
+		renderRoundsHint();
+		if (parseRounds(settings.rounds) !== null) save();
+	});
 
 	$("break").addEventListener("input", () => {
 		settings.breakDuration = $("break").value;
