@@ -163,12 +163,15 @@ jobs:
           EOF
 
           sync
-          # Finder sometimes keeps the volume busy for a moment ("Resource busy"): retry, then force.
+          # Finder sometimes keeps the volume busy for a moment ("Resource busy"), and a refused
+          # detach can still finish a moment later: retry while it's mounted, then force.
           for attempt in 1 2 3 4 5; do
+            [ -d "$MOUNT_DIR" ] || break
             hdiutil detach "$MOUNT_DIR" && break
             sleep 5
-            [ "$attempt" = 5 ] && hdiutil detach -force "$MOUNT_DIR"
           done
+          [ -d "$MOUNT_DIR" ] && hdiutil detach -force "$MOUNT_DIR"
+          [ ! -d "$MOUNT_DIR" ]
           hdiutil convert rw-temp.dmg -format UDZO -o "BijouHub-${{ matrix.rid }}.dmg"
           rm -f rw-temp.dmg
 
