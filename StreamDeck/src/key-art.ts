@@ -27,6 +27,8 @@ export type KeyArt = {
 	play?: boolean;
 	/** Draws a check mark in place of the readout (something just got done). */
 	check?: boolean;
+	/** Draws a window icon in place of the readout: an arrow out of it, or back into it. */
+	glyph?: "popout" | "dock";
 };
 
 /** A key that's mostly words: a small label on top and up to four wrapped lines. */
@@ -62,13 +64,19 @@ export function renderKey(art: KeyArt): string {
 		parts.push(ring(art.fraction, color));
 	}
 
-	if (art.play) {
+	if (art.glyph) {
+		// Icon keys: the label sits higher to make room for the window glyph.
+		if (art.label) parts.push(text(art.label, 42, 12, art.labelColor ?? color, 700));
+		parts.push(windowGlyph(art.glyph, color));
+	} else if (art.play) {
 		parts.push(`<path d="M66 37 L80 45 L66 53 Z" fill="${color}"/>`);
 	} else if (art.label) {
 		parts.push(text(art.label, 52, 13, art.labelColor ?? color, 700));
 	}
 
-	if (art.check) {
+	if (art.glyph) {
+		// Drawn above.
+	} else if (art.check) {
 		parts.push(`<path d="M50 74 L65 89 L94 58" fill="none" stroke="${INK}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>`);
 	} else {
 		parts.push(text(art.big, 86, bigSize(art.big), INK, 600));
@@ -127,6 +135,17 @@ function wrap(value: string, perLine: number, maxLines: number): string[] {
 		return kept;
 	}
 	return lines.length ? lines : [""];
+}
+
+/** A window with an arrow leaving it (pop out) or coming back into it (dock). */
+function windowGlyph(kind: "popout" | "dock", color: string): string {
+	const line = `fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"`;
+	const frame = `<path d="M74 54 H60 a6 6 0 0 0 -6 6 V82 a6 6 0 0 0 6 6 H82 a6 6 0 0 0 6 -6 V68" stroke="${INK}" ${line}/>`;
+	const arrow =
+		kind === "popout"
+			? `<path d="M70 72 L92 50 M79 50 H92 V63" stroke="${color}" ${line}/>`
+			: `<path d="M92 50 L71 71 M71 58 V71 H84" stroke="${color}" ${line}/>`;
+	return frame + arrow;
 }
 
 export function toDataUrl(svg: string): string {

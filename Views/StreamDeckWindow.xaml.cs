@@ -9,7 +9,14 @@ namespace BijouHub.Views;
 
 public partial class StreamDeckWindow : Window
 {
-    private const string PluginUuid = "com.bijounga.bijouhub";
+    private const string PluginUuid = StreamDeckPlugin.Uuid;
+
+    // The plugin version packed into this exe, read once.
+    private static readonly Lazy<Version?> BundledVersion = new(() =>
+    {
+        using var resource = typeof(StreamDeckWindow).Assembly.GetManifestResourceStream("BijouHub.StreamDeckPlugin");
+        return resource == null ? null : StreamDeckPlugin.PackageVersion(resource);
+    });
 
     private readonly Func<int> _connectedPlugins;
     private readonly DispatcherTimer _statusTimer;
@@ -28,14 +35,18 @@ public partial class StreamDeckWindow : Window
         RefreshStatus();
     }
 
-    private static bool PluginInstalled => Directory.Exists(Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "Elgato", "StreamDeck", "Plugins", PluginUuid + ".sdPlugin"));
+    private static bool PluginInstalled => StreamDeckPlugin.Installed;
 
     private void RefreshStatus()
     {
         string text, brushKey;
-        if (_connectedPlugins() > 0)
+        var outdated = StreamDeckPlugin.UpdateAvailable(BundledVersion.Value);
+        if (outdated)
+        {
+            text = $"Plugin {BundledVersion.Value!.ToString(2)} is here with new keys. Update to get them.";
+            brushKey = "AccentBrush";
+        }
+        else if (_connectedPlugins() > 0)
         {
             text = "Connected — your Stream Deck is ready.";
             brushKey = "SuccessBrush";
@@ -53,7 +64,7 @@ public partial class StreamDeckWindow : Window
 
         StatusText.Text = text;
         StatusDot.SetResourceReference(Shape.FillProperty, brushKey);
-        InstallButton.Content = PluginInstalled ? "Reinstall Plugin" : "Install Plugin";
+        InstallButton.Content = outdated ? "Update Plugin" : PluginInstalled ? "Reinstall Plugin" : "Install Plugin";
     }
 
     // The packed plugin ships inside the exe; opening the file hands it to the Stream Deck app,

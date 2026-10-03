@@ -1,7 +1,7 @@
 <Window x:Class="BijouHub.Views.StreamDeckWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Stream Deck" Height="400" Width="420"
+        Title="Stream Deck" Width="420" SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="{DynamicResource BgBrush}">
@@ -19,15 +19,15 @@
 
             <Border Grid.Row="1" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,16">
-                <StackPanel Orientation="Horizontal">
+                <DockPanel>
                     <Ellipse x:Name="StatusDot" Width="9" Height="9" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="StatusText" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="330"/>
-                </StackPanel>
+                    <TextBlock x:Name="StatusText" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                </DockPanel>
             </Border>
 
             <StackPanel Grid.Row="2">
                 <TextBlock TextWrapping="Wrap" Margin="0,0,0,8"
-                           Text="1.  Install the plugin, then drag a BijouHub Timer onto a key."/>
+                           Text="1.  Install the plugin, then drag BijouHub keys onto your deck: Timer, Current Session, Next Goal, Add Time, Pop Out Timer."/>
                 <TextBlock TextWrapping="Wrap" Margin="0,0,0,8"
                            Text="2.  In the key's settings, pick a mode and a duration — 45, 1:30, 2h. Leave the duration empty to count up."/>
                 <TextBlock TextWrapping="Wrap" Margin="0,0,0,8"

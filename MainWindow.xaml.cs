@@ -434,13 +434,17 @@ public partial class MainWindow : Window
         ShowActiveSessionPanel();
     }
 
-    private void PopoutToggle_Click(object sender, RoutedEventArgs e)
+    private void PopoutToggle_Click(object sender, RoutedEventArgs e) => SetTimerPopout(_timerPopout == null);
+
+    // Pops the mini timer out (always on top, for working in another app) or docks it again.
+    private void SetTimerPopout(bool open)
     {
-        if (_timerPopout != null)
+        if (!open)
         {
-            _timerPopout.Close();
+            _timerPopout?.Close();
             return;
         }
+        if (_timerPopout != null) return;
 
         var popout = new TimerPopoutWindow();
         popout.UpdateDisplay(_activeProject?.Name ?? _activeMode?.Name ?? "Session", TimerDisplay.Text, ActiveStatus.Text);
@@ -453,12 +457,14 @@ public partial class MainWindow : Window
         popout.Closed += (_, _) =>
         {
             _timerPopout = null;
+            BroadcastDeckState();
             SetIconButton(PopoutToggleButton, "\uE8A7", "Pop out the timer");
         };
 
         _timerPopout = popout;
         SetIconButton(PopoutToggleButton, "\uE73F", "Dock the timer");
         popout.Show();
+        BroadcastDeckState();
     }
 
     private void ShowActiveSessionPanel()
@@ -2081,7 +2087,8 @@ public partial class MainWindow : Window
         ["activeSeconds"] = _activeSeconds,
         ["paused"] = _paused,
         ["idle"] = _isIdle && !_paused,
-        ["todaySeconds"] = TodayLoggedSeconds() + (IsSessionActive ? _activeSeconds : 0)
+        ["todaySeconds"] = TodayLoggedSeconds() + (IsSessionActive ? _activeSeconds : 0),
+        ["poppedOut"] = _timerPopout != null
     };
 
     private void BroadcastDeckState() => _deckBridge.Broadcast(DeckState());
@@ -2180,6 +2187,12 @@ public partial class MainWindow : Window
             case "focus":
                 BringToFront();
                 return new JsonObject { ["ok"] = true };
+
+            case "popout":
+                if (!IsSessionActive) return new JsonObject { ["error"] = "No session is running" };
+                // "show" picks a side; without it the key toggles.
+                SetTimerPopout(request["show"] is JsonValue sv && sv.TryGetValue<bool>(out var show) ? show : _timerPopout == null);
+                return DeckState();
 
             default:
                 return new JsonObject { ["error"] = "Unknown command" };

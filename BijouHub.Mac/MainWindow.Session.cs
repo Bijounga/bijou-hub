@@ -274,13 +274,18 @@ public partial class MainWindow
 
     // ---------- Pop-out mini timer ----------
 
-    private void Popout_Click(object? sender, RoutedEventArgs e)
+    private void Popout_Click(object? sender, RoutedEventArgs e) => SetTimerPopout(_popout == null);
+
+    // Pops the mini timer out (always on top, for working in another app) or docks it again.
+    private void SetTimerPopout(bool open)
     {
-        if (_popout != null)
+        if (!open)
         {
-            _popout.Close();
+            _popout?.Close();
             return;
         }
+        if (_popout != null) return;
+
         _popout = new TimerPopoutWindow();
         _popout.Update(SessionTitleText.Text ?? "", TimerDisplay, SessionStatusText.Text ?? "");
         _popout.PauseRequested += TogglePause;
@@ -290,10 +295,12 @@ public partial class MainWindow
             _popout = null;
             PopoutIcon.Kind = "popout";
             ToolTip.SetTip(PopoutButton, "Pop out the timer");
+            BroadcastDeckState();
         };
         PopoutIcon.Kind = "dock";
         ToolTip.SetTip(PopoutButton, "Dock the timer");
         _popout.Show();
+        BroadcastDeckState();
     }
 
     // ---------- Crash recovery ----------

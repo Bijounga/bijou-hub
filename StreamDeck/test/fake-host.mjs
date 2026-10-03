@@ -162,6 +162,7 @@ try {
 	appear("S", {}, "com.bijounga.bijouhub.session");
 	appear("G", {}, "com.bijounga.bijouhub.goal");
 	appear("X", { minutes: "5" }, "com.bijounga.bijouhub.extend");
+	appear("P", {}, "com.bijounga.bijouhub.popout");
 	await waitFor(() => Object.keys(keys).every((k) => images.has(keys[k].context)), 3000, "first images");
 	snapshot("appeared");
 	check(textOf("A").includes("1m"), "A shows its 1m preset");
@@ -174,6 +175,10 @@ try {
 	check(textOf("S").includes("OFFLINE"), "Current Session shows BijouHub is off");
 	check(textOf("G").includes("Open BijouHub"), "Next Goal asks for BijouHub while it's off");
 	check(svgOf("X").includes('opacity="0.42"') && textOf("X").includes("+5"), "Add Time is dimmed with no session");
+	check(svgOf("P").includes('opacity="0.42"') && textOf("P").includes("POP OUT"), "Pop Out Timer is dimmed with no session");
+	await tap("P");
+	await waitFor(() => alerts(keys.P.context) > 0, 2000, "pop out alert");
+	check(alerts(keys.P.context) === 1, "Pop Out Timer alerts instead of acting with no session");
 
 	// ---------- Settings panel while BijouHub is closed ----------
 	send("propertyInspectorDidAppear", keys.A.context);
@@ -262,6 +267,22 @@ try {
 	await waitFor(() => textOf("S").some((t) => /^[56]:\d\d$/.test(t)), 3000, "extended");
 	snapshot("extended");
 	check(textOf("S").some((t) => /^[56]:\d\d$/.test(t)), "Add Time extends the countdown by its minutes");
+	check(!svgOf("P").includes('opacity="0.42"') && textOf("P").includes("POP OUT") && textOf("P").includes("Editing"), "Pop Out Timer lights up while a session runs");
+	await tap("P");
+	await waitFor(() => textOf("P").includes("DOCK"), 3000, "popped out");
+	snapshot("popped out");
+	if (process.env.POPOUT_SHOT) {
+		// Optional: capture the real pop-out window (PowerShell + PrintWindow) to eyeball it.
+		const { spawnSync } = await import("node:child_process");
+		const shot = spawnSync("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", process.env.POPOUT_SHOT, "-Out", join(OUT, "popout")], { encoding: "utf8" });
+		console.log("  popout capture: " + (shot.stdout || shot.stderr).trim());
+	}
+	check(textOf("P").includes("DOCK"), "tapping Pop Out Timer pops the timer out (key now offers Dock)");
+	await tap("P");
+	await waitFor(() => textOf("P").includes("POP OUT"), 3000, "docked");
+	check(textOf("P").includes("POP OUT"), "tapping again docks it");
+	await tap("P");
+	await waitFor(() => textOf("P").includes("DOCK"), 3000, "popped out again");
 	await tap("S");
 	await waitFor(() => textOf("S").includes("PAUSED"), 3000, "session paused");
 	check(textOf("S").includes("PAUSED") && textOf("A").includes("PAUSED"), "tapping Current Session pauses (and the Timer key agrees)");
@@ -273,6 +294,7 @@ try {
 	await sleep(2000);
 	snapshot("session idle again");
 	check(textOf("S").includes("TODAY"), "Current Session returns to today's total");
+	check(svgOf("P").includes('opacity="0.42"') && textOf("P").includes("POP OUT"), "finishing the session closes the pop-out and dims the key");
 
 	// ---------- Countdown into overtime ----------
 	if (RUN_OVERTIME) {

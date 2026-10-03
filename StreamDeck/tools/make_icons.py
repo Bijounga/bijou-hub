@@ -104,6 +104,13 @@ def extend_icon():
 </svg>"""
 
 
+def popout_icon():
+    return """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<path d="M236 104 H150 a46 46 0 0 0 -46 46 V362 a46 46 0 0 0 46 46 H362 a46 46 0 0 0 46 -46 V276" fill="none" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M236 276 L408 104 M300 104 H408 V212" fill="none" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>"""
+
+
 def key_frame(inner):
     return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144">
 <defs><radialGradient id="glow" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="{CYAN}" stop-opacity="0.24"/>
@@ -132,6 +139,15 @@ def extend_key():
                      + text("ADD TIME", 52, 13, CYAN, 700) + text("+15", 86, 36) + text("minutes", 106, 14, opacity=0.72))
 
 
+def popout_key():
+    line = 'fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"'
+    return key_frame(f'<circle cx="72" cy="72" r="60" fill="none" stroke="{CYAN}" stroke-opacity="0.2" stroke-width="7"/>'
+                     + text("POP OUT", 42, 12, CYAN, 700)
+                     + f'<path d="M74 54 H60 a6 6 0 0 0 -6 6 V82 a6 6 0 0 0 6 6 H82 a6 6 0 0 0 6 -6 V68" stroke="#F4F6FA" {line}/>'
+                     + f'<path d="M70 72 L92 50 M79 50 H92 V63" stroke="{CYAN}" {line}/>'
+                     + text("timer", 106, 14, opacity=0.72))
+
+
 def render(svg, work):
     html = os.path.join(work, "icon.html")
     with open(html, "w", encoding="utf-8") as f:
@@ -155,9 +171,11 @@ def main():
         ("session", session_icon(), 20),
         ("goal", goal_icon(), 20),
         ("extend", extend_icon(), 20),
+        ("popout", popout_icon(), 20),
         ("session-key", session_key(), 72),
         ("goal-key", goal_key(), 72),
         ("extend-key", extend_key(), 72),
+        ("popout-key", popout_key(), 72),
     ]
     with tempfile.TemporaryDirectory() as work:
         for name, svg, size in targets:

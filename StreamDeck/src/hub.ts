@@ -15,6 +15,8 @@ export type HubState = {
 	idle: boolean;
 	/** Time logged today, including the running session. */
 	todaySeconds: number;
+	/** The always-on-top mini timer is open. */
+	poppedOut: boolean;
 };
 
 /** Open goals across every tab, starred first (see MainWindow.DeckGoals). */
@@ -185,7 +187,8 @@ export class HubClient {
 			activeSeconds: typeof message.activeSeconds === "number" ? message.activeSeconds : 0,
 			paused: message.paused === true,
 			idle: message.idle === true,
-			todaySeconds: typeof message.todaySeconds === "number" ? message.todaySeconds : 0
+			todaySeconds: typeof message.todaySeconds === "number" ? message.todaySeconds : 0,
+			poppedOut: message.poppedOut === true
 		};
 		this.#emit();
 	}

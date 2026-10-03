@@ -7,7 +7,7 @@ using BijouHub.Services;
 namespace BijouHub.Mac;
 
 // The Stream Deck link — the same protocol as Windows (Core's StreamDeckBridge on 127.0.0.1), so
-// one plugin drives either app: Timer keys, Current Session, Next Goal and Add Time.
+// one plugin drives either app: Timer keys, Current Session, Next Goal, Add Time and Pop Out Timer.
 public partial class MainWindow
 {
     private StreamDeckBridge? _deckBridge;
@@ -44,7 +44,8 @@ public partial class MainWindow
         ["activeSeconds"] = _activeSeconds,
         ["paused"] = _paused,
         ["idle"] = _isIdle && !_paused,
-        ["todaySeconds"] = TodayLoggedSeconds() + (IsSessionActive ? _activeSeconds : 0)
+        ["todaySeconds"] = TodayLoggedSeconds() + (IsSessionActive ? _activeSeconds : 0),
+        ["poppedOut"] = _popout != null
     };
 
     private void BroadcastDeckState() => _deckBridge?.Broadcast(DeckState());
@@ -104,6 +105,11 @@ public partial class MainWindow
                 Show();
                 Activate();
                 return new JsonObject { ["ok"] = true };
+            case "popout":
+                if (!IsSessionActive) return new JsonObject { ["error"] = "No session is running" };
+                // "show" picks a side; without it the key toggles.
+                SetTimerPopout(request["show"] is JsonValue sv && sv.TryGetValue<bool>(out var show) ? show : _popout == null);
+                return DeckState();
             default:
                 return new JsonObject { ["error"] = "Unknown command" };
         }

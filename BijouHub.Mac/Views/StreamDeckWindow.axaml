@@ -1,18 +1,18 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="BijouHub.Mac.Views.StreamDeckWindow"
-        Title="Stream Deck" Width="440" Height="400" WindowStartupLocation="CenterOwner" CanResize="False"
+        Title="Stream Deck" Width="440" SizeToContent="Height" WindowStartupLocation="CenterOwner" CanResize="False"
         Background="{DynamicResource BgBrush}">
     <Grid Margin="20" RowDefinitions="Auto,Auto,*,Auto">
         <TextBlock Classes="h2" Text="Stream Deck timers" Margin="0,0,0,10"/>
         <Border Grid.Row="1" Classes="card" Padding="12,10" Margin="0,0,0,16">
-            <StackPanel Orientation="Horizontal" Spacing="10">
-                <Ellipse Name="StatusDot" Width="9" Height="9" VerticalAlignment="Center"/>
-                <TextBlock Name="StatusText" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="340"/>
-            </StackPanel>
+            <DockPanel>
+                <Ellipse Name="StatusDot" Width="9" Height="9" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                <TextBlock Name="StatusText" VerticalAlignment="Center" TextWrapping="Wrap"/>
+            </DockPanel>
         </Border>
         <StackPanel Grid.Row="2" Spacing="8">
-            <TextBlock TextWrapping="Wrap" Text="1.  Install the plugin, then drag BijouHub keys onto your deck: Timer, Current Session, Next Goal, Add Time."/>
+            <TextBlock TextWrapping="Wrap" Text="1.  Install the plugin, then drag BijouHub keys onto your deck: Timer, Current Session, Next Goal, Add Time, Pop Out Timer."/>
             <TextBlock TextWrapping="Wrap" Text="2.  In a Timer key's settings, pick a mode and a duration — 45, 1:30, 2h."/>
             <TextBlock TextWrapping="Wrap" Text="3.  Tap to start, tap again to pause, hold to finish."/>
             <TextBlock Classes="muted" TextWrapping="Wrap" Margin="0,6,0,0"
