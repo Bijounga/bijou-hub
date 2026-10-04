@@ -153,16 +153,32 @@ public partial class MainWindow : Window
 
     private UpdateInfo? _pendingUpdate;
 
-    private async Task CheckForUpdateAsync()
+    private async Task<UpdateInfo?> CheckForUpdateAsync()
     {
         var update = await UpdateService.CheckForUpdateAsync();
-        if (update == null) return;
+        if (update == null) return null;
 
         _pendingUpdate = update;
         if (!IsVisible) _tray?.ShowBalloon("BijouHub update", $"Version {update.Version} is ready. Open BijouHub and click Update.");
         UpdateButton.Content = $"⬆ Update to v{update.Version}";
         UpdateButton.ToolTip = "A new version of BijouHub is available. Click to download and restart.";
         UpdateButton.Visibility = Visibility.Visible;
+        return update;
+    }
+
+    private bool _checkingForUpdates;
+
+    // Clicking the version number checks for an update right now.
+    private async void VersionButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_checkingForUpdates) return;
+        _checkingForUpdates = true;
+        VersionText.Text = "checking…";
+        var update = await CheckForUpdateAsync();
+        VersionText.Text = update != null ? "update ready ↓" : "up to date ✓";
+        await Task.Delay(2500);
+        VersionText.Text = "v" + AppVersion;
+        _checkingForUpdates = false;
     }
 
     private async void UpdateButton_Click(object sender, RoutedEventArgs e)

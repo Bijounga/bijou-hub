@@ -280,7 +280,8 @@ public partial class MainWindow : Window
     private MacUpdateInfo? _pendingUpdate;
     private string? _downloadedUpdate;
 
-    private async Task CheckForUpdateAsync()
+    // False when the check couldn't reach GitHub.
+    private async Task<bool> CheckForUpdateAsync()
     {
         try
         {
@@ -288,15 +289,31 @@ public partial class MainWindow : Window
         }
         catch
         {
-            return; // offline or rate-limited — try again next launch
+            return false; // offline or rate-limited — try again later
         }
-        if (_pendingUpdate == null) return;
+        if (_pendingUpdate == null) return true;
 
         UpdateButton.Content = $"Update to v{_pendingUpdate.Version}";
         ToolTip.SetTip(UpdateButton, MacUpdateService.CanSelfUpdate
             ? "Downloads the update, then restarts BijouHub on the new version"
             : "Move BijouHub into Applications to update in place");
         UpdateButton.IsVisible = true;
+        return true;
+    }
+
+    private bool _checkingForUpdates;
+
+    // Clicking the version number checks for an update right now.
+    private async void VersionButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_checkingForUpdates) return;
+        _checkingForUpdates = true;
+        VersionText.Text = "checking…";
+        var reached = await CheckForUpdateAsync();
+        VersionText.Text = !reached ? "can't reach GitHub" : _pendingUpdate != null ? "update ready ↓" : "up to date ✓";
+        await Task.Delay(2500);
+        VersionText.Text = "v" + MacUpdateService.GetCurrentVersion();
+        _checkingForUpdates = false;
     }
 
     private async void UpdateButton_Click(object? sender, RoutedEventArgs e)

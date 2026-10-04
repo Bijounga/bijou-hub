@@ -146,7 +146,11 @@
                         </Polygon.Fill>
                     </Polygon>
                     <TextBlock Text="BijouHub" Classes="h2" VerticalAlignment="Center"/>
-                    <TextBlock Name="VersionText" Classes="faint" VerticalAlignment="Bottom" Margin="8,0,0,2"/>
+                    <!-- The version; click it to check for an update now. -->
+                    <Button Name="VersionButton" Classes="ghost" Padding="2,0" Margin="6,0,0,0" VerticalAlignment="Bottom" Click="VersionButton_Click"
+                            ToolTip.Tip="Click to check for updates" AutomationProperties.Name="Check for updates">
+                        <TextBlock Name="VersionText" Classes="faint" FontSize="11"/>
+                    </Button>
                 </StackPanel>
                 <!-- Home and the full task list. -->
                 <Button Name="NavHomeButton" Classes="navrow" Click="NavHome_Click" AutomationProperties.Name="Home">
