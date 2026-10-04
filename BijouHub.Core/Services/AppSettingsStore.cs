@@ -27,6 +27,12 @@ public class AppSettings
     // Finished tasks are shown (under the list) rather than tucked away.
     public bool ShowCompletedGoals { get; set; }
 
+    // Sidebar channel sections folded shut (channel ids; "" is the No channel section).
+    public List<string> CollapsedChannels { get; set; } = new();
+
+    // The Home board is showing just this channel ("" for all, "none" for projects without one).
+    public string BoardChannelFilter { get; set; } = "";
+
     // The one-time "still running in the hidden icons" notice has been shown.
     public bool TrayHintShown { get; set; }
 }

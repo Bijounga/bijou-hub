@@ -10,6 +10,14 @@ public class Project
     // What screen readers announce for the project's row.
     public override string ToString() => Name;
     public string? LinkedModeId { get; set; }
+
+    // The channel this project belongs to (see Channel); null for none.
+    public string? ChannelId { get; set; }
+
+    // UI-only: the channel's name and color, stamped on by ChannelRows.Apply.
+    [System.Text.Json.Serialization.JsonIgnore] public string? ChannelName { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore] public string? ChannelColor { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore] public bool HasChannel => ChannelColor != null;
     public ObservableCollection<Goal> Goals { get; set; } = new();
     public List<ProjectNote> Notes { get; set; } = new();
     public int? DefaultTargetMinutes { get; set; }
@@ -67,6 +75,9 @@ public class Project
             Id = Id,
             Name = Name,
             LinkedModeId = LinkedModeId,
+            ChannelId = ChannelId,
+            ChannelName = ChannelName,
+            ChannelColor = ChannelColor,
             DefaultTargetMinutes = DefaultTargetMinutes,
             FreeformNotesXaml = FreeformNotesXaml,
             NotesPlainText = NotesPlainText,

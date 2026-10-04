@@ -108,13 +108,18 @@ public partial class MainWindow
     private void ShowBoard()
     {
         if (_board == null) return;
+        BuildChannelPills();
+        // Just the chosen channel's projects, with the counts below worked out for them.
+        var board = _board.Filtered(card => InBoardFilter(card.Project));
+
         BoardSummary.Children.Clear();
-        BoardSummary.Children.Add(SummaryPill(_board.ReadyToPublish, "ready to publish", "SuccessBrush"));
-        BoardSummary.Children.Add(SummaryPill(_board.BehindPace, "behind pace", "DangerBrush"));
-        BoardSummary.Children.Add(SummaryPill(_board.NeedMusic, "need music", "HazardBrush"));
-        BoardSummary.Children.Add(SummaryPill(_board.Active, _board.Active == 1 ? "active project" : "active projects", "AccentBrush"));
-        BoardCards.ItemsSource = _board.Cards.Select(BuildCard).ToList();
-        BoardEmptyText.IsVisible = _board.Cards.Count == 0;
+        BoardSummary.Children.Add(SummaryPill(board.ReadyToPublish, "ready to publish", "SuccessBrush"));
+        BoardSummary.Children.Add(SummaryPill(board.BehindPace, "behind pace", "DangerBrush"));
+        BoardSummary.Children.Add(SummaryPill(board.NeedMusic, "need music", "HazardBrush"));
+        BoardSummary.Children.Add(SummaryPill(board.Active, board.Active == 1 ? "active project" : "active projects", "AccentBrush"));
+        BoardCards.ItemsSource = board.Cards.Select(BuildCard).ToList();
+        BoardEmptyText.Text = _board.Cards.Count > 0 ? "No projects in this channel yet." : "No projects yet — add one with the + next to Projects.";
+        BoardEmptyText.IsVisible = board.Cards.Count == 0;
     }
 
     private static string ToneKey(string tone) => tone switch
@@ -178,6 +183,9 @@ public partial class MainWindow
         });
 
         var body = new StackPanel();
+        // A strip across the top in the channel's color.
+        if (HexBrushConverter.Parse(card.Project.ChannelColor) is { } channelBrush)
+            body.Children.Add(new Border { Height = 3, CornerRadius = new CornerRadius(2), Margin = new Thickness(-16, -14, -16, 11), Background = channelBrush });
         body.Children.Add(new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -192,6 +200,16 @@ public partial class MainWindow
                 }
             }
         });
+        if (card.Project.ChannelName != null && HexBrushConverter.Parse(card.Project.ChannelColor) is { } dotBrush)
+            body.Children.Add(new StackPanel
+            {
+                Orientation = Orientation.Horizontal, Spacing = 6, Margin = new Thickness(0, 4, 0, 0),
+                Children =
+                {
+                    new Ellipse { Width = 7, Height = 7, Fill = dotBrush, VerticalAlignment = VerticalAlignment.Center },
+                    new TextBlock { Text = card.Project.ChannelName, FontSize = 11, Foreground = Brush("MutedTextBrush") }
+                }
+            });
         body.Children.Add(new TextBlock { Text = card.Subtitle, FontSize = 11, Foreground = Brush("MutedTextBrush"), Margin = new Thickness(0, 3, 0, 14) });
         body.Children.Add(Row("SCRIPT", card.ScriptTone, card.ScriptLabel, card.ScriptDetail));
         body.Children.Add(Row("MUSIC", card.MusicTone, card.MusicLabel, card.MusicDetail));

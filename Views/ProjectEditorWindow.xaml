@@ -30,10 +30,32 @@
             </StackPanel>
         </Grid>
 
-        <StackPanel Grid.Row="1" Margin="0,0,0,16">
-            <TextBlock Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="DEFAULT SESSION BUDGET (MINUTES, OPTIONAL)"/></TextBlock>
-            <TextBox x:Name="BudgetBox" Width="120" HorizontalAlignment="Left"/>
-        </StackPanel>
+        <Grid Grid.Row="1" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="DEFAULT SESSION BUDGET (MINUTES, OPTIONAL)"/></TextBlock>
+                <TextBox x:Name="BudgetBox" Width="120" HorizontalAlignment="Left"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Margin="24,0,0,0">
+                <TextBlock Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="CHANNEL"/></TextBlock>
+                <DockPanel>
+                    <Button Content="Manage…" DockPanel.Dock="Right" Margin="8,0,0,0" Padding="10,4" Click="ManageChannels_Click" AutomationProperties.Name="Manage channels"/>
+                    <ComboBox x:Name="ChannelCombo" AutomationProperties.Name="Channel">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse Width="9" Height="9" Margin="0,0,8,0" VerticalAlignment="Center" Fill="{Binding Color}"/>
+                                    <TextBlock Text="{Binding Name}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </DockPanel>
+            </StackPanel>
+        </Grid>
 
         <DockPanel Grid.Row="2" LastChildFill="False" Margin="0,0,0,6">
             <TextBlock Foreground="{DynamicResource SectionLabelBrush}" VerticalAlignment="Center"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="GOALS"/></TextBlock>

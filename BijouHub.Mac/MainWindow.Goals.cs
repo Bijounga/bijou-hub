@@ -132,7 +132,7 @@ public partial class MainWindow
     {
         if (_applyingRemote || _relinking) return;
         if (e.PropertyName is nameof(DailyGoal.IsEditing) or nameof(DailyGoal.HasProject) or nameof(DailyGoal.ChipText)
-            or nameof(DailyGoal.DueChip) or nameof(DailyGoal.DueOverdue)) return;
+            or nameof(DailyGoal.DueChip) or nameof(DailyGoal.DueOverdue) or nameof(DailyGoal.ChannelColor)) return;
         if (e.PropertyName == nameof(DailyGoal.Starred)) PinStarredGoals();
         // Ticking a goal moves it between the open list and Completed (after the click finishes).
         if (e.PropertyName == nameof(DailyGoal.Done)) Dispatcher.UIThread.Post(SyncVisibleGoals);
@@ -177,6 +177,7 @@ public partial class MainWindow
     private void AddDailyGoal(DailyGoal goal)
     {
         goal.ChipText = ChipFor(goal);
+        goal.ChannelColor = ChannelColorOf(goal);
         goal.PropertyChanged += DailyGoal_PropertyChanged;
         _dailyGoals.Add(goal);
         if (goal.Starred) PinStarredGoals();
@@ -489,7 +490,11 @@ public partial class MainWindow
         var groups = ScopeGroups();
         if (_goalScope != AllScope && !groups.Contains(_goalScope)) _goalScope = EditingGroup;
         SyncVisibleGoals();
-        foreach (var goal in _dailyGoals) goal.ChipText = ChipFor(goal);
+        foreach (var goal in _dailyGoals)
+        {
+            goal.ChipText = ChipFor(goal);
+            goal.ChannelColor = ChannelColorOf(goal);
+        }
         RefreshDueChips();
         BuildScopeTabs(groups);
     }

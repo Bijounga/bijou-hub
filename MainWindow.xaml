@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BijouHub"
         xmlns:views="clr-namespace:BijouHub.Views"
+        xmlns:models="clr-namespace:BijouHub.Models;assembly=BijouHub.Core"
         mc:Ignorable="d"
         Title="BijouHub" Height="820" Width="1280" MinHeight="520" MinWidth="760"
         WindowStartupLocation="CenterScreen"
@@ -207,26 +208,71 @@
                          SelectionChanged="ProjectsList_SelectionChanged"
                          PreviewMouseRightButtonDown="SidebarList_PreviewMouseRightButtonDown"
                          ContextMenuOpening="SidebarList_ContextMenuOpening">
-                    <ListBox.ContextMenu>
-                        <ContextMenu>
-                            <MenuItem Header="Edit…" Click="EditProject_Click"/>
-                            <Separator/>
-                            <MenuItem Header="Delete…" Click="DeleteProject_Click"/>
-                        </ContextMenu>
-                    </ListBox.ContextMenu>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
+                    <ListBox.Resources>
+                        <!-- A channel's section title: not selectable, just click it to fold the section. -->
+                        <Style x:Key="ChannelHeaderRow" TargetType="ListBoxItem">
+                            <Setter Property="OverridesDefaultStyle" Value="True"/>
+                            <Setter Property="Focusable" Value="False"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <ContentPresenter/>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                        <DataTemplate DataType="{x:Type models:ChannelHeader}">
+                            <Button Click="ChannelHeader_Click" Cursor="Hand" Focusable="False" Margin="0,8,0,2" HorizontalContentAlignment="Stretch"
+                                    ToolTip="Click to fold or unfold" AutomationProperties.Name="{Binding Name}">
+                                <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                                <DockPanel Margin="2,2">
+                                    <TextBlock DockPanel.Dock="Left" FontSize="10" Width="14" VerticalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                <Setter Property="Text" Value="▾"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Collapsed}" Value="True">
+                                                        <Setter Property="Text" Value="▸"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center" Fill="{Binding Color}"/>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Count}" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource MutedTextBrush}"/>
+                                    <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" Foreground="{DynamicResource MutedTextBrush}"/>
+                                </DockPanel>
+                            </Button>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type models:Project}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="4"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <Border Grid.Column="0" CornerRadius="2" Margin="0,0,10,0"
-                                        Background="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=(ItemsControl.AlternationIndex), Converter={StaticResource IndexToBrushConverter}}"/>
+                                <!-- The stripe is the channel's color, or the theme's rotating accent for a project with none. -->
+                                <Border Grid.Column="0" CornerRadius="2" Margin="0,0,10,0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=(ItemsControl.AlternationIndex), Converter={StaticResource IndexToBrushConverter}}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasChannel}" Value="True">
+                                                    <Setter Property="Background" Value="{Binding ChannelColor}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                </Border>
                                 <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" FontSize="13"/>
                             </Grid>
                         </DataTemplate>
-                    </ListBox.ItemTemplate>
+                    </ListBox.Resources>
+                    <ListBox.ItemContainerStyleSelector>
+                        <local:SidebarRowStyleSelector HeaderStyle="{StaticResource ChannelHeaderRow}"/>
+                    </ListBox.ItemContainerStyleSelector>
                 </ListBox>
 
                 <!-- Everything that isn't daily work lives in one quiet row of tools. -->
@@ -701,7 +747,11 @@
                                                             Background="{DynamicResource CardHoverBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                                             Cursor="Hand" MouseLeftButtonUp="DailyGoalChip_Click" ToolTip="Change the linked project"
                                                             Visibility="{Binding ChipText, Converter={StaticResource EmptyToCollapsedConverter}}">
-                                                        <TextBlock Text="{Binding ChipText}" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Ellipse Width="6" Height="6" Margin="0,1,5,0" VerticalAlignment="Center" Fill="{Binding ChannelColor}"
+                                                                     Visibility="{Binding ChannelColor, Converter={StaticResource EmptyToCollapsedConverter}}"/>
+                                                            <TextBlock Text="{Binding ChipText}" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
+                                                        </StackPanel>
                                                     </Border>
                                                     <Button Grid.Column="6" Click="DailyGoalDelete_Click" Focusable="False" Cursor="Hand"
                                                             Margin="6,0,2,0" VerticalAlignment="Center" ToolTip="Delete" AutomationProperties.Name="Delete goal">
@@ -861,6 +911,7 @@
                                 ToolTip="Refresh — script progress comes from BijouDocs and tracks from BijouMusic, matched by project name"
                                 AutomationProperties.Name="Refresh projects"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE72C;" FontSize="13"/></Button>
                     </DockPanel>
+                    <WrapPanel x:Name="BoardChannelPills" Margin="0,0,0,2"/>
                     <WrapPanel x:Name="BoardSummary" Margin="0,0,0,12"/>
                     <ItemsControl x:Name="BoardCards">
                         <ItemsControl.ItemsPanel>
@@ -886,6 +937,8 @@
                                         </Style>
                                     </Border.Style>
                                     <StackPanel>
+                                        <Border Height="3" CornerRadius="2" Margin="-16,-14,-16,11" Background="{Binding Project.ChannelColor}"
+                                                Visibility="{Binding Project.ChannelColor, Converter={StaticResource EmptyToCollapsedConverter}}"/>
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"
                                                        TextTrimming="CharacterEllipsis" MaxWidth="190"/>
@@ -894,6 +947,10 @@
                                                 <TextBlock Text="{Binding StatusPillText}" FontSize="10" FontWeight="Bold"
                                                            Foreground="{Binding StatusTone, Converter={StaticResource ToneBrushConverter}}"/>
                                             </Border>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0" Visibility="{Binding Project.ChannelName, Converter={StaticResource EmptyToCollapsedConverter}}">
+                                            <Ellipse Width="7" Height="7" Margin="0,0,6,0" VerticalAlignment="Center" Fill="{Binding Project.ChannelColor}"/>
+                                            <TextBlock Text="{Binding Project.ChannelName}" FontSize="11" Foreground="{DynamicResource MutedTextBrush}"/>
                                         </StackPanel>
                                         <TextBlock Text="{Binding Subtitle}" FontSize="11" Foreground="{DynamicResource MutedTextBrush}" Margin="0,3,0,14"/>
 
@@ -1034,8 +1091,12 @@
                                                         <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
                                                     </Style>
                                                 </StackPanel.Resources>
-                                                <TextBlock Text="{Binding ChipText}" Margin="0,0,12,0"
-                                                           Visibility="{Binding ChipText, Converter={StaticResource EmptyToCollapsedConverter}}"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,12,0"
+                                                            Visibility="{Binding ChipText, Converter={StaticResource EmptyToCollapsedConverter}}">
+                                                    <Ellipse Width="6" Height="6" Margin="0,1,5,0" VerticalAlignment="Center" Fill="{Binding ChannelColor}"
+                                                             Visibility="{Binding ChannelColor, Converter={StaticResource EmptyToCollapsedConverter}}"/>
+                                                    <TextBlock Text="{Binding ChipText}"/>
+                                                </StackPanel>
                                                 <StackPanel Orientation="Horizontal" Cursor="Hand" MouseLeftButtonUp="DailyGoalDueChip_Click" ToolTip="Change the date and time"
                                                             Visibility="{Binding DueChip, Converter={StaticResource EmptyToCollapsedConverter}}" Background="Transparent">
                                                     <TextBlock Text="&#xE787;" FontFamily="{StaticResource IconFont}" FontSize="10" Margin="0,1,5,0"/>
@@ -1144,8 +1205,12 @@
                                                         <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
                                                     </Style>
                                                 </StackPanel.Resources>
-                                                <TextBlock Text="{Binding ChipText}" Margin="0,0,12,0"
-                                                           Visibility="{Binding ChipText, Converter={StaticResource EmptyToCollapsedConverter}}"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,12,0"
+                                                            Visibility="{Binding ChipText, Converter={StaticResource EmptyToCollapsedConverter}}">
+                                                    <Ellipse Width="6" Height="6" Margin="0,1,5,0" VerticalAlignment="Center" Fill="{Binding ChannelColor}"
+                                                             Visibility="{Binding ChannelColor, Converter={StaticResource EmptyToCollapsedConverter}}"/>
+                                                    <TextBlock Text="{Binding ChipText}"/>
+                                                </StackPanel>
                                                 <StackPanel Orientation="Horizontal" Cursor="Hand" MouseLeftButtonUp="DailyGoalDueChip_Click" ToolTip="Change the date and time"
                                                             Visibility="{Binding DueChip, Converter={StaticResource EmptyToCollapsedConverter}}" Background="Transparent">
                                                     <TextBlock Text="&#xE787;" FontFamily="{StaticResource IconFont}" FontSize="10" Margin="0,1,5,0"/>

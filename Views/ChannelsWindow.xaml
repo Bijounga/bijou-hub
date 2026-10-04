@@ -1,0 +1,19 @@
+<Window x:Class="BijouHub.Views.ChannelsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Channels" Width="520" SizeToContent="Height" MaxHeight="640" WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize" ShowInTaskbar="False" Background="{DynamicResource BgBrush}">
+    <StackPanel Margin="20,18,20,18">
+        <TextBlock Text="Group your projects by channel. Each gets a color that shows up in the sidebar, on the board and on its tasks."
+                   TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,14"/>
+        <ScrollViewer MaxHeight="360" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="Rows"/>
+        </ScrollViewer>
+        <TextBlock x:Name="EmptyText" Text="No channels yet." FontSize="13" Foreground="{DynamicResource MutedTextBrush}" Margin="2,2,0,6"/>
+        <Button Content="+ New channel" HorizontalAlignment="Left" Padding="12,6" Margin="0,8,0,0" Click="Add_Click" AutomationProperties.Name="New channel"/>
+        <DockPanel Margin="0,20,0,0" LastChildFill="False">
+            <Button Content="Cancel" MinWidth="80" Padding="12,6" Click="Cancel_Click" IsCancel="True"/>
+            <Button Content="Save" MinWidth="90" Padding="12,6" DockPanel.Dock="Right" Click="Save_Click" Style="{DynamicResource AccentButton}"/>
+        </DockPanel>
+    </StackPanel>
+</Window>

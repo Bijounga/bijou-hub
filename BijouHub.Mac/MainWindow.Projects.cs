@@ -45,10 +45,8 @@ public partial class MainWindow
     {
         _projectStore.Save(_projects.ToList());
         _boardBuiltAt = DateTime.MinValue;
-        var selected = ProjectsList.SelectedItem;
-        ProjectsList.ItemsSource = null;
-        ProjectsList.ItemsSource = _projects;
-        ProjectsList.SelectedItem = selected;
+        ReloadChannels(); // the project editor can add channels
+        RebuildProjectRows();
     }
 
     private async void NewProject_Click(object? sender, RoutedEventArgs e)
@@ -70,6 +68,7 @@ public partial class MainWindow
         project.Goals = copy.Goals;
         project.DefaultTargetMinutes = copy.DefaultTargetMinutes;
         project.LinkedModeId = copy.LinkedModeId;
+        project.ChannelId = copy.ChannelId;
         PersistProjects();
         ShowProject(project);
     }

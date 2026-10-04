@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Data.Converters;
 using Avalonia.Interactivity;
 using BijouHub.Models;
+using BijouHub.Services;
 
 namespace BijouHub.Mac.Views;
 
@@ -25,6 +26,24 @@ public partial class ProjectEditorWindow : Window
         NameBox.Text = project.Name;
         BudgetBox.Text = project.DefaultTargetMinutes?.ToString(CultureInfo.InvariantCulture) ?? "";
         GoalsList.ItemsSource = project.Goals;
+        FillChannels(project.ChannelId);
+    }
+
+    // "(none)" plus every channel, each with its color dot; keeps the chosen one across a Manage.
+    private void FillChannels(string? selectedId)
+    {
+        var items = new List<Channel> { new() { Id = "", Name = "(none)", Color = "#00000000" } };
+        items.AddRange(new ChannelStore().Load());
+        ChannelCombo.ItemsSource = items;
+        ChannelCombo.SelectedItem = items.FirstOrDefault(c => c.Id == (selectedId ?? "")) ?? items[0];
+    }
+
+    private async void ManageChannels_Click(object? sender, RoutedEventArgs e)
+    {
+        var current = (ChannelCombo.SelectedItem as Channel)?.Id;
+        var count = (ChannelCombo.ItemsSource as List<Channel>)?.Count ?? 1;
+        if (await new ChannelsWindow(new ChannelStore().Load(), addOne: count == 1).ShowDialog<bool>(this))
+            FillChannels(current);
     }
 
     private void AddGoal_Click(object? sender, RoutedEventArgs e)
@@ -60,6 +79,7 @@ public partial class ProjectEditorWindow : Window
             _project.Name = name;
 
         _project.DefaultTargetMinutes = int.TryParse(BudgetBox.Text, out var minutes) ? minutes : null;
+        _project.ChannelId = ChannelCombo.SelectedItem is Channel { Id: not "" } channel ? channel.Id : null;
 
         Close(true);
     }

@@ -34,8 +34,26 @@ public partial class ProjectEditorWindow : Window
         ModeCombo.SelectedItem = ModeCombo.Items.Cast<WorkMode>()
             .FirstOrDefault(m => m.Id == (_working.LinkedModeId ?? "")) ?? ModeCombo.Items[0];
 
+        FillChannels(_working.ChannelId);
+
         GoalsList.ItemsSource = _working.Goals;
         ListReorderBehavior.Enable(GoalsList, _working.Goals);
+    }
+
+    // "(none)" plus every channel, each with its color dot; keeps the chosen one across a Manage.
+    private void FillChannels(string? selectedId)
+    {
+        ChannelCombo.Items.Clear();
+        ChannelCombo.Items.Add(new Channel { Id = "", Name = "(none)", Color = "Transparent" });
+        foreach (var channel in new ChannelStore().Load()) ChannelCombo.Items.Add(channel);
+        ChannelCombo.SelectedItem = ChannelCombo.Items.Cast<Channel>().FirstOrDefault(c => c.Id == (selectedId ?? "")) ?? ChannelCombo.Items[0];
+    }
+
+    private void ManageChannels_Click(object sender, RoutedEventArgs e)
+    {
+        var current = (ChannelCombo.SelectedItem as Channel)?.Id;
+        if (new ChannelsWindow(new ChannelStore().Load(), addOne: ChannelCombo.Items.Count == 1) { Owner = this }.ShowDialog() == true)
+            FillChannels(current);
     }
 
     // WPF's ScrollViewer marks MouseWheel as handled even when its own scrolling is disabled
@@ -300,6 +318,7 @@ public partial class ProjectEditorWindow : Window
 
         Project.Name = _working.Name;
         Project.LinkedModeId = _working.LinkedModeId;
+        Project.ChannelId = ChannelCombo.SelectedItem is Channel { Id: not "" } channel ? channel.Id : null;
         Project.DefaultTargetMinutes = _working.DefaultTargetMinutes;
         Project.Goals.Clear();
         foreach (var goal in _working.Goals)

@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:BijouHub.Mac.Controls"
+        xmlns:models="clr-namespace:BijouHub.Models;assembly=BijouHub.Core"
         x:Class="BijouHub.Mac.MainWindow"
         Title="BijouHub" Width="1240" Height="800" MinWidth="900" MinHeight="580">
 
@@ -16,6 +17,20 @@
         </Style>
         <Style Selector="ListBox.goalrows ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem.channelhdr">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,8,0,1"/>
+            <Setter Property="IsHitTestVisible" Value="True"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem.channelhdr:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem.channelhdr:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
         </Style>
         <Style Selector="Button.navrow">
             <Setter Property="Background" Value="Transparent"/>
@@ -164,7 +179,12 @@
                                                             </Panel>
                                                             <Border Grid.Column="5" Classes="chip" Margin="8,0,0,0" VerticalAlignment="Center"
                                                                     IsVisible="{Binding ChipText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                                                <TextBlock Text="{Binding ChipText}" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
+                                                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                                                    <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                                                                             Fill="{Binding ChannelColor, Converter={x:Static controls:HexBrushConverter.Instance}}"
+                                                                             IsVisible="{Binding ChannelColor, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                                                    <TextBlock Text="{Binding ChipText}" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
+                                                                </StackPanel>
                                                             </Border>
                                                             <Button Grid.Column="6" Classes="ghost rowdelete" Padding="5" Margin="6,0,0,0" Click="GoalDelete_Click" ToolTip.Tip="Delete">
                                                                 <controls:LineIcon Kind="close" Width="11" Height="11"/>
@@ -244,19 +264,36 @@
                     </Button>
                     <TextBlock Name="ProjectsLabel" Classes="label" Text="PROJECTS" VerticalAlignment="Center"/>
                 </DockPanel>
-                <ListBox Name="ProjectsList" Grid.Row="4" Classes="nav" SelectionChanged="ProjectsList_SelectionChanged">
+                <ListBox Name="ProjectsList" Grid.Row="4" Classes="nav" SelectionChanged="ProjectsList_SelectionChanged" ContainerPrepared="ProjectsList_ContainerPrepared">
                     <ListBox.ContextMenu>
-                        <ContextMenu Opening="SidebarMenu_Opening">
-                            <MenuItem Header="Edit…" Click="EditProject_Click"/>
-                            <Separator/>
-                            <MenuItem Header="Delete…" Click="DeleteProject_Click"/>
-                        </ContextMenu>
+                        <ContextMenu Opening="ProjectsMenu_Opening"/>
                     </ListBox.ContextMenu>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                    <ListBox.DataTemplates>
+                        <!-- A channel's section title: click it to fold the section. -->
+                        <DataTemplate DataType="models:ChannelHeader">
+                            <Button Classes="ghost" Padding="2,3" Click="ChannelHeader_Click" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                    ToolTip.Tip="Click to fold or unfold" AutomationProperties.Name="{Binding Name}">
+                                <DockPanel>
+                                    <Panel DockPanel.Dock="Left" Width="14" VerticalAlignment="Center">
+                                        <TextBlock Text="▾" FontSize="10" Classes="muted" IsVisible="{Binding !Collapsed}"/>
+                                        <TextBlock Text="▸" FontSize="10" Classes="muted" IsVisible="{Binding Collapsed}"/>
+                                    </Panel>
+                                    <Ellipse DockPanel.Dock="Left" Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center"
+                                             Fill="{Binding Color, Converter={x:Static controls:HexBrushConverter.Instance}}"/>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Count}" FontSize="11" Classes="muted" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="SemiBold" Classes="muted" VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
+                            </Button>
                         </DataTemplate>
-                    </ListBox.ItemTemplate>
+                        <DataTemplate DataType="models:Project">
+                            <Grid ColumnDefinitions="4,*">
+                                <Border Width="4" CornerRadius="2" Margin="0,1,10,1" IsVisible="{Binding HasChannel}"
+                                        Background="{Binding ChannelColor, Converter={x:Static controls:HexBrushConverter.Instance}}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.DataTemplates>
                 </ListBox>
 
                 <!-- Everything that isn't daily work: one quiet row of tools. -->
@@ -428,6 +465,7 @@
                                     <controls:LineIcon Kind="refresh" Width="14" Height="14"/>
                                 </Button>
                             </DockPanel>
+                            <WrapPanel Name="BoardChannelPills" Margin="0,0,0,2"/>
                             <WrapPanel Name="BoardSummary" Margin="0,0,0,12"/>
                             <ItemsControl Name="BoardCards">
                                 <ItemsControl.ItemsPanel>
@@ -583,8 +621,12 @@
                                                                  PropertyChanged="GoalEditor_PropertyChanged"/>
                                                     </Panel>
                                                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,3,0,0">
-                                                        <TextBlock Text="{Binding ChipText}" FontSize="11" Classes="muted"
-                                                                   IsVisible="{Binding ChipText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                                        <StackPanel Orientation="Horizontal" Spacing="5" IsVisible="{Binding ChipText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                            <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                                                                     Fill="{Binding ChannelColor, Converter={x:Static controls:HexBrushConverter.Instance}}"
+                                                                     IsVisible="{Binding ChannelColor, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                                            <TextBlock Text="{Binding ChipText}" FontSize="11" Classes="muted"/>
+                                                        </StackPanel>
                                                         <Border Classes="duechip" Classes.overdue="{Binding DueOverdue}" Background="Transparent" Cursor="Hand"
                                                                 PointerPressed="GoalDueChip_PointerPressed"
                                                                 IsVisible="{Binding DueChip, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
@@ -632,8 +674,12 @@
                                                                  PropertyChanged="GoalEditor_PropertyChanged"/>
                                                     </Panel>
                                                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,3,0,0">
-                                                        <TextBlock Text="{Binding ChipText}" FontSize="11" Classes="muted"
-                                                                   IsVisible="{Binding ChipText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                                        <StackPanel Orientation="Horizontal" Spacing="5" IsVisible="{Binding ChipText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                            <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                                                                     Fill="{Binding ChannelColor, Converter={x:Static controls:HexBrushConverter.Instance}}"
+                                                                     IsVisible="{Binding ChannelColor, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                                            <TextBlock Text="{Binding ChipText}" FontSize="11" Classes="muted"/>
+                                                        </StackPanel>
                                                         <Border Classes="duechip" Classes.overdue="{Binding DueOverdue}" Background="Transparent" Cursor="Hand"
                                                                 PointerPressed="GoalDueChip_PointerPressed"
                                                                 IsVisible="{Binding DueChip, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">

@@ -105,7 +105,7 @@ public partial class MainWindow : Window
         ModesList.ItemsSource = _modes;
 
         _projects = _projectStore.Load();
-        ProjectsList.ItemsSource = _projects;
+        InitChannels();
 
         _blockWatcher.NewBlockedProcessDetected += OnNewBlockedProcessDetected;
         _blockWatcher.HardBlockedProcessClosed += OnHardBlockedProcessClosed;
@@ -300,15 +300,20 @@ public partial class MainWindow : Window
     // Right-clicking a mode or project opens it (like a click) and then its Edit / Delete menu.
     private void SidebarList_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement((ListBox)sender, source) is ListBoxItem item)
+        if (e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement((ListBox)sender, source) is ListBoxItem item
+            && item.DataContext is not ChannelHeader)
             item.IsSelected = true;
     }
 
     // Only over an item: right-clicking the empty part of the list shows nothing.
     private void SidebarList_ContextMenuOpening(object sender, ContextMenuEventArgs e)
     {
-        if (e.OriginalSource is not DependencyObject source || ItemsControl.ContainerFromElement((ListBox)sender, source) is not ListBoxItem)
+        if (e.OriginalSource is not DependencyObject source || ItemsControl.ContainerFromElement((ListBox)sender, source) is not ListBoxItem item)
+        {
             e.Handled = true;
+            return;
+        }
+        if (sender == ProjectsList) BuildProjectMenu(ProjectsList.ContextMenu!, item.DataContext);
     }
 
     private void EditMode_Click(object sender, RoutedEventArgs e)
@@ -346,6 +351,17 @@ public partial class MainWindow : Window
 
     private void ProjectsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (_rebuildingProjectRows) return;
+
+        // A channel header isn't a project: keep showing what was open.
+        if (ProjectsList.SelectedItem is ChannelHeader)
+        {
+            _rebuildingProjectRows = true;
+            ProjectsList.SelectedItem = _detailProject != null && ProjectsList.Items.Contains(_detailProject) ? _detailProject : null;
+            _rebuildingProjectRows = false;
+            return;
+        }
+
         if (ProjectsList.SelectedItem is not Project project)
         {
             if (!IsSessionActive) ShowEmptyState();
@@ -452,8 +468,8 @@ public partial class MainWindow : Window
     {
         _boardBuiltAt = DateTime.MinValue;
         _projectStore.Save(_projects);
-        ProjectsList.ItemsSource = null;
-        ProjectsList.ItemsSource = _projects;
+        ReloadChannels(); // the project editor can add channels
+        RebuildProjectRows();
     }
 
     private void SelectProjectAndShowDetail(Project project)
@@ -967,15 +983,20 @@ public partial class MainWindow : Window
     {
         if (_board == null) return;
 
+        BuildChannelPills();
+        // Just the chosen channel's projects, with the counts below worked out for them.
+        var board = _board.Filtered(card => InBoardFilter(card.Project));
+
         BoardCards.ItemsSource = null;
-        BoardCards.ItemsSource = _board.Cards;
-        BoardEmptyText.Visibility = _board.Cards.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        BoardCards.ItemsSource = board.Cards;
+        BoardEmptyText.Text = _board.Cards.Count > 0 ? "No projects in this channel yet." : "No projects yet — add one with the + next to Projects.";
+        BoardEmptyText.Visibility = board.Cards.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
         BoardSummary.Children.Clear();
-        BoardSummary.Children.Add(BuildSummaryPill(_board.ReadyToPublish, "ready to publish", "SuccessBrush"));
-        BoardSummary.Children.Add(BuildSummaryPill(_board.BehindPace, "behind pace", "DangerBrush"));
-        BoardSummary.Children.Add(BuildSummaryPill(_board.NeedMusic, "need music", "HazardBrush"));
-        BoardSummary.Children.Add(BuildSummaryPill(_board.Active, _board.Active == 1 ? "active project" : "active projects", "AccentBrush"));
+        BoardSummary.Children.Add(BuildSummaryPill(board.ReadyToPublish, "ready to publish", "SuccessBrush"));
+        BoardSummary.Children.Add(BuildSummaryPill(board.BehindPace, "behind pace", "DangerBrush"));
+        BoardSummary.Children.Add(BuildSummaryPill(board.NeedMusic, "need music", "HazardBrush"));
+        BoardSummary.Children.Add(BuildSummaryPill(board.Active, board.Active == 1 ? "active project" : "active projects", "AccentBrush"));
     }
 
     private static Border BuildSummaryPill(int count, string label, string toneBrush)
@@ -1760,7 +1781,7 @@ public partial class MainWindow : Window
     {
         if (_applyingRemote || _relinking) return;
         if (e.PropertyName is nameof(DailyGoal.IsEditing) or nameof(DailyGoal.HasProject) or nameof(DailyGoal.ChipText)
-            or nameof(DailyGoal.DueChip) or nameof(DailyGoal.DueOverdue)) return;
+            or nameof(DailyGoal.DueChip) or nameof(DailyGoal.DueOverdue) or nameof(DailyGoal.ChannelColor)) return;
         if (e.PropertyName == nameof(DailyGoal.Starred)) PinStarredGoals();
         SaveDailyPlan();
         if (sender is DailyGoal goal) PushGoalChange(goal, e.PropertyName);
@@ -1788,6 +1809,7 @@ public partial class MainWindow : Window
     private void AddDailyGoal(DailyGoal goal)
     {
         goal.ChipText = ChipFor(goal);
+        goal.ChannelColor = ChannelColorOf(goal);
         goal.PropertyChanged += DailyGoal_PropertyChanged;
         _dailyGoals.Add(goal);
         if (goal.Starred) PinStarredGoals();

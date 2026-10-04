@@ -40,7 +40,7 @@ public partial class MainWindow : Window
         _modes = new ObservableCollection<WorkMode>(_modeStore.Load());
         ModesList.ItemsSource = _modes;
         _projects = new ObservableCollection<Project>(_projectStore.Load());
-        ProjectsList.ItemsSource = _projects;
+        InitChannels();
 
         VersionText.Text = "v" + MacUpdateService.GetCurrentVersion();
         InitSession();
@@ -97,8 +97,9 @@ public partial class MainWindow : Window
             {
                 if (!e.GetCurrentPoint(list).Properties.IsRightButtonPressed) return;
                 var item = (e.Source as Avalonia.Visual)?.FindAncestorOfType<ListBoxItem>(includeSelf: true);
-                if (item != null) list.SelectedItem = item.DataContext;
+                if (item != null && item.DataContext is not ChannelHeader) list.SelectedItem = item.DataContext;
                 _sidebarMenuOnItem = item != null;
+                _sidebarMenuRow = item?.DataContext;
             }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
         }
     }
@@ -145,6 +146,17 @@ public partial class MainWindow : Window
 
     private void ProjectsList_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
+        if (_rebuildingProjectRows) return;
+
+        // A channel header isn't a project: keep showing what was open.
+        if (ProjectsList.SelectedItem is ChannelHeader)
+        {
+            _rebuildingProjectRows = true;
+            ProjectsList.SelectedItem = _detailProject != null && ProjectsList.Items.Contains(_detailProject) ? _detailProject : null;
+            _rebuildingProjectRows = false;
+            return;
+        }
+
         if (ProjectsList.SelectedItem is not Project project)
         {
             if (ModesList.SelectedItem == null && !IsSessionActive) ShowHome();
@@ -275,11 +287,13 @@ public partial class MainWindow : Window
 
         // Re-create the stores so they read the new folder straight away — no restart needed.
         _projectStore = new ProjectStore();
+        _channelStore = new ChannelStore();
         _logService = new SessionLogService();
         _dailyStore = new DailyPlanStore();
         _today = null;
         _projects = new ObservableCollection<Project>(_projectStore.Load());
-        ProjectsList.ItemsSource = _projects;
+        ReloadChannels();
+        RebuildProjectRows();
         InvalidateTodayLogged();
         RefreshToolStates();
         ShowHome();

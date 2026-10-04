@@ -1,0 +1,19 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="BijouHub.Mac.Views.ChannelsWindow"
+        Title="Channels" Width="520" SizeToContent="Height" MaxHeight="640" WindowStartupLocation="CenterOwner" CanResize="False"
+        Background="{DynamicResource BgBrush}">
+    <StackPanel Margin="20,18" Spacing="10">
+        <TextBlock Text="Group your projects by channel. Each gets a color that shows up in the sidebar, on the board and on its tasks."
+                   TextWrapping="Wrap" FontSize="12" Classes="muted"/>
+        <ScrollViewer MaxHeight="360">
+            <StackPanel Name="Rows" Spacing="8"/>
+        </ScrollViewer>
+        <TextBlock Name="EmptyText" Text="No channels yet." Classes="muted"/>
+        <Button Content="+ New channel" HorizontalAlignment="Left" Click="Add_Click" AutomationProperties.Name="New channel"/>
+        <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,10,0,0">
+            <Button Content="Cancel" MinWidth="80" HorizontalContentAlignment="Center" Click="Cancel_Click"/>
+            <Button Grid.Column="2" Content="Save" Classes="primary" MinWidth="90" HorizontalContentAlignment="Center" Click="Save_Click"/>
+        </Grid>
+    </StackPanel>
+</Window>

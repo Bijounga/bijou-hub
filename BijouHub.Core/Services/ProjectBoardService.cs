@@ -32,7 +32,18 @@ public static class ProjectBoardService
         public string StatusPillText => StatusLabel.ToUpperInvariant();
     }
 
-    public sealed record Board(IReadOnlyList<Card> Cards, int ReadyToPublish, int BehindPace, int NeedMusic, int Active);
+    public sealed record Board(IReadOnlyList<Card> Cards, int ReadyToPublish, int BehindPace, int NeedMusic, int Active)
+    {
+        // The same board for just some projects (a channel), with its counts recomputed.
+        public Board Filtered(Func<Card, bool> keep) => Summarize(Cards.Where(keep).ToList());
+    }
+
+    public static Board Summarize(IReadOnlyList<Card> cards) => new(
+        cards,
+        cards.Count(c => c.StatusLabel == "Ready to publish"),
+        cards.Count(c => c.StatusLabel == "Behind pace"),
+        cards.Count(c => c.MusicTone == "warning" && c.StatusLabel != "Not started"),
+        cards.Count);
 
     private sealed record Script(string Title, int Done, int Total, DateTime? Due, DateTime? Updated);
 
@@ -110,12 +121,7 @@ public static class ProjectBoardService
                 project.NextIncompleteGoal() is Goal next ? $"Next: {next.Name}" : ""));
         }
 
-        return new Board(
-            cards,
-            cards.Count(c => c.StatusLabel == "Ready to publish"),
-            cards.Count(c => c.StatusLabel == "Behind pace"),
-            cards.Count(c => c.MusicTone == "warning" && c.StatusLabel != "Not started"),
-            cards.Count);
+        return Summarize(cards);
     }
 
     private static string Subtitle(DateTime? lastWorked, Script? script)

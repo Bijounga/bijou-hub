@@ -90,7 +90,11 @@ public partial class MainWindow
         if (_goalScope != AllScope && !groups.Contains(_goalScope)) _goalScope = EditingGroup;
 
         RefreshGoalViews();
-        foreach (var goal in _dailyGoals) goal.ChipText = ChipFor(goal);
+        foreach (var goal in _dailyGoals)
+        {
+            goal.ChipText = ChipFor(goal);
+            goal.ChannelColor = ChannelColorOf(goal);
+        }
         RefreshDueChips();
         BuildScopeTabs(groups);
     }
