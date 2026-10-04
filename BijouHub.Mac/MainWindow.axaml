@@ -290,7 +290,12 @@
                             <Grid ColumnDefinitions="4,*">
                                 <Border Width="4" CornerRadius="2" Margin="0,1,10,1" IsVisible="{Binding HasChannel}"
                                         Background="{Binding ChannelColor, Converter={x:Static controls:HexBrushConverter.Instance}}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                                <DockPanel Grid.Column="1">
+                                    <!-- ★ marks the channel's main project. -->
+                                    <TextBlock DockPanel.Dock="Right" Text="★" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource HazardBrush}" IsVisible="{Binding IsMain}" ToolTip.Tip="Main project"/>
+                                    <TextBlock Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
                             </Grid>
                         </DataTemplate>
                     </ListBox.DataTemplates>

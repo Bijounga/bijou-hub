@@ -35,6 +35,7 @@ public partial class ProjectEditorWindow : Window
             .FirstOrDefault(m => m.Id == (_working.LinkedModeId ?? "")) ?? ModeCombo.Items[0];
 
         FillChannels(_working.ChannelId);
+        MainBox.IsChecked = _working.IsMain;
 
         GoalsList.ItemsSource = _working.Goals;
         ListReorderBehavior.Enable(GoalsList, _working.Goals);
@@ -319,6 +320,7 @@ public partial class ProjectEditorWindow : Window
         Project.Name = _working.Name;
         Project.LinkedModeId = _working.LinkedModeId;
         Project.ChannelId = ChannelCombo.SelectedItem is Channel { Id: not "" } channel ? channel.Id : null;
+        Project.IsMain = MainBox.IsChecked == true;
         Project.DefaultTargetMinutes = _working.DefaultTargetMinutes;
         Project.Goals.Clear();
         foreach (var goal in _working.Goals)

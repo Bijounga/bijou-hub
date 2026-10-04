@@ -14,6 +14,10 @@ public class Project
     // The channel this project belongs to (see Channel); null for none.
     public string? ChannelId { get; set; }
 
+    // The project being worked on right now in its channel: starred in the sidebar, first in its
+    // section, badged on the board. At most one per channel (see ChannelRows.SetMain).
+    public bool IsMain { get; set; }
+
     // UI-only: the channel's name and color, stamped on by ChannelRows.Apply.
     [System.Text.Json.Serialization.JsonIgnore] public string? ChannelName { get; set; }
     [System.Text.Json.Serialization.JsonIgnore] public string? ChannelColor { get; set; }
@@ -76,6 +80,7 @@ public class Project
             Name = Name,
             LinkedModeId = LinkedModeId,
             ChannelId = ChannelId,
+            IsMain = IsMain,
             ChannelName = ChannelName,
             ChannelColor = ChannelColor,
             DefaultTargetMinutes = DefaultTargetMinutes,

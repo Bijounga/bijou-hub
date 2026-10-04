@@ -266,7 +266,13 @@
                                         </Style>
                                     </Border.Style>
                                 </Border>
-                                <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" FontSize="13"/>
+                                <DockPanel Grid.Column="1">
+                                    <!-- ★ marks the channel's main project. -->
+                                    <TextBlock DockPanel.Dock="Right" Text="★" FontSize="11" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip="Main project"
+                                               Foreground="{DynamicResource HazardBrush}"
+                                               Visibility="{Binding IsMain, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
                             </Grid>
                         </DataTemplate>
                     </ListBox.Resources>
@@ -946,6 +952,11 @@
                                                     Background="{Binding StatusTone, Converter={StaticResource ToneBrushConverter}, ConverterParameter=Soft}">
                                                 <TextBlock Text="{Binding StatusPillText}" FontSize="10" FontWeight="Bold"
                                                            Foreground="{Binding StatusTone, Converter={StaticResource ToneBrushConverter}}"/>
+                                            </Border>
+                                            <Border CornerRadius="4" Padding="7,2" Margin="6,0,0,0" VerticalAlignment="Center" BorderThickness="1"
+                                                    BorderBrush="{DynamicResource HazardBrush}" ToolTip="The main project in its channel"
+                                                    Visibility="{Binding Project.IsMain, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <TextBlock Text="★ MAIN" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource HazardBrush}"/>
                                             </Border>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0" Visibility="{Binding Project.ChannelName, Converter={StaticResource EmptyToCollapsedConverter}}">

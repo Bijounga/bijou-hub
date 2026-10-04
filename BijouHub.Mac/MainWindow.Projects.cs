@@ -54,6 +54,7 @@ public partial class MainWindow
         var project = new Project();
         if (!await new ProjectEditorWindow(project).ShowDialog<bool>(this)) return;
         _projects.Add(project);
+        ChannelRows.SetMain(_projects, project, project.IsMain);
         PersistProjects();
         SelectProject(project);
     }
@@ -69,6 +70,7 @@ public partial class MainWindow
         project.DefaultTargetMinutes = copy.DefaultTargetMinutes;
         project.LinkedModeId = copy.LinkedModeId;
         project.ChannelId = copy.ChannelId;
+        ChannelRows.SetMain(_projects, project, copy.IsMain);
         PersistProjects();
         ShowProject(project);
     }

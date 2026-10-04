@@ -85,9 +85,19 @@ public partial class MainWindow
         ShowBoard();
     }
 
+    private void SetMainProject(Project project, bool on)
+    {
+        ChannelRows.SetMain(_projects, project, on);
+        _projectStore.Save(_projects.ToList());
+        RebuildProjectRows();
+        ShowBoard();
+    }
+
     private void AssignChannel(Project project, string? channelId)
     {
         project.ChannelId = channelId;
+        // The new channel may already have a main project; the one that moved defers to it.
+        if (project.IsMain && _projects.Any(p => p != project && p.IsMain && (p.ChannelId ?? "") == (channelId ?? ""))) project.IsMain = false;
         _projectStore.Save(_projects.ToList());
         RebuildProjectRows();
         ShowBoard();
@@ -115,6 +125,10 @@ public partial class MainWindow
             var edit = new MenuItem { Header = "Edit…" };
             edit.Click += EditProject_Click;
             items.Add(edit);
+
+            var main = new MenuItem { Header = project.IsMain ? "Remove main project mark" : "Mark as main project" };
+            main.Click += (_, _) => SetMainProject(project, !project.IsMain);
+            items.Add(main);
 
             var channel = new MenuItem { Header = "Channel" };
             var sub = new List<object>();

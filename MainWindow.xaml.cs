@@ -386,6 +386,7 @@ public partial class MainWindow : Window
         if (editor.ShowDialog() != true) return;
 
         _projects.Add(project);
+        ChannelRows.SetMain(_projects, project, project.IsMain);
         PersistAndRefreshProjectList();
         ProjectsList.SelectedItem = project;
     }
@@ -397,6 +398,7 @@ public partial class MainWindow : Window
         var editor = new ProjectEditorWindow(project, _modes) { Owner = this };
         if (editor.ShowDialog() != true) return;
 
+        ChannelRows.SetMain(_projects, project, project.IsMain);
         PersistAndRefreshProjectList();
         ProjectsList.SelectedItem = project;
     }
@@ -988,7 +990,7 @@ public partial class MainWindow : Window
         var board = _board.Filtered(card => InBoardFilter(card.Project));
 
         BoardCards.ItemsSource = null;
-        BoardCards.ItemsSource = board.Cards;
+        BoardCards.ItemsSource = board.Cards.OrderByDescending(c => c.Project.IsMain).ToList(); // each channel's main project first
         BoardEmptyText.Text = _board.Cards.Count > 0 ? "No projects in this channel yet." : "No projects yet — add one with the + next to Projects.";
         BoardEmptyText.Visibility = board.Cards.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 

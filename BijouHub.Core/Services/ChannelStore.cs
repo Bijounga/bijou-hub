@@ -41,6 +41,17 @@ public static class ChannelRows
         }
     }
 
+    // Marks (or unmarks) a project as its channel's main project; marking one unmarks any other
+    // in the same channel (projects with no channel share one "channel" of their own).
+    public static void SetMain(IEnumerable<Project> projects, Project project, bool on)
+    {
+        project.IsMain = on;
+        if (!on) return;
+        foreach (var other in projects)
+            if (other != project && other.IsMain && (other.ChannelId ?? "") == (project.ChannelId ?? ""))
+                other.IsMain = false;
+    }
+
     // The sidebar's project list: with channels, a header for each (in channel order, then "No
     // channel") followed by its projects, or just the header while collapsed. With no channels
     // at all, just the projects.
@@ -49,20 +60,20 @@ public static class ChannelRows
         var rows = new List<object>();
         if (channels.Count == 0)
         {
-            rows.AddRange(projects);
+            rows.AddRange(projects.OrderByDescending(p => p.IsMain));
             return rows;
         }
 
         var known = channels.Select(c => c.Id).ToHashSet();
         foreach (var channel in channels)
         {
-            var mine = projects.Where(p => p.ChannelId == channel.Id).ToList();
+            var mine = projects.Where(p => p.ChannelId == channel.Id).OrderByDescending(p => p.IsMain).ToList();
             var isCollapsed = collapsed.Contains(channel.Id);
             rows.Add(new ChannelHeader(channel.Id, channel.Name, channel.Color, mine.Count, isCollapsed));
             if (!isCollapsed) rows.AddRange(mine);
         }
 
-        var loose = projects.Where(p => p.ChannelId == null || !known.Contains(p.ChannelId)).ToList();
+        var loose = projects.Where(p => p.ChannelId == null || !known.Contains(p.ChannelId)).OrderByDescending(p => p.IsMain).ToList();
         if (loose.Count > 0)
         {
             var isCollapsed = collapsed.Contains("");

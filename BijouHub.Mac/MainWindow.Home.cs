@@ -117,7 +117,7 @@ public partial class MainWindow
         BoardSummary.Children.Add(SummaryPill(board.BehindPace, "behind pace", "DangerBrush"));
         BoardSummary.Children.Add(SummaryPill(board.NeedMusic, "need music", "HazardBrush"));
         BoardSummary.Children.Add(SummaryPill(board.Active, board.Active == 1 ? "active project" : "active projects", "AccentBrush"));
-        BoardCards.ItemsSource = board.Cards.Select(BuildCard).ToList();
+        BoardCards.ItemsSource = board.Cards.OrderByDescending(c => c.Project.IsMain).Select(BuildCard).ToList(); // each channel's main project first
         BoardEmptyText.Text = _board.Cards.Count > 0 ? "No projects in this channel yet." : "No projects yet — add one with the + next to Projects.";
         BoardEmptyText.IsVisible = board.Cards.Count == 0;
     }
@@ -200,6 +200,16 @@ public partial class MainWindow
                 }
             }
         });
+        if (card.Project.IsMain)
+        {
+            var header = (StackPanel)body.Children[^1];
+            header.Children.Add(new Border
+            {
+                CornerRadius = new CornerRadius(4), Padding = new Thickness(7, 2), BorderThickness = new Thickness(1), VerticalAlignment = VerticalAlignment.Center,
+                BorderBrush = Brush("HazardBrush"),
+                Child = new TextBlock { Text = "★ MAIN", FontSize = 10, FontWeight = FontWeight.Bold, Foreground = Brush("HazardBrush") }
+            });
+        }
         if (card.Project.ChannelName != null && HexBrushConverter.Parse(card.Project.ChannelColor) is { } dotBrush)
             body.Children.Add(new StackPanel
             {

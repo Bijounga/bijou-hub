@@ -27,6 +27,7 @@ public partial class ProjectEditorWindow : Window
         BudgetBox.Text = project.DefaultTargetMinutes?.ToString(CultureInfo.InvariantCulture) ?? "";
         GoalsList.ItemsSource = project.Goals;
         FillChannels(project.ChannelId);
+        MainBox.IsChecked = project.IsMain;
     }
 
     // "(none)" plus every channel, each with its color dot; keeps the chosen one across a Manage.
@@ -80,6 +81,7 @@ public partial class ProjectEditorWindow : Window
 
         _project.DefaultTargetMinutes = int.TryParse(BudgetBox.Text, out var minutes) ? minutes : null;
         _project.ChannelId = ChannelCombo.SelectedItem is Channel { Id: not "" } channel ? channel.Id : null;
+        _project.IsMain = MainBox.IsChecked == true;
 
         Close(true);
     }

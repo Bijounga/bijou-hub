@@ -35,6 +35,8 @@
                     </ComboBox>
                     <Button Grid.Column="1" Content="Manage…" Margin="8,0,0,0" Click="ManageChannels_Click" AutomationProperties.Name="Manage channels"/>
                 </Grid>
+                <CheckBox Name="MainBox" Content="Main project for this channel" Margin="0,8,0,0" AutomationProperties.Name="Main project for this channel"
+                          ToolTip.Tip="The one you're working on now: starred, first in its channel, and badged on the board"/>
             </StackPanel>
         </Grid>
 

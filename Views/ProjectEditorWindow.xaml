@@ -54,6 +54,8 @@
                         </ComboBox.ItemTemplate>
                     </ComboBox>
                 </DockPanel>
+                <CheckBox x:Name="MainBox" Content="Main project for this channel" Margin="0,8,0,0"
+                          ToolTip="The one you're working on now: starred, first in its channel, and badged on the board"/>
             </StackPanel>
         </Grid>
 
