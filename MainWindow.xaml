@@ -169,7 +169,16 @@
 
                 <ListBox x:Name="ModesList" Grid.Row="2"
                          AlternationCount="3"
-                         SelectionChanged="ModesList_SelectionChanged">
+                         SelectionChanged="ModesList_SelectionChanged"
+                         PreviewMouseRightButtonDown="SidebarList_PreviewMouseRightButtonDown"
+                         ContextMenuOpening="SidebarList_ContextMenuOpening">
+                    <ListBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Edit…" Click="EditMode_Click"/>
+                            <Separator/>
+                            <MenuItem Header="Delete…" Click="DeleteMode_Click"/>
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Grid>
@@ -195,7 +204,16 @@
 
                 <ListBox x:Name="ProjectsList" Grid.Row="4"
                          AlternationCount="3"
-                         SelectionChanged="ProjectsList_SelectionChanged">
+                         SelectionChanged="ProjectsList_SelectionChanged"
+                         PreviewMouseRightButtonDown="SidebarList_PreviewMouseRightButtonDown"
+                         ContextMenuOpening="SidebarList_ContextMenuOpening">
+                    <ListBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Edit…" Click="EditProject_Click"/>
+                            <Separator/>
+                            <MenuItem Header="Delete…" Click="DeleteProject_Click"/>
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Grid>

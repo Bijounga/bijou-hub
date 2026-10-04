@@ -177,6 +177,13 @@
                     <TextBlock Name="ModesLabel" Classes="label" Text="MODES" VerticalAlignment="Center"/>
                 </DockPanel>
                 <ListBox Name="ModesList" Grid.Row="2" Classes="nav" SelectionChanged="ModesList_SelectionChanged">
+                    <ListBox.ContextMenu>
+                        <ContextMenu Opening="SidebarMenu_Opening">
+                            <MenuItem Header="Edit…" Click="EditMode_Click"/>
+                            <Separator/>
+                            <MenuItem Header="Delete…" Click="DeleteMode_Click"/>
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis"/>
@@ -191,6 +198,13 @@
                     <TextBlock Name="ProjectsLabel" Classes="label" Text="PROJECTS" VerticalAlignment="Center"/>
                 </DockPanel>
                 <ListBox Name="ProjectsList" Grid.Row="4" Classes="nav" SelectionChanged="ProjectsList_SelectionChanged">
+                    <ListBox.ContextMenu>
+                        <ContextMenu Opening="SidebarMenu_Opening">
+                            <MenuItem Header="Edit…" Click="EditProject_Click"/>
+                            <Separator/>
+                            <MenuItem Header="Delete…" Click="DeleteProject_Click"/>
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis"/>

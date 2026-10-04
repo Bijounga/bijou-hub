@@ -296,6 +296,20 @@ public partial class MainWindow : Window
         ModesList.SelectedItem = mode;
     }
 
+    // Right-clicking a mode or project opens it (like a click) and then its Edit / Delete menu.
+    private void SidebarList_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement((ListBox)sender, source) is ListBoxItem item)
+            item.IsSelected = true;
+    }
+
+    // Only over an item: right-clicking the empty part of the list shows nothing.
+    private void SidebarList_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        if (e.OriginalSource is not DependencyObject source || ItemsControl.ContainerFromElement((ListBox)sender, source) is not ListBoxItem)
+            e.Handled = true;
+    }
+
     private void EditMode_Click(object sender, RoutedEventArgs e)
     {
         if (ModesList.SelectedItem is not WorkMode mode) return;

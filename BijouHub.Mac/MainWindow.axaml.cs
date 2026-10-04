@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Avalonia.Controls;
+using Avalonia.VisualTree;
 using Avalonia.Threading;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -41,6 +42,7 @@ public partial class MainWindow : Window
 
         VersionText.Text = "v" + MacUpdateService.GetCurrentVersion();
         InitSession();
+        InitSidebarMenus();
         InitDue();
         InitGoals();
         InitTasksPage();
@@ -83,6 +85,29 @@ public partial class MainWindow : Window
     }
 
     // ---------- Navigation ----------
+
+    // Right-clicking a mode or project opens it (like a click) and then its Edit / Delete menu.
+    private void InitSidebarMenus()
+    {
+        foreach (var list in new[] { ModesList, ProjectsList })
+        {
+            list.AddHandler(PointerPressedEvent, (_, e) =>
+            {
+                if (!e.GetCurrentPoint(list).Properties.IsRightButtonPressed) return;
+                var item = (e.Source as Avalonia.Visual)?.FindAncestorOfType<ListBoxItem>(includeSelf: true);
+                if (item != null) list.SelectedItem = item.DataContext;
+                _sidebarMenuOnItem = item != null;
+            }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+        }
+    }
+
+    private bool _sidebarMenuOnItem;
+
+    // Only over an item: right-clicking the empty part of the list shows nothing.
+    private void SidebarMenu_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (!_sidebarMenuOnItem) e.Cancel = true;
+    }
 
     private void ShowOnly(Control panel)
     {
