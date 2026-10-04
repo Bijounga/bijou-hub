@@ -529,6 +529,10 @@
                         </ScrollViewer>
                         <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
                             <DockPanel Margin="0,0,0,16">
+                                <Button Name="TasksListMenuButton" DockPanel.Dock="Right" Classes="ghost" Padding="6" Margin="10,0,0,0" VerticalAlignment="Bottom"
+                                        Click="TasksListMenu_Click" ToolTip.Tip="List options" AutomationProperties.Name="List options">
+                                    <controls:LineIcon Kind="more" Width="16" Height="16"/>
+                                </Button>
                                 <TextBlock Name="TasksCountText" DockPanel.Dock="Right" VerticalAlignment="Bottom" Classes="muted" Margin="0,0,0,6"/>
                                 <TextBlock Name="TasksTitle" Classes="h1" Foreground="{DynamicResource AccentBrush}"/>
                             </DockPanel>

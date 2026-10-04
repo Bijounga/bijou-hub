@@ -7,7 +7,9 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using BijouHub.Mac.Controls;
 using BijouHub.Models;
+using BijouHub.Mac.Views;
 using BijouHub.Services;
+using BijouHub.Services.GoogleTasks;
 
 namespace BijouHub.Mac;
 
@@ -89,6 +91,7 @@ public partial class MainWindow
             ? $"{GroupLabel(group)} · {_taskView.Title}"
             : _taskView.Title;
         TasksCountText.Text = _tasksOpenItems.Count == 0 ? "" : $"{_tasksOpenItems.Count} open";
+        TasksListMenuButton.IsVisible = GoogleMode && _taskView.Target != null;
         TasksEmptyText.IsVisible = _tasksOpenItems.Count == 0;
         TasksCompletedToggle.IsVisible = _tasksDoneItems.Count > 0;
         TasksCompletedText.Text = $"{(_showCompleted ? "▾" : "▸")}  Completed today  {_tasksDoneItems.Count}";
@@ -160,6 +163,7 @@ public partial class MainWindow
         button.Classes.Add("navrow");
         button.Classes.Set("on", selected);
         Avalonia.Automation.AutomationProperties.SetName(button, $"{view.Title} list");
+        if (GoogleMode && view.Target is { } target) button.ContextMenu = ListMenu(target);
         button.Click += (_, _) =>
         {
             _taskViewKey = view.Key;
@@ -167,6 +171,76 @@ public partial class MainWindow
             TasksInput.Focus();
         };
         return button;
+    }
+
+    // ---------- Deleting a list ----------
+
+    // What a list's ⋯ (and right-click) offers.
+    private ContextMenu ListMenu(ListTarget target)
+    {
+        var delete = new MenuItem { Header = "Delete list…" };
+        delete.Click += async (_, _) => await DeleteGoogleListAsync(target, askFirst: true);
+        return new ContextMenu { Items = { delete } };
+    }
+
+    private void TasksListMenu_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_taskView?.Target is not { } target) return;
+        var menu = ListMenu(target);
+        menu.PlacementTarget = TasksListMenuButton;
+        menu.Open(TasksListMenuButton);
+    }
+
+    private static string ListLabel(ListTarget target) => $"{GroupLabel(target.Group)} · {target.Name ?? GoogleGoalsSync.GeneralList}";
+
+    // Deletes the list on Google (its tasks go with it, everywhere) and drops its tasks here.
+    private async Task<bool> DeleteGoogleListAsync(ListTarget target, bool askFirst)
+    {
+        if (!GoogleMode || _googleSync == null) return false;
+        var goals = _dailyGoals.Where(g => IsTargetOf(target, g)).ToList();
+        if (askFirst)
+        {
+            var open = goals.Count(g => !g.Done);
+            var what = open switch
+            {
+                0 => "Everything in it is deleted too",
+                1 => "Its 1 open task is deleted too",
+                _ => $"Its {open} open tasks are deleted too"
+            };
+            if (!await PromptWindow.Confirm(this, "Delete list",
+                    $"Delete the list \"{ListLabel(target)}\" from Google Tasks?\n\n{what}, on your phone and everywhere else. This can't be undone.",
+                    "Delete list"))
+                return false;
+        }
+
+        await _googleLock.WaitAsync();
+        try
+        {
+            await _googleSync.DeleteListAsync(target.Group, target.Name);
+            SetSyncState(SyncState.Synced);
+        }
+        catch (Exception ex)
+        {
+            ReportGoogleError(ex);
+            return false;
+        }
+        finally
+        {
+            _googleLock.Release();
+        }
+
+        // Gone on Google with the list; no per-task deletes to send.
+        foreach (var goal in goals)
+        {
+            goal.PropertyChanged -= DailyGoal_PropertyChanged;
+            _dailyGoals.Remove(goal);
+        }
+        if (_taskViewKey == "list:" + target.Key) _taskViewKey = "today";
+        RefreshGoalScope();
+        RefreshDailyProjectCombo();
+        SaveDailyPlan();
+        UpdateDailyProgress();
+        return true;
     }
 
     private void TasksCompletedToggle_Click(object? sender, RoutedEventArgs e)

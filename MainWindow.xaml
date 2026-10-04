@@ -941,6 +941,12 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <DockPanel Margin="0,0,0,16">
+                        <Button x:Name="TasksListMenuButton" DockPanel.Dock="Right" Click="TasksListMenu_Click" Cursor="Hand" Focusable="False"
+                                VerticalAlignment="Bottom" Margin="10,0,0,2" ToolTip="List options" AutomationProperties.Name="List options">
+                            <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                            <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE712;" FontSize="16" Margin="6,4"
+                                       Foreground="{DynamicResource MutedTextBrush}"/>
+                        </Button>
                         <TextBlock x:Name="TasksCountText" DockPanel.Dock="Right" VerticalAlignment="Bottom" FontSize="12" Margin="0,0,0,6"
                                    Foreground="{DynamicResource MutedTextBrush}"/>
                         <TextBlock x:Name="TasksTitle" Style="{StaticResource HeadingText}" FontSize="28" Foreground="{DynamicResource AccentBrush}"/>

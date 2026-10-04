@@ -101,6 +101,14 @@ class Handler(BaseHTTPRequestHandler):
             if method == "POST":
                 return self.send_json(200, new_list(self.body()["title"]))
 
+        # /tasks/v1/users/@me/lists/{list}
+        if parts[:5] == ["tasks", "v1", "users", "@me", "lists"] and len(parts) == 6 and method == "DELETE":
+            if parts[5] not in LISTS:
+                return self.send_json(404, {"error": {"code": 404, "message": "Task list not found"}})
+            del LISTS[parts[5]]
+            TASKS.pop(parts[5], None)
+            return self.send_json(204)
+
         # /tasks/v1/lists/{list}/tasks[/{task}]
         if parts[:3] == ["tasks", "v1", "lists"] and len(parts) >= 5 and parts[4] == "tasks":
             lid = parts[3]

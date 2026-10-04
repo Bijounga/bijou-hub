@@ -386,17 +386,35 @@ public partial class MainWindow : Window
         SelectProjectAndShowDetail(project);
     }
 
-    private void DeleteProject_Click(object sender, RoutedEventArgs e)
+    private async void DeleteProject_Click(object sender, RoutedEventArgs e)
     {
         if (ProjectsList.SelectedItem is not Project project) return;
 
-        var confirm = MessageBox.Show($"Delete project \"{project.Name}\"?", "Delete Project",
-            MessageBoxButton.YesNo, MessageBoxImage.Warning);
-        if (confirm != MessageBoxResult.Yes) return;
+        // With Google Tasks, the project has a list there too ("EDITING - name"): offer to delete it with it.
+        var deleteList = false;
+        if (GoogleMode && _googleSync?.HasList(EditingGroup, project.Name) == true)
+        {
+            var open = _dailyGoals.Count(g => !g.Done && GoogleGoalsSync.GroupOf(g) == EditingGroup
+                                              && string.Equals(g.ProjectName, project.Name, StringComparison.OrdinalIgnoreCase));
+            var tasks = open switch { 0 => "", 1 => " (1 open task)", _ => $" ({open} open tasks)" };
+            var choice = ChoiceWindow.Ask(this, "Delete project",
+                $"Delete \"{project.Name}\"?\n\nIt also has a list in Google Tasks, EDITING - {project.Name}{tasks}. " +
+                "Delete that too, or keep it (it stays under Editing on the Tasks page and on your phone)?",
+                "Delete project only", "Delete project and its list");
+            if (choice < 0) return;
+            deleteList = choice == 1;
+        }
+        else
+        {
+            var confirm = MessageBox.Show($"Delete project \"{project.Name}\"?", "Delete Project",
+                MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (confirm != MessageBoxResult.Yes) return;
+        }
 
         _projects.Remove(project);
         PersistAndRefreshProjectList();
         ShowEmptyState();
+        if (deleteList) await DeleteGoogleListAsync(new ListTarget(EditingGroup, project.Name, project.Id, project.Name), askFirst: false);
     }
 
     private void PersistAndRefreshProjectList()

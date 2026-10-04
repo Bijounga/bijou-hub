@@ -4,6 +4,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using BijouHub.Models;
 using BijouHub.Services.GoogleTasks;
+using BijouHub.Views;
 
 namespace BijouHub;
 
@@ -119,6 +120,7 @@ public partial class MainWindow
             ? $"{GroupLabel(group)} · {_taskView.Title}"
             : _taskView.Title;
         TasksCountText.Text = openCount == 0 ? "" : $"{openCount} open";
+        TasksListMenuButton.Visibility = GoogleMode && _taskView.Target != null ? Visibility.Visible : Visibility.Collapsed;
         TasksEmptyText.Visibility = openCount == 0 ? Visibility.Visible : Visibility.Collapsed;
         TasksCompletedToggle.Visibility = doneCount > 0 ? Visibility.Visible : Visibility.Collapsed;
         TasksCompletedText.Text = $"{(_showCompleted ? "▾" : "▸")}  Completed today  {doneCount}";
@@ -195,6 +197,7 @@ public partial class MainWindow
             Template = new ControlTemplate(typeof(Button)) { VisualTree = new FrameworkElementFactory(typeof(ContentPresenter)) }
         };
         System.Windows.Automation.AutomationProperties.SetName(button, $"{view.Title} list");
+        if (GoogleMode && view.Target is { } target) button.ContextMenu = ListMenu(target);
         button.Click += (_, _) =>
         {
             _taskViewKey = view.Key;
@@ -202,6 +205,79 @@ public partial class MainWindow
             TasksInput.Focus();
         };
         return button;
+    }
+
+    // ---------- Deleting a list ----------
+
+    // What a list's ⋯ (and right-click) offers.
+    private ContextMenu ListMenu(ListTarget target)
+    {
+        var menu = new ContextMenu();
+        var delete = new MenuItem { Header = "Delete list…" };
+        delete.Click += async (_, _) => await DeleteGoogleListAsync(target, askFirst: true);
+        menu.Items.Add(delete);
+        return menu;
+    }
+
+    private void TasksListMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (_taskView?.Target is not { } target) return;
+        var menu = ListMenu(target);
+        menu.PlacementTarget = TasksListMenuButton;
+        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        menu.IsOpen = true;
+    }
+
+    private static string ListLabel(ListTarget target) => $"{GroupLabel(target.Group)} · {target.Name ?? GoogleGoalsSync.GeneralList}";
+
+    // Deletes the list on Google (its tasks go with it, everywhere) and drops its tasks here.
+    private async Task<bool> DeleteGoogleListAsync(ListTarget target, bool askFirst)
+    {
+        if (!GoogleMode || _googleSync == null) return false;
+        var goals = _dailyGoals.Where(g => IsTargetOf(target, g)).ToList();
+        if (askFirst)
+        {
+            var open = goals.Count(g => !g.Done);
+            var what = open switch
+            {
+                0 => "Everything in it is deleted too",
+                1 => "Its 1 open task is deleted too",
+                _ => $"Its {open} open tasks are deleted too"
+            };
+            var sure = ChoiceWindow.Ask(this, "Delete list",
+                $"Delete the list \"{ListLabel(target)}\" from Google Tasks?\n\n{what}, on your phone and everywhere else. This can't be undone.",
+                "Delete list");
+            if (sure != 0) return false;
+        }
+
+        await _googleLock.WaitAsync();
+        try
+        {
+            await _googleSync.DeleteListAsync(target.Group, target.Name);
+            SetSyncState(SyncState.Synced);
+        }
+        catch (Exception ex)
+        {
+            ReportGoogleError(ex);
+            return false;
+        }
+        finally
+        {
+            _googleLock.Release();
+        }
+
+        // Gone on Google with the list; no per-task deletes to send.
+        foreach (var goal in goals)
+        {
+            goal.PropertyChanged -= DailyGoal_PropertyChanged;
+            _dailyGoals.Remove(goal);
+        }
+        if (_taskViewKey == "list:" + target.Key) _taskViewKey = "today";
+        RefreshGoalScope();
+        RefreshDailyProjectCombo();
+        SaveDailyPlan();
+        UpdateDailyProgress();
+        return true;
     }
 
     private void TasksCompletedToggle_Click(object sender, RoutedEventArgs e)

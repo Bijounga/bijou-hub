@@ -50,6 +50,10 @@ public sealed class GoogleTasksClient
         return new TaskList((string)json!["id"]!, (string?)json["title"] ?? title);
     }
 
+    // Deletes the list and every task in it.
+    public Task DeleteTaskListAsync(string listId, CancellationToken cancel = default) =>
+        SendAsync(HttpMethod.Delete, $"/users/@me/lists/{Esc(listId)}", null, cancel);
+
     // Open tasks plus those completed since completedSince. Two queries: the API can't express
     // "open OR completed after X" in one, and completed tasks are hidden unless asked for.
     public async Task<List<TaskItem>> GetTasksAsync(string listId, DateTime completedSince, CancellationToken cancel = default)

@@ -6,7 +6,7 @@
     <StackPanel Margin="20" Spacing="12">
         <TextBlock Name="MessageText" TextWrapping="Wrap"/>
         <TextBox Name="ValueBox" IsVisible="False" KeyDown="ValueBox_KeyDown"/>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,6,0,0">
+        <StackPanel Name="ButtonRow" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,6,0,0">
             <Button Name="CancelButton" Content="Cancel" MinWidth="90" HorizontalContentAlignment="Center" Click="Cancel_Click"/>
             <Button Name="OkButton" Classes="primary" Content="OK" MinWidth="90" HorizontalContentAlignment="Center" Click="Ok_Click"/>
         </StackPanel>

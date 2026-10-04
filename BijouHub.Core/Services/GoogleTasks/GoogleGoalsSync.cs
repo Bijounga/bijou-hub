@@ -132,6 +132,19 @@ public sealed partial class GoogleGoalsSync
 
     public async Task CreateListAsync(string title, CancellationToken cancel = default) => await EnsureListAsync(title, cancel);
 
+    // Whether a group's list exists on Google (as of the last fetch). A null name is its General list.
+    public bool HasList(string group, string? name) => Find(TitleFor(group, name)) != null;
+
+    // Deletes a list and all its tasks on Google. Nothing happens if it's already gone.
+    public async Task DeleteListAsync(string group, string? name, CancellationToken cancel = default)
+    {
+        var title = TitleFor(group, name);
+        if (Find(title) == null) await RefreshListsAsync(cancel);
+        if (Find(title) is not { } list) return;
+        await _client.DeleteTaskListAsync(list.Id, cancel);
+        _lists.Remove(list);
+    }
+
     private async Task RefreshListsAsync(CancellationToken cancel)
     {
         var lists = await _client.GetTaskListsAsync(cancel);

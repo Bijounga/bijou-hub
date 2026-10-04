@@ -3,6 +3,7 @@ using Avalonia.Interactivity;
 using BijouHub.Mac.Views;
 using BijouHub.Models;
 using BijouHub.Services;
+using BijouHub.Services.GoogleTasks;
 
 namespace BijouHub.Mac;
 
@@ -76,11 +77,31 @@ public partial class MainWindow
     private async void DeleteProject_Click(object? sender, RoutedEventArgs e)
     {
         if (_detailProject is not Project project) return;
-        if (!await PromptWindow.Confirm(this, "Delete project", $"Delete the project \"{project.Name}\"? Its logged time stays in the session log.", "Delete")) return;
+
+        // With Google Tasks, the project has a list there too ("EDITING - name"): offer to delete it with it.
+        var deleteList = false;
+        if (GoogleMode && _googleSync?.HasList(EditingGroup, project.Name) == true)
+        {
+            var open = _dailyGoals.Count(g => !g.Done && GoogleGoalsSync.GroupOf(g) == EditingGroup
+                                              && string.Equals(g.ProjectName, project.Name, StringComparison.OrdinalIgnoreCase));
+            var tasks = open switch { 0 => "", 1 => " (1 open task)", _ => $" ({open} open tasks)" };
+            var choice = await PromptWindow.Choose(this, "Delete project",
+                $"Delete \"{project.Name}\"? Its logged time stays in the session log.\n\nIt also has a list in Google Tasks, EDITING - {project.Name}{tasks}. " +
+                "Delete that too, or keep it (it stays under Editing on the Tasks page and on your phone)?",
+                "Delete project only", "Delete project and its list");
+            if (choice < 0) return;
+            deleteList = choice == 1;
+        }
+        else if (!await PromptWindow.Confirm(this, "Delete project", $"Delete the project \"{project.Name}\"? Its logged time stays in the session log.", "Delete"))
+        {
+            return;
+        }
+
         _projects.Remove(project);
         PersistProjects();
         ProjectsList.SelectedItem = null;
         ShowHome();
+        if (deleteList) await DeleteGoogleListAsync(new ListTarget(EditingGroup, project.Name, project.Id, project.Name), askFirst: false);
     }
 
     private async void LogTime_Click(object? sender, RoutedEventArgs e)
