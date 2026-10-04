@@ -243,9 +243,16 @@ public partial class MainWindow
         return true;
     }
 
-    private void TasksCompletedToggle_Click(object? sender, RoutedEventArgs e)
+    private void TasksCompletedToggle_Click(object? sender, RoutedEventArgs e) => ToggleShowCompleted();
+
+    // One switch for the Completed section on Home and on the Tasks page; remembered.
+    private void ToggleShowCompleted()
     {
         _showCompleted = !_showCompleted;
+        var settings = _settingsStore.Load();
+        settings.ShowCompletedGoals = _showCompleted;
+        _settingsStore.Save(settings);
+        UpdateCompletedSection();
         RefreshTasksPage();
     }
 

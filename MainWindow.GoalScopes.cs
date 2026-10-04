@@ -25,12 +25,42 @@ public partial class MainWindow
     }
 
     private string _goalScope = EditingGroup;
+    private ListCollectionView? _homeDone;
+
+    // Re-applies the filters to the open list and the Completed list.
+    private void RefreshGoalViews()
+    {
+        CollectionViewSource.GetDefaultView(_dailyGoals).Refresh();
+        _homeDone?.Refresh();
+        UpdateCompletedSection();
+    }
+
+    // The "Completed 22" toggle under the list, and whether that list is open.
+    private void UpdateCompletedSection()
+    {
+        var done = _dailyGoals.Count(g => g.Done && InScope(g));
+        DailyCompletedToggle.Visibility = done > 0 ? Visibility.Visible : Visibility.Collapsed;
+        DailyCompletedText.Text = $"{(_showCompleted ? "▾" : "▸")}  Completed  {done}";
+        DailyDoneList.Visibility = _showCompleted && done > 0 ? Visibility.Visible : Visibility.Collapsed;
+        DailyGoalsList.Visibility = _dailyGoals.Any(g => !g.Done && InScope(g)) ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void DailyCompletedToggle_Click(object sender, RoutedEventArgs e) => ToggleShowCompleted();
     private bool _relinking;
 
     private void InitGoalScopes()
     {
         _goalScope = _settingsStore.Load().GoalScope is { Length: > 0 } saved ? saved : EditingGroup;
-        CollectionViewSource.GetDefaultView(_dailyGoals).Filter = item => item is DailyGoal goal && InScope(goal);
+        // Open goals in the list; finished ones in the Completed section below it.
+        var open = (ListCollectionView)CollectionViewSource.GetDefaultView(_dailyGoals);
+        open.Filter = item => item is DailyGoal goal && InScope(goal) && !goal.Done;
+        _homeDone = new ListCollectionView(_dailyGoals) { Filter = item => item is DailyGoal goal && InScope(goal) && goal.Done };
+        foreach (var view in new[] { open, _homeDone })
+        {
+            view.IsLiveFiltering = true; // ticking a goal moves it between the two at once
+            view.LiveFilteringProperties.Add(nameof(DailyGoal.Done));
+        }
+        DailyDoneList.ItemsSource = _homeDone;
     }
 
     private bool InScope(DailyGoal goal) =>
@@ -59,7 +89,7 @@ public partial class MainWindow
         var groups = ScopeGroups();
         if (_goalScope != AllScope && !groups.Contains(_goalScope)) _goalScope = EditingGroup;
 
-        CollectionViewSource.GetDefaultView(_dailyGoals).Refresh();
+        RefreshGoalViews();
         foreach (var goal in _dailyGoals) goal.ChipText = ChipFor(goal);
         RefreshDueChips();
         BuildScopeTabs(groups);
@@ -254,7 +284,7 @@ public partial class MainWindow
         }
 
         goal.ChipText = ChipFor(goal);
-        CollectionViewSource.GetDefaultView(_dailyGoals).Refresh();
+        RefreshGoalViews();
         SaveDailyPlan();
         if (GoogleMode) QueueGoogle(sync => sync.MoveToListAsync(goal));
     }

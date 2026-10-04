@@ -24,6 +24,9 @@ public class AppSettings
     // keep working.
     public bool KeepRunningWhenClosed { get; set; }
 
+    // Finished tasks are shown (under the list) rather than tucked away.
+    public bool ShowCompletedGoals { get; set; }
+
     // The one-time "still running in the hidden icons" notice has been shown.
     public bool TrayHintShown { get; set; }
 }

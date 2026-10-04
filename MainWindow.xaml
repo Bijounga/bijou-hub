@@ -569,16 +569,8 @@
                             <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                     CornerRadius="{DynamicResource CornerRadiusBase}" Padding="14,12">
                                 <StackPanel>
-                                    <DockPanel x:Name="CarryOverRow" Margin="0,0,0,10" LastChildFill="False" Visibility="Collapsed">
-                                        <Button x:Name="CarryOverButton" Padding="12,5" Click="CarryOver_Click"/>
-                                        <Button Content="Dismiss" Margin="8,0,0,0" Padding="10,5" Click="DismissCarryOver_Click"/>
-                                    </DockPanel>
-
-                                    <ListBox x:Name="DailyGoalsList" Margin="0,0,0,6" Background="Transparent" BorderThickness="0" Padding="0"
-                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                             ScrollViewer.VerticalScrollBarVisibility="Disabled">
-                                        <ListBox.ItemContainerStyle>
-                                            <Style TargetType="ListBoxItem">
+<StackPanel.Resources>
+<Style x:Key="GoalRowContainer" TargetType="ListBoxItem">
                                                 <Setter Property="Focusable" Value="False"/>
                                                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                                                 <Setter Property="Template">
@@ -596,9 +588,7 @@
                                                     </Setter.Value>
                                                 </Setter>
                                             </Style>
-                                        </ListBox.ItemContainerStyle>
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
+<DataTemplate x:Key="GoalRowTemplate">
                                                 <Grid Background="Transparent" ContextMenuOpening="DailyGoalRow_ContextMenuOpening">
                                                     <Grid.ContextMenu>
                                                         <ContextMenu/>
@@ -735,8 +725,17 @@
                                                     </Button>
                                                 </Grid>
                                             </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
+</StackPanel.Resources>
+                                    <DockPanel x:Name="CarryOverRow" Margin="0,0,0,10" LastChildFill="False" Visibility="Collapsed">
+                                        <Button x:Name="CarryOverButton" Padding="12,5" Click="CarryOver_Click"/>
+                                        <Button Content="Dismiss" Margin="8,0,0,0" Padding="10,5" Click="DismissCarryOver_Click"/>
+                                    </DockPanel>
+
+                                    <ListBox x:Name="DailyGoalsList" Margin="0,0,0,6" Background="Transparent" BorderThickness="0" Padding="0"
+                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                             ItemContainerStyle="{StaticResource GoalRowContainer}"
+                                             ItemTemplate="{StaticResource GoalRowTemplate}"/>
                                     <!-- "Add a task" bar, Microsoft To Do style: type, Enter, repeat. -->
                                     <Border x:Name="AddGoalBar" CornerRadius="6" BorderThickness="1" Padding="12,0" MinHeight="44"
                                             Cursor="IBeam" MouseLeftButtonDown="AddGoalBar_MouseLeftButtonDown"
@@ -794,6 +793,18 @@
                                                       ToolTip="Link new tasks to a project (optional)"/>
                                         </Grid>
                                     </Border>
+
+                                    <!-- Finished tasks, tucked away under the list; click to show or hide them. -->
+                                    <Button x:Name="DailyCompletedToggle" Click="DailyCompletedToggle_Click" Cursor="Hand" Margin="2,12,0,6"
+                                            HorizontalAlignment="Left" Focusable="False" Visibility="Collapsed" AutomationProperties.Name="Completed">
+                                        <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                                        <TextBlock x:Name="DailyCompletedText" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"/>
+                                    </Button>
+                                    <ListBox x:Name="DailyDoneList" Margin="0,0,0,6" Background="Transparent" BorderThickness="0" Padding="0"
+                                             Visibility="Collapsed" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                             ItemContainerStyle="{StaticResource GoalRowContainer}"
+                                             ItemTemplate="{StaticResource GoalRowTemplate}"/>
 
                                     <TextBlock x:Name="DailyNotesLabel" Text="NOTES FOR TODAY" Foreground="{DynamicResource MutedTextBrush}" FontSize="10" Margin="2,14,0,4"/>
                                     <TextBox x:Name="DailyNotesBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="54" MaxHeight="220"

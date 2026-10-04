@@ -77,7 +77,7 @@ public partial class MainWindow
     private void MoveGoalToDay(DailyGoal goal, bool tomorrow)
     {
         goal.Due = tomorrow ? TomorrowKey : null; // saves and syncs the due date
-        CollectionViewSource.GetDefaultView(_dailyGoals).Refresh();
+        RefreshGoalViews();
         UpdateDailyProgress();
     }
 

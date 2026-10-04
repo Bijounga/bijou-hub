@@ -6,15 +6,15 @@
 
     <Window.Styles>
         <!-- Goal rows: delete appears on hover; done goals strike through; starred stars glow. -->
-        <Style Selector="ListBox#DailyGoalsList ListBoxItem">
+        <Style Selector="ListBox.goalrows ListBoxItem">
             <Setter Property="Padding" Value="4,3"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="CornerRadius" Value="6"/>
         </Style>
-        <Style Selector="ListBox#DailyGoalsList ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="ListBox.goalrows ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
         </Style>
-        <Style Selector="ListBox#DailyGoalsList ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="ListBox.goalrows ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
         </Style>
         <Style Selector="Button.navrow">
@@ -125,6 +125,53 @@
             <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
         </Style>
     </Window.Styles>
+
+    <Window.Resources>
+<DataTemplate x:Key="GoalRow">
+                                                        <Grid ColumnDefinitions="18,Auto,Auto,*,Auto,Auto,Auto">
+                                                            <Grid.ContextMenu>
+                                                                <ContextMenu Opening="GoalMenu_Opening"/>
+                                                            </Grid.ContextMenu>
+                                                            <controls:LineIcon Kind="grip" Width="14" Height="14" StrokeWidth="2.2" Cursor="SizeAll"
+                                                                               Foreground="{DynamicResource FaintTextBrush}" PointerPressed="GoalGrip_PointerPressed"
+                                                                               ToolTip.Tip="Drag to reorder"/>
+                                                            <CheckBox Grid.Column="1" IsChecked="{Binding Done}" MinWidth="0" Margin="2,0,4,0" AutomationProperties.Name="{Binding Text}"/>
+                                                            <Button Grid.Column="2" Classes="ghost star" Classes.starred="{Binding Starred}" Padding="3"
+                                                                    Margin="0,0,8,0" Click="GoalStar_Click" ToolTip.Tip="Star to pin it to the top">
+                                                                <controls:LineIcon Kind="star" Width="15" Height="15" Filled="{Binding Starred}"/>
+                                                            </Button>
+                                                            <Panel Grid.Column="3" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Text}" Classes.done="{Binding Done}" FontSize="14" TextWrapping="Wrap"
+                                                                           IsVisible="{Binding !IsEditing}" DoubleTapped="GoalText_DoubleTapped"/>
+                                                                <TextBox Text="{Binding Text, Mode=OneWay}" IsVisible="{Binding IsEditing}" Padding="4,2" MinHeight="0"
+                                                                         KeyDown="GoalEditor_KeyDown" LostFocus="GoalEditor_LostFocus"
+                                                                         PropertyChanged="GoalEditor_PropertyChanged"/>
+                                                            </Panel>
+                                                            <!-- When it's due: a chip once dated (red when past), or a calendar on hover. -->
+                                                            <Panel Grid.Column="4" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                                <Border Classes="chip duechip" Classes.overdue="{Binding DueOverdue}" Cursor="Hand"
+                                                                        PointerPressed="GoalDueChip_PointerPressed" ToolTip.Tip="Change the date and time"
+                                                                        IsVisible="{Binding DueChip, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                                                        <controls:LineIcon Kind="calendar" Width="10" Height="10"/>
+                                                                        <TextBlock Text="{Binding DueChip}" FontSize="11"/>
+                                                                    </StackPanel>
+                                                                </Border>
+                                                                <Button Classes="ghost rowdue" Padding="4" Click="GoalDue_Click" ToolTip.Tip="Add a date and time"
+                                                                        IsVisible="{Binding DueChip, Converter={x:Static StringConverters.IsNullOrEmpty}}">
+                                                                    <controls:LineIcon Kind="calendar" Width="13" Height="13"/>
+                                                                </Button>
+                                                            </Panel>
+                                                            <Border Grid.Column="5" Classes="chip" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                                    IsVisible="{Binding ChipText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                                <TextBlock Text="{Binding ChipText}" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
+                                                            </Border>
+                                                            <Button Grid.Column="6" Classes="ghost rowdelete" Padding="5" Margin="6,0,0,0" Click="GoalDelete_Click" ToolTip.Tip="Delete">
+                                                                <controls:LineIcon Kind="close" Width="11" Height="11"/>
+                                                            </Button>
+                                                        </Grid>
+                                                    </DataTemplate>
+    </Window.Resources>
 
     <Grid Margin="{DynamicResource ShellPadding}" ColumnDefinitions="236,*">
 
@@ -304,54 +351,7 @@
                                                 <Button Content="Dismiss" Margin="8,0,0,0" Click="DismissCarryOver_Click"/>
                                             </DockPanel>
                                             <ListBox Name="DailyGoalsList" Background="Transparent" Margin="0,0,0,6" SelectionMode="Single"
-                                                     ScrollViewer.VerticalScrollBarVisibility="Disabled" DragDrop.AllowDrop="True">
-                                                <ListBox.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Grid ColumnDefinitions="18,Auto,Auto,*,Auto,Auto,Auto">
-                                                            <Grid.ContextMenu>
-                                                                <ContextMenu Opening="GoalMenu_Opening"/>
-                                                            </Grid.ContextMenu>
-                                                            <controls:LineIcon Kind="grip" Width="14" Height="14" StrokeWidth="2.2" Cursor="SizeAll"
-                                                                               Foreground="{DynamicResource FaintTextBrush}" PointerPressed="GoalGrip_PointerPressed"
-                                                                               ToolTip.Tip="Drag to reorder"/>
-                                                            <CheckBox Grid.Column="1" IsChecked="{Binding Done}" MinWidth="0" Margin="2,0,4,0" AutomationProperties.Name="{Binding Text}"/>
-                                                            <Button Grid.Column="2" Classes="ghost star" Classes.starred="{Binding Starred}" Padding="3"
-                                                                    Margin="0,0,8,0" Click="GoalStar_Click" ToolTip.Tip="Star to pin it to the top">
-                                                                <controls:LineIcon Kind="star" Width="15" Height="15" Filled="{Binding Starred}"/>
-                                                            </Button>
-                                                            <Panel Grid.Column="3" VerticalAlignment="Center">
-                                                                <TextBlock Text="{Binding Text}" Classes.done="{Binding Done}" FontSize="14" TextWrapping="Wrap"
-                                                                           IsVisible="{Binding !IsEditing}" DoubleTapped="GoalText_DoubleTapped"/>
-                                                                <TextBox Text="{Binding Text, Mode=OneWay}" IsVisible="{Binding IsEditing}" Padding="4,2" MinHeight="0"
-                                                                         KeyDown="GoalEditor_KeyDown" LostFocus="GoalEditor_LostFocus"
-                                                                         PropertyChanged="GoalEditor_PropertyChanged"/>
-                                                            </Panel>
-                                                            <!-- When it's due: a chip once dated (red when past), or a calendar on hover. -->
-                                                            <Panel Grid.Column="4" Margin="8,0,0,0" VerticalAlignment="Center">
-                                                                <Border Classes="chip duechip" Classes.overdue="{Binding DueOverdue}" Cursor="Hand"
-                                                                        PointerPressed="GoalDueChip_PointerPressed" ToolTip.Tip="Change the date and time"
-                                                                        IsVisible="{Binding DueChip, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                                                    <StackPanel Orientation="Horizontal" Spacing="5">
-                                                                        <controls:LineIcon Kind="calendar" Width="10" Height="10"/>
-                                                                        <TextBlock Text="{Binding DueChip}" FontSize="11"/>
-                                                                    </StackPanel>
-                                                                </Border>
-                                                                <Button Classes="ghost rowdue" Padding="4" Click="GoalDue_Click" ToolTip.Tip="Add a date and time"
-                                                                        IsVisible="{Binding DueChip, Converter={x:Static StringConverters.IsNullOrEmpty}}">
-                                                                    <controls:LineIcon Kind="calendar" Width="13" Height="13"/>
-                                                                </Button>
-                                                            </Panel>
-                                                            <Border Grid.Column="5" Classes="chip" Margin="8,0,0,0" VerticalAlignment="Center"
-                                                                    IsVisible="{Binding ChipText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                                                <TextBlock Text="{Binding ChipText}" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
-                                                            </Border>
-                                                            <Button Grid.Column="6" Classes="ghost rowdelete" Padding="5" Margin="6,0,0,0" Click="GoalDelete_Click" ToolTip.Tip="Delete">
-                                                                <controls:LineIcon Kind="close" Width="11" Height="11"/>
-                                                            </Button>
-                                                        </Grid>
-                                                    </DataTemplate>
-                                                </ListBox.ItemTemplate>
-                                            </ListBox>
+                                                     ScrollViewer.VerticalScrollBarVisibility="Disabled" DragDrop.AllowDrop="True" Classes="goalrows" ItemTemplate="{StaticResource GoalRow}"/>
 
                                             <Border Name="AddGoalBar" CornerRadius="6" BorderThickness="1" Padding="12,0" MinHeight="42" Cursor="IBeam"
                                                     PointerPressed="AddGoalBar_PointerPressed">
@@ -378,6 +378,14 @@
                                                               ToolTip.Tip="Link new tasks to a project or list (optional)"/>
                                                 </Grid>
                                             </Border>
+
+                                            <!-- Finished tasks, tucked away under the list; click to show or hide them. -->
+                                            <Button Name="DailyCompletedToggle" Classes="ghost" Padding="0" Margin="2,12,0,6" HorizontalAlignment="Left"
+                                                    Click="DailyCompletedToggle_Click" IsVisible="False" AutomationProperties.Name="Completed">
+                                                <TextBlock Name="DailyCompletedText" FontSize="12" Classes="muted"/>
+                                            </Button>
+                                            <ListBox Name="DailyDoneList" Classes="goalrows" Background="Transparent" Margin="0,0,0,6" SelectionMode="Single"
+                                                     ScrollViewer.VerticalScrollBarVisibility="Disabled" IsVisible="False" ItemTemplate="{StaticResource GoalRow}"/>
 
                                             <TextBlock Name="DailyNotesLabel" Classes="label" Text="NOTES FOR TODAY" Margin="2,14,0,4"/>
                                             <TextBox Name="DailyNotesBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="56" MaxHeight="220"

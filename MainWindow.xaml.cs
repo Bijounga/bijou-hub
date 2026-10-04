@@ -97,6 +97,7 @@ public partial class MainWindow : Window
 
         var settings = _settingsStore.Load();
         _dailyTargetMinutes = settings.DailyTargetMinutes;
+        _showCompleted = settings.ShowCompletedGoals;
         AppScaleTransform.ScaleX = settings.ZoomLevel;
         AppScaleTransform.ScaleY = settings.ZoomLevel;
 
@@ -1752,7 +1753,7 @@ public partial class MainWindow : Window
             DayView.Upcoming => $"{total} upcoming",
             _ => done == total ? $"All {total} done" : $"{done} of {total} done"
         };
-        DailyGoalsList.Visibility = total == 0 ? Visibility.Collapsed : Visibility.Visible;
+        UpdateCompletedSection();
     }
 
     private void DailyGoal_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

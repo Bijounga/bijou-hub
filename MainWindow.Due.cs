@@ -60,7 +60,7 @@ public partial class MainWindow
 
         goal.DueTime = time?.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture); // kept locally
         goal.Due = date is DateTime d ? DueText.Key(d) : null; // saved and synced
-        CollectionViewSource.GetDefaultView(_dailyGoals).Refresh();
+        RefreshGoalViews();
         RefreshDueChips();
         UpdateDailyProgress();
     }

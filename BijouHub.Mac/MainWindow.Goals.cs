@@ -28,6 +28,7 @@ public partial class MainWindow
     private DailyPlanStore _dailyStore = new();
     private readonly ObservableCollection<DailyGoal> _dailyGoals = new();
     private readonly ObservableCollection<DailyGoal> _visibleGoals = new();
+    private readonly ObservableCollection<DailyGoal> _visibleDone = new();
     private DailyPlan? _today;
     private bool _loadingDailyPlan;
     private bool _relinking;
@@ -45,6 +46,7 @@ public partial class MainWindow
     {
         _goalScope = _settingsStore.Load().GoalScope is { Length: > 0 } saved ? saved : EditingGroup;
         DailyGoalsList.ItemsSource = _visibleGoals;
+        DailyDoneList.ItemsSource = _visibleDone;
         DailyGoalsList.AddHandler(DragDrop.DragOverEvent, GoalList_DragOver);
         DailyGoalsList.AddHandler(DragDrop.DropEvent, GoalList_Drop);
 
@@ -122,7 +124,7 @@ public partial class MainWindow
         };
         RefreshDayTabs();
         RefreshTasksPage();
-        DailyGoalsList.IsVisible = visible.Count > 0;
+        UpdateCompletedSection();
         BuildScopeTabs(ScopeGroups());
     }
 
@@ -132,6 +134,8 @@ public partial class MainWindow
         if (e.PropertyName is nameof(DailyGoal.IsEditing) or nameof(DailyGoal.HasProject) or nameof(DailyGoal.ChipText)
             or nameof(DailyGoal.DueChip) or nameof(DailyGoal.DueOverdue)) return;
         if (e.PropertyName == nameof(DailyGoal.Starred)) PinStarredGoals();
+        // Ticking a goal moves it between the open list and Completed (after the click finishes).
+        if (e.PropertyName == nameof(DailyGoal.Done)) Dispatcher.UIThread.Post(SyncVisibleGoals);
         SaveDailyPlan();
         if (sender is DailyGoal goal) PushGoalChange(goal, e.PropertyName);
     }
@@ -151,11 +155,24 @@ public partial class MainWindow
     // The list shows only the current tab's goals, in the master order.
     private void SyncVisibleGoals()
     {
-        var desired = _dailyGoals.Where(InScope).ToList();
-        if (desired.SequenceEqual(_visibleGoals)) return;
-        _visibleGoals.Clear();
-        foreach (var goal in desired) _visibleGoals.Add(goal);
+        // Open goals in the list; finished ones in the Completed section below it.
+        var scoped = _dailyGoals.Where(InScope).ToList();
+        Sync(_visibleGoals, scoped.Where(g => !g.Done));
+        Sync(_visibleDone, scoped.Where(g => g.Done));
+        UpdateCompletedSection();
     }
+
+    // The "Completed 22" toggle under the list, and whether that list is open.
+    private void UpdateCompletedSection()
+    {
+        var done = _dailyGoals.Count(g => g.Done && InScope(g));
+        DailyCompletedToggle.IsVisible = done > 0;
+        DailyCompletedText.Text = $"{(_showCompleted ? "▾" : "▸")}  Completed  {done}";
+        DailyDoneList.IsVisible = _showCompleted && done > 0;
+        DailyGoalsList.IsVisible = _dailyGoals.Any(g => !g.Done && InScope(g));
+    }
+
+    private void DailyCompletedToggle_Click(object? sender, RoutedEventArgs e) => ToggleShowCompleted();
 
     private void AddDailyGoal(DailyGoal goal)
     {

@@ -34,7 +34,9 @@ public partial class MainWindow : Window
 
         RecoverInterruptedSession();
         MacDoNotDisturb.Restore(); // left on by a session that didn't end cleanly
-        _dailyTargetMinutes = new AppSettingsStore().Load().DailyTargetMinutes;
+        var savedSettings = new AppSettingsStore().Load();
+        _dailyTargetMinutes = savedSettings.DailyTargetMinutes;
+        _showCompleted = savedSettings.ShowCompletedGoals;
         _modes = new ObservableCollection<WorkMode>(_modeStore.Load());
         ModesList.ItemsSource = _modes;
         _projects = new ObservableCollection<Project>(_projectStore.Load());
