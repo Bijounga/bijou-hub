@@ -33,6 +33,12 @@ public class AppSettings
     // The Home board is showing just this channel ("" for all, "none" for projects without one).
     public string BoardChannelFilter { get; set; } = "";
 
+    // Elgato Key Light address ("192.168.1.40", optionally with :port); null when none is set up.
+    public string? KeyLightAddress { get; set; }
+
+    // Switch the light off again when the session that lit it ends.
+    public bool KeyLightOffWhenDone { get; set; } = true;
+
     // The one-time "still running in the hidden icons" notice has been shown.
     public bool TrayHintShown { get; set; }
 }

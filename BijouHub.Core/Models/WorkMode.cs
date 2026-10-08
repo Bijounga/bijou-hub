@@ -16,5 +16,8 @@ public class WorkMode
     // Silences notifications while a session in this mode runs.
     public bool DoNotDisturb { get; set; }
 
+    // Switches on the Elgato Key Light while a session in this mode runs.
+    public bool KeyLight { get; set; }
+
     public override string ToString() => Name;
 }

@@ -117,8 +117,10 @@ public partial class MainWindow : Window
         SaveProjectNotes();
         HomePanel.IsVisible = panel == HomePanel;
         TasksPanel.IsVisible = panel == TasksPanel;
+        CalendarPanel.IsVisible = panel == CalendarPanel;
         NavHomeButton.Classes.Set("on", panel == HomePanel);
         NavTasksButton.Classes.Set("on", panel == TasksPanel);
+        NavCalendarButton.Classes.Set("on", panel == CalendarPanel);
         ModePanel.IsVisible = panel == ModePanel;
         ProjectPanel.IsVisible = panel == ProjectPanel;
         SessionPanel.IsVisible = panel == SessionPanel;

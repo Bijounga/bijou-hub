@@ -44,7 +44,7 @@ public partial class MainWindow
 
     private void InitGoals()
     {
-        _goalScope = _settingsStore.Load().GoalScope is { Length: > 0 } saved ? saved : EditingGroup;
+        _goalScope = EditingGroup; // always opens on Editing, whichever tab was last used
         DailyGoalsList.ItemsSource = _visibleGoals;
         DailyDoneList.ItemsSource = _visibleDone;
         DailyGoalsList.AddHandler(DragDrop.DragOverEvent, GoalList_DragOver);
@@ -512,7 +512,7 @@ public partial class MainWindow
         GoalScopeTabs.IsVisible = GoogleMode;
         if (!GoalScopeTabs.IsVisible) return;
 
-        foreach (var scope in groups.Append(AllScope))
+        foreach (var scope in groups.Prepend(AllScope))
         {
             var open = _dailyGoals.Count(g => !g.Done && InDay(g) && (scope == AllScope || GoogleGoalsSync.GroupOf(g) == scope));
             var selected = scope == _goalScope;
@@ -599,7 +599,7 @@ public partial class MainWindow
         // Ctrl+Tab / Ctrl+Shift+Tab cycle the goal tabs on Home (Cmd isn't free: it's tab switching on a Mac too).
         if (e.Key == Key.Tab && e.KeyModifiers.HasFlag(KeyModifiers.Control) && HomePanel.IsVisible && GoalScopeTabs.IsVisible)
         {
-            var scopes = ScopeGroups().Append(AllScope).ToList();
+            var scopes = ScopeGroups().Prepend(AllScope).ToList();
             var index = Math.Max(0, scopes.IndexOf(_goalScope));
             var step = e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? -1 : 1;
             SetGoalScope(scopes[(index + step + scopes.Count) % scopes.Count]);

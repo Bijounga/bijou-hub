@@ -20,6 +20,7 @@ public partial class ModeEditorWindow : Window
 
         NameBox.Text = mode.Name;
         DoNotDisturbBox.IsChecked = mode.DoNotDisturb;
+        KeyLightBox.IsChecked = mode.KeyLight;
         _launchItems = new ObservableCollection<LaunchItem>(mode.LaunchItems);
         _blockItems = new ObservableCollection<BlockItem>(mode.BlockItems);
         LaunchItemsList.ItemsSource = _launchItems;
@@ -27,6 +28,12 @@ public partial class ModeEditorWindow : Window
 
         ListReorderBehavior.Enable(LaunchItemsList, _launchItems);
         ListReorderBehavior.Enable(BlockItemsList, _blockItems);
+    }
+
+    private void SetUpKeyLight_Click(object sender, RoutedEventArgs e)
+    {
+        new KeyLightWindow { Owner = this }.ShowDialog();
+        if (KeyLightBox.IsChecked != true && !string.IsNullOrEmpty(new AppSettingsStore().Load().KeyLightAddress)) KeyLightBox.IsChecked = true;
     }
 
     private void AddApp_Click(object sender, RoutedEventArgs e)
@@ -126,6 +133,7 @@ public partial class ModeEditorWindow : Window
         Mode.LaunchItems = _launchItems.ToList();
         Mode.BlockItems = _blockItems.ToList();
         Mode.DoNotDisturb = DoNotDisturbBox.IsChecked == true;
+        Mode.KeyLight = KeyLightBox.IsChecked == true;
 
         DialogResult = true;
         Close();

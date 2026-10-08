@@ -41,6 +41,25 @@ public partial class MainWindow
 
     private void NavTasks_Click(object? sender, RoutedEventArgs e) => ShowTasks();
 
+    // Pulls the latest from Google Tasks now, rather than waiting for the next automatic check.
+    private async void TasksRefresh_Click(object? sender, RoutedEventArgs e)
+    {
+        TasksRefreshButton.IsEnabled = false;
+        TasksRefreshButton.Opacity = 0.5;
+        try
+        {
+            LoadDailyPlan();
+            RefreshTasksPage();
+            await RefreshGoogleGoalsAsync();
+            RefreshTasksPage();
+        }
+        finally
+        {
+            TasksRefreshButton.Opacity = 1;
+            TasksRefreshButton.IsEnabled = true;
+        }
+    }
+
     private void ShowTasks()
     {
         ModesList.SelectedItem = null;

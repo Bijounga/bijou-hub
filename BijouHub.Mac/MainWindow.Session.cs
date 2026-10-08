@@ -62,6 +62,8 @@ public partial class MainWindow
         }
 
         if (mode?.DoNotDisturb == true) MacDoNotDisturb.TurnOn();
+        if (mode?.KeyLight == true && _settingsStore.Load().KeyLightAddress is { Length: > 0 } lightAddress)
+            _ = KeyLightService.SessionStartedAsync(lightAddress);
 
         _activeMode = mode;
         _activeProject = project;
@@ -261,6 +263,7 @@ public partial class MainWindow
         _deckKeyId = null;
         StartPomodoro(null);
         MacDoNotDisturb.Restore();
+        EndKeyLight();
         BroadcastDeckState();
 
         if (project != null && askForNote)
@@ -341,10 +344,18 @@ public partial class MainWindow
         catch { /* nothing to clean up */ }
     }
 
+    // The session that switched the Key Light on is over: off again, if that's what the user wants.
+    private void EndKeyLight(bool wait = false)
+    {
+        var settings = _settingsStore.Load();
+        KeyLightService.SessionEnded(settings.KeyLightAddress, settings.KeyLightOffWhenDone, wait);
+    }
+
     private void FinalizeSessionSilently()
     {
         _tick?.Stop();
         MacDoNotDisturb.Restore();
+        EndKeyLight(wait: true);
         if (_activeSeconds > 0)
         {
             _logService.InsertSession(new SessionRecord

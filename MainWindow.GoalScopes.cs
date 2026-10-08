@@ -50,7 +50,7 @@ public partial class MainWindow
 
     private void InitGoalScopes()
     {
-        _goalScope = _settingsStore.Load().GoalScope is { Length: > 0 } saved ? saved : EditingGroup;
+        _goalScope = EditingGroup; // always opens on Editing, whichever tab was last used
         // Open goals in the list; finished ones in the Completed section below it.
         var open = (ListCollectionView)CollectionViewSource.GetDefaultView(_dailyGoals);
         open.Filter = item => item is DailyGoal goal && InScope(goal) && !goal.Done;
@@ -116,7 +116,7 @@ public partial class MainWindow
         }
         GoalScopeTabs.Visibility = Visibility.Visible;
 
-        foreach (var scope in groups.Append(AllScope))
+        foreach (var scope in groups.Prepend(AllScope))
         {
             var open = _dailyGoals.Count(g => !g.Done && InDay(g) && (scope == AllScope || GoogleGoalsSync.GroupOf(g) == scope));
             GoalScopeTabs.Children.Add(BuildScopeTab(scope, open, scope == _goalScope));
@@ -231,7 +231,7 @@ public partial class MainWindow
 
     private void CycleGoalScope(int direction)
     {
-        var scopes = ScopeGroups().Append(AllScope).ToList();
+        var scopes = ScopeGroups().Prepend(AllScope).ToList();
         var index = scopes.IndexOf(_goalScope);
         SetGoalScope(scopes[((index < 0 ? 0 : index) + direction + scopes.Count) % scopes.Count]);
     }

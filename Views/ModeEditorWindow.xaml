@@ -109,8 +109,15 @@
         </Grid>
 
         <DockPanel Grid.Row="5" Margin="0,16,0,0" LastChildFill="False">
-            <CheckBox x:Name="DoNotDisturbBox" Content="Do Not Disturb while this mode runs" VerticalAlignment="Center"
-                      ToolTip="Turns off Windows notifications for the session, and back on when it ends"/>
+            <StackPanel VerticalAlignment="Center">
+                <CheckBox x:Name="DoNotDisturbBox" Content="Do Not Disturb while this mode runs"
+                          ToolTip="Turns off Windows notifications for the session, and back on when it ends"/>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                    <CheckBox x:Name="KeyLightBox" Content="Turn on my Elgato Key Light" VerticalAlignment="Center"
+                              ToolTip="Switches the light on when a session starts in this mode"/>
+                    <Button Content="Set up…" Margin="10,0,0,0" Padding="8,2" Click="SetUpKeyLight_Click" AutomationProperties.Name="Set up Key Light"/>
+                </StackPanel>
+            </StackPanel>
             <Button Content="Save" Width="90" DockPanel.Dock="Right" Click="Save_Click"/>
             <Button Content="Cancel" Width="90" Margin="0,0,8,0" DockPanel.Dock="Right" Click="Cancel_Click"/>
         </DockPanel>

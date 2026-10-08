@@ -14,12 +14,19 @@ public partial class ModeEditorWindow : Window
 
     public ModeEditorWindow() : this(new WorkMode()) { }
 
+    private async void SetUpKeyLight_Click(object? sender, RoutedEventArgs e)
+    {
+        await new KeyLightWindow().ShowDialog<bool>(this);
+        if (KeyLightBox.IsChecked != true && !string.IsNullOrEmpty(new BijouHub.Services.AppSettingsStore().Load().KeyLightAddress)) KeyLightBox.IsChecked = true;
+    }
+
     public ModeEditorWindow(WorkMode mode)
     {
         InitializeComponent();
         _mode = mode;
         NameBox.Text = mode.Name;
         DoNotDisturbBox.IsChecked = mode.DoNotDisturb;
+        KeyLightBox.IsChecked = mode.KeyLight;
         _items = new ObservableCollection<LaunchItem>(mode.LaunchItems);
         ItemsList.ItemsSource = _items;
         Opened += (_, _) =>
@@ -72,6 +79,7 @@ public partial class ModeEditorWindow : Window
         _mode.Name = string.IsNullOrWhiteSpace(NameBox.Text) ? "New Mode" : NameBox.Text.Trim();
         _mode.LaunchItems = _items.ToList();
         _mode.DoNotDisturb = DoNotDisturbBox.IsChecked == true;
+        _mode.KeyLight = KeyLightBox.IsChecked == true;
         Close(true);
     }
 

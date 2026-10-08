@@ -226,7 +226,7 @@
                         <TextBlock Text="Home" FontSize="13"/>
                     </StackPanel>
                 </Button>
-                <Button Name="NavTasksButton" Classes="navrow" Click="NavTasks_Click" AutomationProperties.Name="Tasks" Margin="0,0,0,12">
+                <Button Name="NavTasksButton" Classes="navrow" Click="NavTasks_Click" AutomationProperties.Name="Tasks">
                     <DockPanel>
                         <TextBlock Name="NavTasksCount" DockPanel.Dock="Right" FontSize="11" Classes="muted" VerticalAlignment="Center"/>
                         <StackPanel Orientation="Horizontal" Spacing="10">
@@ -234,6 +234,12 @@
                             <TextBlock Text="Tasks" FontSize="13"/>
                         </StackPanel>
                     </DockPanel>
+                </Button>
+                <Button Name="NavCalendarButton" Classes="navrow" Click="NavCalendar_Click" AutomationProperties.Name="Calendar" Margin="0,0,0,12">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <controls:LineIcon Kind="calendar" Width="15" Height="15" Foreground="{DynamicResource MutedTextBrush}"/>
+                        <TextBlock Text="Calendar" FontSize="13"/>
+                    </StackPanel>
                 </Button>
                 </StackPanel>
 
@@ -591,6 +597,15 @@
                     </ScrollViewer>
 
 
+                    <!-- Calendar: a month of due dates and worked time, or the same as a timeline. -->
+                    <Grid Name="CalendarPanel" RowDefinitions="Auto,*" Margin="28,26,28,20" IsVisible="False">
+                        <DockPanel Margin="0,0,0,16">
+                            <StackPanel Name="CalendarControls" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Bottom"/>
+                            <TextBlock Name="CalendarTitle" Classes="h1" Foreground="{DynamicResource AccentBrush}"/>
+                        </DockPanel>
+                        <Grid Name="CalendarBody" Grid.Row="1"/>
+                    </Grid>
+
                     <!-- Tasks: every list, full size, like Microsoft To Do. -->
                     <Grid Name="TasksPanel" ColumnDefinitions="230,*" Margin="28,26,28,20" IsVisible="False">
                         <ScrollViewer Grid.Column="0" Margin="0,0,18,0">
@@ -598,6 +613,10 @@
                         </ScrollViewer>
                         <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
                             <DockPanel Margin="0,0,0,16">
+                                <Button Name="TasksRefreshButton" DockPanel.Dock="Right" Classes="ghost" Padding="6" Margin="4,0,0,0" VerticalAlignment="Bottom"
+                                        Click="TasksRefresh_Click" ToolTip.Tip="Refresh tasks" AutomationProperties.Name="Refresh tasks">
+                                    <controls:LineIcon Kind="refresh" Width="16" Height="16"/>
+                                </Button>
                                 <Button Name="TasksListMenuButton" DockPanel.Dock="Right" Classes="ghost" Padding="6" Margin="10,0,0,0" VerticalAlignment="Bottom"
                                         Click="TasksListMenu_Click" ToolTip.Tip="List options" AutomationProperties.Name="List options">
                                     <controls:LineIcon Kind="more" Width="16" Height="16"/>

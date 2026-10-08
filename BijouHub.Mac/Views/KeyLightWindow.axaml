@@ -1,0 +1,31 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="BijouHub.Mac.Views.KeyLightWindow"
+        Title="Elgato Key Light" Width="480" SizeToContent="Height" WindowStartupLocation="CenterOwner" CanResize="False"
+        Background="{DynamicResource BgBrush}">
+    <StackPanel Margin="20,18" Spacing="10">
+        <TextBlock Text="Switch your Key Light on when a session starts in a mode that has it ticked. It talks to the light over your home network; nothing goes online."
+                   TextWrapping="Wrap" FontSize="12" Classes="muted"/>
+
+        <StackPanel Spacing="4">
+            <TextBlock Text="LIGHT'S ADDRESS" Classes="label"/>
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBox Name="AddressBox" AutomationProperties.Name="Light address"/>
+                <Button Name="FindButton" Grid.Column="1" Content="Find my light" Margin="8,0,0,0" Click="Find_Click" AutomationProperties.Name="Find my light"/>
+            </Grid>
+        </StackPanel>
+        <TextBlock Name="StatusText" FontSize="12" TextWrapping="Wrap" Classes="muted" Text="Press Find my light, or type its address (like 192.168.1.40)."/>
+
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="Turn on" Click="TestOn_Click" AutomationProperties.Name="Test turn on"/>
+            <Button Content="Turn off" Click="TestOff_Click" AutomationProperties.Name="Test turn off"/>
+        </StackPanel>
+
+        <CheckBox Name="OffBox" Content="Turn it off again when the session ends" Margin="0,6,0,0"/>
+
+        <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,10,0,0">
+            <Button Content="Cancel" MinWidth="80" HorizontalContentAlignment="Center" Click="Cancel_Click"/>
+            <Button Grid.Column="2" Content="Save" Classes="primary" MinWidth="90" HorizontalContentAlignment="Center" Click="Save_Click" AutomationProperties.Name="Save"/>
+        </Grid>
+    </StackPanel>
+</Window>

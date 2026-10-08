@@ -490,6 +490,7 @@ public partial class MainWindow : Window
 
         EmptyState.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
+        CalendarPanel.Visibility = Visibility.Collapsed;
         ModeDetailPanel.Visibility = Visibility.Collapsed;
         ActiveSessionPanel.Visibility = Visibility.Collapsed;
         ProjectDetailPanel.Visibility = Visibility.Collapsed;
@@ -1213,6 +1214,8 @@ public partial class MainWindow : Window
         }
 
         if (mode?.DoNotDisturb == true) DoNotDisturb.TurnOn();
+        if (mode?.KeyLight == true && _settingsStore.Load().KeyLightAddress is { Length: > 0 } lightAddress)
+            _ = KeyLightService.SessionStartedAsync(lightAddress);
 
         _activeMode = mode;
         _activeProject = project;
@@ -1338,6 +1341,13 @@ public partial class MainWindow : Window
         catch { /* best effort — a missed checkpoint just means slightly more to lose on a crash */ }
     }
 
+    // The session that switched the Key Light on is over: off again, if that's what the user wants.
+    private void EndKeyLight(bool wait = false)
+    {
+        var settings = _settingsStore.Load();
+        KeyLightService.SessionEnded(settings.KeyLightAddress, settings.KeyLightOffWhenDone, wait);
+    }
+
     private static void ClearSessionCheckpoint()
     {
         try { File.Delete(SessionCheckpointPath); }
@@ -1351,6 +1361,7 @@ public partial class MainWindow : Window
     {
         _tickTimer.Stop();
         DoNotDisturb.Restore();
+        EndKeyLight(wait: true);
 
         if (_activeSeconds > 0)
         {
@@ -1655,6 +1666,7 @@ public partial class MainWindow : Window
         _deckKeyId = null;
         StartPomodoro(null);
         DoNotDisturb.Restore();
+        EndKeyLight();
         UpdateTaskbarProgress();
         BroadcastDeckState();
 

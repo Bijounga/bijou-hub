@@ -158,6 +158,12 @@
                             <TextBlock x:Name="NavTasksText" Text="Tasks" FontSize="13"/>
                         </DockPanel>
                     </Button>
+                    <Button x:Name="NavCalendarButton" Style="{StaticResource NavRow}" Background="Transparent" Click="NavCalendar_Click" AutomationProperties.Name="Calendar">
+                        <DockPanel>
+                            <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE787;" FontSize="14" Margin="0,0,10,0" Foreground="{DynamicResource MutedTextBrush}"/>
+                            <TextBlock Text="Calendar" FontSize="13"/>
+                        </DockPanel>
+                    </Button>
                 </StackPanel>
 
                 <DockPanel Grid.Row="1" Margin="4,0,0,6">
@@ -1026,6 +1032,19 @@
                 </StackPanel>
             </ScrollViewer>
 
+            <!-- Calendar: a month of due dates and worked time, or the same as a timeline. -->
+            <Grid x:Name="CalendarPanel" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <DockPanel Margin="0,0,0,16">
+                    <StackPanel x:Name="CalendarControls" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Bottom"/>
+                    <TextBlock x:Name="CalendarTitle" Style="{StaticResource HeadingText}" FontSize="28" Foreground="{DynamicResource AccentBrush}"/>
+                </DockPanel>
+                <Grid x:Name="CalendarBody" Grid.Row="1"/>
+            </Grid>
+
             <!-- Tasks: every list, full size, like Microsoft To Do. -->
             <Grid x:Name="TasksPanel" Visibility="Collapsed">
                 <Grid.ColumnDefinitions>
@@ -1042,6 +1061,12 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <DockPanel Margin="0,0,0,16">
+                        <Button x:Name="TasksRefreshButton" DockPanel.Dock="Right" Click="TasksRefresh_Click" Cursor="Hand" Focusable="False"
+                                VerticalAlignment="Bottom" Margin="4,0,0,2" ToolTip="Refresh tasks" AutomationProperties.Name="Refresh tasks">
+                            <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                            <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE72C;" FontSize="16" Margin="6,4"
+                                       Foreground="{DynamicResource MutedTextBrush}"/>
+                        </Button>
                         <Button x:Name="TasksListMenuButton" DockPanel.Dock="Right" Click="TasksListMenu_Click" Cursor="Hand" Focusable="False"
                                 VerticalAlignment="Bottom" Margin="10,0,0,2" ToolTip="List options" AutomationProperties.Name="List options">
                             <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>

@@ -90,9 +90,19 @@ public class SessionLogService
             if (_cache != null && key == _cacheKey) return _cache;
 
             var json = File.ReadAllText(_filePath);
-            _cache = string.IsNullOrWhiteSpace(json)
-                ? new List<SessionRecord>()
-                : JsonSerializer.Deserialize<List<SessionRecord>>(json) ?? new List<SessionRecord>();
+            try
+            {
+                _cache = string.IsNullOrWhiteSpace(json)
+                    ? new List<SessionRecord>()
+                    : JsonSerializer.Deserialize<List<SessionRecord>>(json) ?? new List<SessionRecord>();
+            }
+            catch (JsonException)
+            {
+                // A damaged history file mustn't stop the app opening: keep a copy beside it and start fresh.
+                try { File.Copy(_filePath, _filePath + $".damaged-{DateTime.Now:yyyyMMdd-HHmmss}", true); }
+                catch { /* the copy is a courtesy */ }
+                _cache = new List<SessionRecord>();
+            }
             _cacheKey = key;
             return _cache;
         }

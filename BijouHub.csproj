@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Assets\app-icon.ico</ApplicationIcon>
-    <Version>1.26.1</Version>
+    <Version>1.27.0</Version>
     <!-- Single-file publishes must carry WPF's native DLLs inside the exe, or it crashes at startup. -->
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
