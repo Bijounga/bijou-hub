@@ -755,16 +755,29 @@
                                                                  IsVisibleChanged="DailyGoalEditor_IsVisibleChanged"
                                                                  KeyDown="DailyGoalEditor_KeyDown" LostKeyboardFocus="DailyGoalEditor_LostKeyboardFocus"/>
                                                     </Grid>
-                                                    <Border Grid.Column="5" CornerRadius="9" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center"
-                                                            Background="{DynamicResource CardHoverBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                                                            Cursor="Hand" MouseLeftButtonUp="DailyGoalChip_Click" ToolTip="Change the linked project"
-                                                            Visibility="{Binding ChipText, Converter={StaticResource EmptyToCollapsedConverter}}">
+                                                    <Button Grid.Column="5" Margin="8,0,0,0" VerticalAlignment="Center" Cursor="Hand" Focusable="True"
+                                                            Click="DailyGoalChip_Click" ToolTip="Change the project"
+                                                            AutomationProperties.Name="{Binding ProjectChip, StringFormat=Project: {0}}">
+                                                      <Button.Template><ControlTemplate TargetType="Button"><ContentPresenter/></ControlTemplate></Button.Template>
+                                                      <Border CornerRadius="9" Padding="8,2"
+                                                            Background="{DynamicResource CardHoverBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                                                         <StackPanel Orientation="Horizontal">
                                                             <Ellipse Width="6" Height="6" Margin="0,1,5,0" VerticalAlignment="Center" Fill="{Binding ChannelColor}"
                                                                      Visibility="{Binding ChannelColor, Converter={StaticResource EmptyToCollapsedConverter}}"/>
-                                                            <TextBlock Text="{Binding ChipText}" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
+                                                            <TextBlock Text="{Binding ProjectChip}" FontSize="11" Foreground="{DynamicResource AccentBrush}">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding NoProject}" Value="True">
+                                                                                <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
                                                         </StackPanel>
-                                                    </Border>
+                                                      </Border>
+                                                    </Button>
                                                     <Button Grid.Column="6" Click="DailyGoalDelete_Click" Focusable="False" Cursor="Hand"
                                                             Margin="6,0,2,0" VerticalAlignment="Center" ToolTip="Delete" AutomationProperties.Name="Delete goal">
                                                         <Button.Template>
@@ -1127,12 +1140,15 @@
                                                         <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
                                                     </Style>
                                                 </StackPanel.Resources>
-                                                <StackPanel Orientation="Horizontal" Margin="0,0,12,0"
-                                                            Visibility="{Binding ChipText, Converter={StaticResource EmptyToCollapsedConverter}}">
-                                                    <Ellipse Width="6" Height="6" Margin="0,1,5,0" VerticalAlignment="Center" Fill="{Binding ChannelColor}"
-                                                             Visibility="{Binding ChannelColor, Converter={StaticResource EmptyToCollapsedConverter}}"/>
-                                                    <TextBlock Text="{Binding ChipText}"/>
-                                                </StackPanel>
+                                                <Button Margin="0,0,12,0" Cursor="Hand" Click="DailyGoalChip_Click" ToolTip="Change the project"
+                                                        AutomationProperties.Name="{Binding ProjectChip, StringFormat=Project: {0}}">
+                                                    <Button.Template><ControlTemplate TargetType="Button"><ContentPresenter/></ControlTemplate></Button.Template>
+                                                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                                                        <Ellipse Width="6" Height="6" Margin="0,1,5,0" VerticalAlignment="Center" Fill="{Binding ChannelColor}"
+                                                                 Visibility="{Binding ChannelColor, Converter={StaticResource EmptyToCollapsedConverter}}"/>
+                                                        <TextBlock Text="{Binding ProjectChip}"/>
+                                                    </StackPanel>
+                                                </Button>
                                                 <StackPanel Orientation="Horizontal" Cursor="Hand" MouseLeftButtonUp="DailyGoalDueChip_Click" ToolTip="Change the date and time"
                                                             Visibility="{Binding DueChip, Converter={StaticResource EmptyToCollapsedConverter}}" Background="Transparent">
                                                     <TextBlock Text="&#xE787;" FontFamily="{StaticResource IconFont}" FontSize="10" Margin="0,1,5,0"/>
@@ -1241,12 +1257,15 @@
                                                         <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
                                                     </Style>
                                                 </StackPanel.Resources>
-                                                <StackPanel Orientation="Horizontal" Margin="0,0,12,0"
-                                                            Visibility="{Binding ChipText, Converter={StaticResource EmptyToCollapsedConverter}}">
-                                                    <Ellipse Width="6" Height="6" Margin="0,1,5,0" VerticalAlignment="Center" Fill="{Binding ChannelColor}"
-                                                             Visibility="{Binding ChannelColor, Converter={StaticResource EmptyToCollapsedConverter}}"/>
-                                                    <TextBlock Text="{Binding ChipText}"/>
-                                                </StackPanel>
+                                                <Button Margin="0,0,12,0" Cursor="Hand" Click="DailyGoalChip_Click" ToolTip="Change the project"
+                                                        AutomationProperties.Name="{Binding ProjectChip, StringFormat=Project: {0}}">
+                                                    <Button.Template><ControlTemplate TargetType="Button"><ContentPresenter/></ControlTemplate></Button.Template>
+                                                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                                                        <Ellipse Width="6" Height="6" Margin="0,1,5,0" VerticalAlignment="Center" Fill="{Binding ChannelColor}"
+                                                                 Visibility="{Binding ChannelColor, Converter={StaticResource EmptyToCollapsedConverter}}"/>
+                                                        <TextBlock Text="{Binding ProjectChip}"/>
+                                                    </StackPanel>
+                                                </Button>
                                                 <StackPanel Orientation="Horizontal" Cursor="Hand" MouseLeftButtonUp="DailyGoalDueChip_Click" ToolTip="Change the date and time"
                                                             Visibility="{Binding DueChip, Converter={StaticResource EmptyToCollapsedConverter}}" Background="Transparent">
                                                     <TextBlock Text="&#xE787;" FontFamily="{StaticResource IconFont}" FontSize="10" Margin="0,1,5,0"/>

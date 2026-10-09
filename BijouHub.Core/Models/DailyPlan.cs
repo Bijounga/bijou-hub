@@ -45,7 +45,21 @@ public class DailyGoal : INotifyPropertyChanged
     public string? Group { get => _group; set => Set(ref _group, value); }
 
     // UI-only: the list label shown on the goal (adds the group on the All tab).
-    [JsonIgnore] public string? ChipText { get => _chipText; set => Set(ref _chipText, value); }
+    [JsonIgnore]
+    public string? ChipText
+    {
+        get => _chipText;
+        set
+        {
+            if (!Set(ref _chipText, value)) return;
+            OnPropertyChanged(nameof(ProjectChip));
+            OnPropertyChanged(nameof(NoProject));
+        }
+    }
+
+    // UI-only: what the clickable project chip says. A task with no project invites one.
+    [JsonIgnore] public string ProjectChip => string.IsNullOrEmpty(_chipText) ? "＋ Project" : _chipText;
+    [JsonIgnore] public bool NoProject => string.IsNullOrEmpty(_chipText);
 
     private string? _channelColor;
 

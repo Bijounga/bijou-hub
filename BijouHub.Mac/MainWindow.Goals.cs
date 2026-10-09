@@ -343,6 +343,30 @@ public partial class MainWindow
         goal.IsEditing = false;
     }
 
+    // The projects (and, with Google Tasks, the lists) a goal can belong to, the current one ticked.
+    private void AddTargetItems(Avalonia.Controls.ItemCollection items, DailyGoal goal)
+    {
+        var scope = !GoogleMode ? EditingGroup : _goalScope == AllScope ? AllScope : GoogleGoalsSync.GroupOf(goal);
+        foreach (var target in TargetsFor(scope))
+        {
+            var item = new MenuItem { Header = (IsTargetOf(target, goal) ? "✓  " : "     ") + target.Label };
+            item.Click += (_, _) => RelinkGoal(goal, target);
+            items.Add(item);
+        }
+    }
+
+    // The project chip (on Home and on the Tasks page) opens a picker of projects and lists.
+    private void GoalProjectChip_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: DailyGoal goal } chip)
+        {
+            var menu = new ContextMenu { Placement = Avalonia.Controls.PlacementMode.Bottom };
+            AddTargetItems(menu.Items, goal);
+            menu.Open(chip);
+        }
+        e.Handled = true;
+    }
+
     private void GoalMenu_Opening(object? sender, CancelEventArgs e)
     {
         if (sender is not ContextMenu { DataContext: DailyGoal goal } menu) return;
@@ -365,14 +389,8 @@ public partial class MainWindow
         due.Click += (_, _) => OpenDuePicker((menu.PlacementTarget as Control) ?? DailyGoalsList, goal);
         menu.Items.Add(due);
 
-        var link = new MenuItem { Header = GoogleMode ? "Move to list" : "Link to project" };
-        var scope = !GoogleMode ? EditingGroup : _goalScope == AllScope ? AllScope : GoogleGoalsSync.GroupOf(goal);
-        foreach (var target in TargetsFor(scope))
-        {
-            var item = new MenuItem { Header = (IsTargetOf(target, goal) ? "✓  " : "     ") + target.Label };
-            item.Click += (_, _) => RelinkGoal(goal, target);
-            link.Items.Add(item);
-        }
+        var link = new MenuItem { Header = GoogleMode ? "Project / list" : "Project" };
+        AddTargetItems(link.Items, goal);
         menu.Items.Add(link);
         menu.Items.Add(new Separator());
 

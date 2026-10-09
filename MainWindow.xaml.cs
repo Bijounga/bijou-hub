@@ -2003,16 +2003,30 @@ public partial class MainWindow : Window
         goal.IsEditing = false;
     }
 
-    private void DailyGoalChip_Click(object sender, MouseButtonEventArgs e)
+    // The project chip (on Home and on the Tasks page) opens a picker of projects and lists.
+    private void DailyGoalChip_Click(object sender, RoutedEventArgs e)
     {
-        // The chip opens the same menu as right-clicking the row.
-        if (sender is not FrameworkElement chip) return;
-        var row = (FrameworkElement)VisualTreeHelperParentGrid(chip);
-        if (row.ContextMenu == null) return;
-        BuildGoalMenu(row.ContextMenu, (DailyGoal)row.DataContext);
-        row.ContextMenu.PlacementTarget = chip;
-        row.ContextMenu.IsOpen = true;
+        if (sender is FrameworkElement { DataContext: DailyGoal goal } chip) ShowProjectPicker(goal, chip);
         e.Handled = true;
+    }
+
+    private void ShowProjectPicker(DailyGoal goal, FrameworkElement anchor)
+    {
+        var menu = new ContextMenu { PlacementTarget = anchor, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
+        AddTargetItems(menu.Items, goal);
+        menu.IsOpen = true;
+    }
+
+    // The projects (and, with Google Tasks, the lists) a goal can belong to, the current one ticked.
+    private void AddTargetItems(ItemCollection items, DailyGoal goal)
+    {
+        var menuScope = !GoogleMode ? EditingGroup : _goalScope == AllScope ? AllScope : GoogleGoalsSync.GroupOf(goal);
+        foreach (var target in TargetsFor(menuScope))
+        {
+            var item = new MenuItem { Header = target.Label, IsCheckable = true, IsChecked = IsTargetOf(target, goal) };
+            item.Click += (_, _) => RelinkGoal(goal, target);
+            items.Add(item);
+        }
     }
 
     private static DependencyObject VisualTreeHelperParentGrid(DependencyObject element)
@@ -2050,14 +2064,8 @@ public partial class MainWindow : Window
         due.Click += (_, _) => OpenDuePicker(menu.PlacementTarget ?? DailyGoalsList, goal);
         menu.Items.Add(due);
 
-        var link = new MenuItem { Header = GoogleMode ? "Move to list" : "Link to project" };
-        var menuScope = !GoogleMode ? EditingGroup : _goalScope == AllScope ? AllScope : GoogleGoalsSync.GroupOf(goal);
-        foreach (var target in TargetsFor(menuScope))
-        {
-            var item = new MenuItem { Header = target.Label, IsCheckable = true, IsChecked = IsTargetOf(target, goal) };
-            item.Click += (_, _) => RelinkGoal(goal, target);
-            link.Items.Add(item);
-        }
+        var link = new MenuItem { Header = GoogleMode ? "Project / list" : "Project" };
+        AddTargetItems(link.Items, goal);
         menu.Items.Add(link);
 
         menu.Items.Add(new Separator());

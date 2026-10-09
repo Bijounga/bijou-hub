@@ -177,15 +177,18 @@
                                                                     <controls:LineIcon Kind="calendar" Width="13" Height="13"/>
                                                                 </Button>
                                                             </Panel>
-                                                            <Border Grid.Column="5" Classes="chip" Margin="8,0,0,0" VerticalAlignment="Center"
-                                                                    IsVisible="{Binding ChipText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                            <Button Grid.Column="5" Margin="8,0,0,0" VerticalAlignment="Center" Cursor="Hand" Padding="0" Background="Transparent" BorderThickness="0"
+                                                                    Click="GoalProjectChip_Click" ToolTip.Tip="Change the project"
+                                                                    AutomationProperties.Name="{Binding ProjectChip, StringFormat='Project: {0}'}">
+                                                            <Border Classes="chip">
                                                                 <StackPanel Orientation="Horizontal" Spacing="5">
                                                                     <Ellipse Width="6" Height="6" VerticalAlignment="Center"
                                                                              Fill="{Binding ChannelColor, Converter={x:Static controls:HexBrushConverter.Instance}}"
                                                                              IsVisible="{Binding ChannelColor, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                                                                    <TextBlock Text="{Binding ChipText}" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
+                                                                    <TextBlock Text="{Binding ProjectChip}" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
                                                                 </StackPanel>
                                                             </Border>
+                                                            </Button>
                                                             <Button Grid.Column="6" Classes="ghost rowdelete" Padding="5" Margin="6,0,0,0" Click="GoalDelete_Click" ToolTip.Tip="Delete">
                                                                 <controls:LineIcon Kind="close" Width="11" Height="11"/>
                                                             </Button>
@@ -645,12 +648,13 @@
                                                                  PropertyChanged="GoalEditor_PropertyChanged"/>
                                                     </Panel>
                                                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,3,0,0">
-                                                        <StackPanel Orientation="Horizontal" Spacing="5" IsVisible="{Binding ChipText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                        <Button Padding="0" Background="Transparent" BorderThickness="0" Cursor="Hand" Click="GoalProjectChip_Click" ToolTip.Tip="Change the project"
+                                                                AutomationProperties.Name="{Binding ProjectChip, StringFormat='Project: {0}'}"><StackPanel Orientation="Horizontal" Spacing="5">
                                                             <Ellipse Width="6" Height="6" VerticalAlignment="Center"
                                                                      Fill="{Binding ChannelColor, Converter={x:Static controls:HexBrushConverter.Instance}}"
                                                                      IsVisible="{Binding ChannelColor, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                                                            <TextBlock Text="{Binding ChipText}" FontSize="11" Classes="muted"/>
-                                                        </StackPanel>
+                                                            <TextBlock Text="{Binding ProjectChip}" FontSize="11" Classes="muted"/>
+                                                        </StackPanel></Button>
                                                         <Border Classes="duechip" Classes.overdue="{Binding DueOverdue}" Background="Transparent" Cursor="Hand"
                                                                 PointerPressed="GoalDueChip_PointerPressed"
                                                                 IsVisible="{Binding DueChip, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
@@ -698,12 +702,13 @@
                                                                  PropertyChanged="GoalEditor_PropertyChanged"/>
                                                     </Panel>
                                                     <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,3,0,0">
-                                                        <StackPanel Orientation="Horizontal" Spacing="5" IsVisible="{Binding ChipText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                        <Button Padding="0" Background="Transparent" BorderThickness="0" Cursor="Hand" Click="GoalProjectChip_Click" ToolTip.Tip="Change the project"
+                                                                AutomationProperties.Name="{Binding ProjectChip, StringFormat='Project: {0}'}"><StackPanel Orientation="Horizontal" Spacing="5">
                                                             <Ellipse Width="6" Height="6" VerticalAlignment="Center"
                                                                      Fill="{Binding ChannelColor, Converter={x:Static controls:HexBrushConverter.Instance}}"
                                                                      IsVisible="{Binding ChannelColor, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                                                            <TextBlock Text="{Binding ChipText}" FontSize="11" Classes="muted"/>
-                                                        </StackPanel>
+                                                            <TextBlock Text="{Binding ProjectChip}" FontSize="11" Classes="muted"/>
+                                                        </StackPanel></Button>
                                                         <Border Classes="duechip" Classes.overdue="{Binding DueOverdue}" Background="Transparent" Cursor="Hand"
                                                                 PointerPressed="GoalDueChip_PointerPressed"
                                                                 IsVisible="{Binding DueChip, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
