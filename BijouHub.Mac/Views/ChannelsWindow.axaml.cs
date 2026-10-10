@@ -14,12 +14,18 @@ public partial class ChannelsWindow : Window
 {
     private readonly List<Channel> _channels;
     private Channel? _focusNew;
+    private readonly IReadOnlyDictionary<string, string> _hints;
 
     public ChannelsWindow() : this(Array.Empty<Channel>()) { }
 
-    public ChannelsWindow(IEnumerable<Channel> channels, bool addOne = false)
+    // `hints` (channel id → the projects in it) is for restoring channels whose names didn't reach
+    // this computer: each unnamed one shows which projects it holds, so you know which is which.
+    public ChannelsWindow(IEnumerable<Channel> channels, bool addOne = false, IReadOnlyDictionary<string, string>? hints = null)
     {
         InitializeComponent();
+        _hints = hints ?? new Dictionary<string, string>();
+        if (_hints.Count > 0)
+            IntroText.Text = "These channels exist on your other computer but their names didn't arrive here. Name each one: the projects in it are listed so you can tell which is which.";
         // A working copy: Cancel leaves everything as it was.
         _channels = channels.Select(c => new Channel { Id = c.Id, Name = c.Name, Color = c.Color }).ToList();
         if (addOne) AddChannel();
@@ -86,11 +92,16 @@ public partial class ChannelsWindow : Window
         Grid.SetColumn(delete, 1);
         line.Children.Add(delete);
 
+        var stack = new StackPanel { Spacing = 8 };
+        if (_hints.TryGetValue(channel.Id, out var projects))
+            stack.Children.Add(new TextBlock { Text = "Holds: " + projects, FontSize = 11, TextWrapping = TextWrapping.Wrap, Classes = { "muted" } });
+        stack.Children.Add(line);
+        stack.Children.Add(swatches);
         return new Border
         {
             Classes = { "card" },
             Padding = new Thickness(10, 10, 10, 8),
-            Child = new StackPanel { Spacing = 8, Children = { line, swatches } }
+            Child = stack
         };
     }
 

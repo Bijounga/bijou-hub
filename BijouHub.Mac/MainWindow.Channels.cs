@@ -72,6 +72,33 @@ public partial class MainWindow
             _rebuildingProjectRows = false;
         }
         ApplyGoalChannelColors();
+        RefreshChannelsNotice();
+    }
+
+    // Projects can point at channels that aren't saved on this computer (the channel list didn't
+    // sync). Say so, and let the user name them again: the projects keep their channel ids, so
+    // the sections come straight back.
+    private void RefreshChannelsNotice()
+    {
+        var orphans = ChannelRows.Orphans(_projects, _channels);
+        ChannelsNotice.IsVisible = orphans.Count > 0;
+        if (orphans.Count > 0) ToolTip.SetTip(ChannelsNotice, "Looked for: " + _channelStore.Describe());
+    }
+
+    private async void ChannelsNotice_Click(object? sender, RoutedEventArgs e)
+    {
+        var channels = _channelStore.Load();
+        var hints = new Dictionary<string, string>();
+        foreach (var (id, names) in ChannelRows.Orphans(_projects, channels))
+        {
+            channels.Add(new Channel { Id = id, Name = "", Color = ChannelPalette.Next(channels) });
+            hints[id] = string.Join(", ", names);
+        }
+        var window = new ChannelsWindow(channels, false, hints);
+        if (!await window.ShowDialog<bool>(this)) return;
+        ReloadChannels();
+        RebuildProjectRows();
+        ShowBoard();
     }
 
     // Channel headers aren't selectable projects: they get a plain section-title look.

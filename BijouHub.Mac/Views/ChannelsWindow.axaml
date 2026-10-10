@@ -4,7 +4,7 @@
         Title="Channels" Width="520" SizeToContent="Height" MaxHeight="640" WindowStartupLocation="CenterOwner" CanResize="False"
         Background="{DynamicResource BgBrush}">
     <StackPanel Margin="20,18" Spacing="10">
-        <TextBlock Text="Group your projects by channel. Each gets a color that shows up in the sidebar, on the board and on its tasks."
+        <TextBlock Name="IntroText" Text="Group your projects by channel. Each gets a color that shows up in the sidebar, on the board and on its tasks."
                    TextWrapping="Wrap" FontSize="12" Classes="muted"/>
         <ScrollViewer MaxHeight="360">
             <StackPanel Name="Rows" Spacing="8"/>

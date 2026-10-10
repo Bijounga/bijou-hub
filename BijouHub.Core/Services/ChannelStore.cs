@@ -34,6 +34,20 @@ public class ChannelStore
         }
     }
 
+    // Where the channel list is looked for and what's there, for the "channels missing" notice.
+    public string Describe()
+    {
+        try
+        {
+            var info = new FileInfo(_filePath);
+            return info.Exists ? $"{_filePath} ({info.Length} bytes)" : $"{_filePath} (no such file)";
+        }
+        catch (Exception ex)
+        {
+            return $"{_filePath} ({ex.Message})";
+        }
+    }
+
     // What's on disk right now, for noticing a change that synced in from another computer.
     public string Fingerprint()
     {
@@ -64,6 +78,18 @@ public static class ChannelRows
             project.ChannelName = channel?.Name;
             project.ChannelColor = channel?.Color;
         }
+    }
+
+    // Channels that projects point at but that aren't in the list: what happens when the channel
+    // list hasn't reached this computer. Each is its id with the names of the projects in it.
+    public static List<(string Id, List<string> Projects)> Orphans(IEnumerable<Project> projects, IReadOnlyList<Channel> channels)
+    {
+        var known = channels.Select(c => c.Id).ToHashSet();
+        return projects
+            .Where(p => !string.IsNullOrEmpty(p.ChannelId) && !known.Contains(p.ChannelId))
+            .GroupBy(p => p.ChannelId!)
+            .Select(g => (g.Key, g.Select(p => p.Name).ToList()))
+            .ToList();
     }
 
     // Marks (or unmarks) a project as its channel's main project; marking one unmarks any other

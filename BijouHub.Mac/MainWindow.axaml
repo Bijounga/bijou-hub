@@ -267,12 +267,19 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <DockPanel Grid.Row="3" Margin="4,14,0,6">
+                <StackPanel Grid.Row="3">
+                <DockPanel Margin="4,14,0,6">
                     <Button DockPanel.Dock="Right" Classes="ghost" Padding="5" Click="NewProject_Click" ToolTip.Tip="New project">
                         <controls:LineIcon Kind="add" Width="12" Height="12"/>
                     </Button>
                     <TextBlock Name="ProjectsLabel" Classes="label" Text="PROJECTS" VerticalAlignment="Center"/>
                 </DockPanel>
+                <!-- Shown when projects belong to channels this computer doesn't have the names of. -->
+                <Button Name="ChannelsNotice" IsVisible="False" Classes="ghost" Click="ChannelsNotice_Click" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                        Padding="8,6" Margin="0,0,0,6" AutomationProperties.Name="Restore channels">
+                    <TextBlock Text="Channel names missing here. Click to restore them." FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource HazardBrush}"/>
+                </Button>
+                </StackPanel>
                 <ListBox Name="ProjectsList" Grid.Row="4" Classes="nav" SelectionChanged="ProjectsList_SelectionChanged" ContainerPrepared="ProjectsList_ContainerPrepared">
                     <ListBox.ContextMenu>
                         <ContextMenu Opening="ProjectsMenu_Opening"/>
