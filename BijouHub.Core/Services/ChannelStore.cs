@@ -10,16 +10,41 @@ public class ChannelStore
 {
     private readonly string _filePath = Path.Combine(DataPaths.SyncDir, "channels.json");
 
+    // A file in a cloud-synced folder can be briefly unreadable (still downloading, locked by the
+    // sync client), so a failed read is retried; if it still fails, the reason goes to errors.log
+    // instead of silently showing no channels.
     public List<Channel> Load()
+    {
+        if (!File.Exists(_filePath)) return new List<Channel>();
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                return JsonSerializer.Deserialize<List<Channel>>(File.ReadAllText(_filePath)) ?? new List<Channel>();
+            }
+            catch (Exception ex) when (attempt < 3 && ex is IOException or UnauthorizedAccessException)
+            {
+                Thread.Sleep(200);
+            }
+            catch (Exception ex)
+            {
+                ErrorLog.Write($"Couldn't read channels from {_filePath}: {ex.GetType().Name}: {ex.Message}");
+                return new List<Channel>();
+            }
+        }
+    }
+
+    // What's on disk right now, for noticing a change that synced in from another computer.
+    public string Fingerprint()
     {
         try
         {
-            if (!File.Exists(_filePath)) return new List<Channel>();
-            return JsonSerializer.Deserialize<List<Channel>>(File.ReadAllText(_filePath)) ?? new List<Channel>();
+            var info = new FileInfo(_filePath);
+            return info.Exists ? $"{info.Length}:{info.LastWriteTimeUtc.Ticks}" : "";
         }
         catch
         {
-            return new List<Channel>();
+            return "";
         }
     }
 

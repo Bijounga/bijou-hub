@@ -2560,7 +2560,7 @@ public partial class MainWindow : Window
         if (!hasExistingSyncedData)
         {
             // First time pointing here: bring existing data along so nothing's lost.
-            foreach (var fileName in new[] { "projects.json", "sessions.json" })
+            foreach (var fileName in new[] { "projects.json", "channels.json", "events.json", "sessions.json", "daily.json" })
             {
                 var source = System.IO.Path.Combine(DataPaths.SyncDir, fileName);
                 var dest = System.IO.Path.Combine(chosen, fileName);

@@ -41,6 +41,18 @@ public partial class MainWindow
         _boardBuiltAt = DateTime.MinValue;
     }
 
+    // Quick add from the project page; weights and sub-goals are still edited in the project editor.
+    private async void AddProjectGoal_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_detailProject is not Project project) return;
+        var name = (await PromptWindow.Ask(this, "Add goal", $"New goal for \"{project.Name}\""))?.Trim();
+        if (string.IsNullOrEmpty(name)) return;
+        project.Goals.Add(new Goal { Name = name, Weight = 100 });
+        _projectStore.Save(_projects.ToList());
+        _boardBuiltAt = DateTime.MinValue;
+        ShowProject(project);
+    }
+
     private void PersistProjects()
     {
         _projectStore.Save(_projects.ToList());

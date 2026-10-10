@@ -31,6 +31,22 @@ public partial class MainWindow
         _boardFilter = settings.BoardChannelFilter ?? "";
         _channels = _channelStore.Load();
         RebuildProjectRows();
+
+        // Channels edited on another computer arrive through the sync folder; look again when the window comes back to the front.
+        _channelsSeen = _channelStore.Fingerprint();
+        Activated += (_, _) => RefreshChannelsIfChanged();
+    }
+
+    private string _channelsSeen = "";
+
+    private void RefreshChannelsIfChanged()
+    {
+        var now = _channelStore.Fingerprint();
+        if (now == _channelsSeen) return;
+        _channelsSeen = now;
+        ReloadChannels();
+        RebuildProjectRows();
+        if (HomePanel.IsVisible) ShowBoard();
     }
 
     private void ReloadChannels()

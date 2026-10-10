@@ -36,6 +36,22 @@ public partial class MainWindow
         _channels = _channelStore.Load();
         ProjectsList.ContextMenu = new ContextMenu(); // filled when it opens (it depends on what's under the cursor)
         RebuildProjectRows();
+
+        // Channels edited on another computer arrive through the sync folder; look again when the window comes back to the front.
+        _channelsSeen = _channelStore.Fingerprint();
+        Activated += (_, _) => RefreshChannelsIfChanged();
+    }
+
+    private string _channelsSeen = "";
+
+    private void RefreshChannelsIfChanged()
+    {
+        var now = _channelStore.Fingerprint();
+        if (now == _channelsSeen) return;
+        _channelsSeen = now;
+        ReloadChannels();
+        RebuildProjectRows();
+        if (HomePanel.Visibility == Visibility.Visible) ShowBoard();
     }
 
     private void ReloadChannels()

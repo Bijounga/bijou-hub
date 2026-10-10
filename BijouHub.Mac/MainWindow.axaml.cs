@@ -274,7 +274,7 @@ public partial class MainWindow : Window
         if (!hasData)
         {
             // First time pointing here: bring the existing data along so nothing's lost.
-            foreach (var file in new[] { "projects.json", "sessions.json", "daily.json" })
+            foreach (var file in new[] { "projects.json", "channels.json", "events.json", "sessions.json", "daily.json" })
             {
                 var source = Path.Combine(DataPaths.SyncDir, file);
                 var target = Path.Combine(chosen, file);

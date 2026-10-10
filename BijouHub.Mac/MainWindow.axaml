@@ -573,6 +573,10 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+                            <Button Classes="ghost" Padding="10,6" Margin="0,-12,0,20" HorizontalAlignment="Left" Click="AddProjectGoal_Click"
+                                    ToolTip.Tip="Add a goal to this project" AutomationProperties.Name="Add goal">
+                                <StackPanel Orientation="Horizontal" Spacing="8"><controls:LineIcon Kind="add" Width="14" Height="14"/><TextBlock Text="Add goal"/></StackPanel>
+                            </Button>
 
                             <WrapPanel>
                                 <Button Classes="primary" Padding="18,8" Margin="0,0,8,8" Click="StartProjectSession_Click">
