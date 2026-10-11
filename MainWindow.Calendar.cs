@@ -33,7 +33,7 @@ public partial class MainWindow
 
     private void NavCalendar_Click(object sender, RoutedEventArgs e) => ShowCalendar();
 
-    private void ShowCalendar()
+    private void ShowCalendar(DateTime? day = null, CalendarMode? mode = null)
     {
         HideAllPanels();
         ModesList.SelectedItem = null;
@@ -45,8 +45,9 @@ public partial class MainWindow
         SetNavHighlight();
 
         _events = _eventStore.Load();
-        _calMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-        _calDay = DateTime.Today;
+        _calDay = (day ?? DateTime.Today).Date;
+        _calMonth = new DateTime(_calDay.Year, _calDay.Month, 1);
+        if (mode != null) _calMode = mode.Value;
         _gridScroll = -1;
         _editEvent = null;
         _lastDeletedEvent = null;
@@ -326,7 +327,7 @@ public partial class MainWindow
         return card;
     }
 
-    private UIElement BuildEntryRow(ActivityEntry entry)
+    private UIElement BuildEntryRow(ActivityEntry entry, bool interactive = true)
     {
         var row = new Grid { Margin = new Thickness(0, 0, 0, 9) };
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(18) });
@@ -365,7 +366,7 @@ public partial class MainWindow
         row.Children.Add(text);
 
         // An event opens in the editor (on its day).
-        if (entry.Kind == ActivityKind.Event && entry.SourceId != null)
+        if (interactive && entry.Kind == ActivityKind.Event && entry.SourceId != null)
         {
             var id = entry.SourceId;
             var open = new Button

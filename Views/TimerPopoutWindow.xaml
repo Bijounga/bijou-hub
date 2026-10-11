@@ -1,13 +1,15 @@
 <Window x:Class="BijouHub.Views.TimerPopoutWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:BijouHub.Views"
+        Title="BijouHub Timer"
         WindowStyle="None"
         ResizeMode="NoResize"
         ShowInTaskbar="False"
         Topmost="True"
         SizeToContent="Manual"
-        Width="190" Height="120"
-        MinWidth="120" MinHeight="76"
+        Width="220" Height="164"
+        MinWidth="140" MinHeight="100"
         WindowStartupLocation="Manual"
         Background="{DynamicResource PopoutScreenBrush}"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
@@ -46,7 +48,9 @@
                 </Grid>
 
                 <TextBlock x:Name="StatusText" Grid.Row="2" FontSize="11" Foreground="{DynamicResource TimerScreenInkBrush}"
-                           HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                           HorizontalAlignment="Center" Margin="0,0,0,8"/>
+
+                <local:SessionTaskPicker x:Name="TaskPicker" Grid.Row="3" Margin="0,0,0,10"/>
 
                 <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center">
                     <Button Content="Finish" Padding="10,4" Click="Finish_Click"/>

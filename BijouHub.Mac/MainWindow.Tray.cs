@@ -73,6 +73,7 @@ public partial class MainWindow
 
         Add("Open BijouHub", BringToFront);
         Add("Quick Capture", ShowQuickCapture);
+        Add(_tasksPopout == null ? "Task List" : "Close Task List", ToggleTasksPopout);
         if (IsSessionActive)
         {
             menu.Items.Add(new NativeMenuItemSeparator());

@@ -9,14 +9,22 @@ public partial class TimerPopoutWindow : Window
 {
     public event Action? DockRequested;
     public event Action? FinishRequested;
+    public event Action<BijouHub.Models.DailyGoal?>? TaskPicked;
+    public event Action<string>? TaskAdded;
+    public event Action? TaskDone;
 
     public TimerPopoutWindow()
     {
         InitializeComponent();
+        TaskPicker.TaskPicked += goal => TaskPicked?.Invoke(goal);
+        TaskPicker.TaskAdded += text => TaskAdded?.Invoke(text);
+        TaskPicker.DoneClicked += () => TaskDone?.Invoke();
         var workArea = SystemParameters.WorkArea;
         Left = workArea.Right - Width - 16;
         Top = workArea.Top + 16;
     }
+
+    public void SetTasks(IReadOnlyList<BijouHub.Models.DailyGoal> tasks, BijouHub.Models.DailyGoal? selected) => TaskPicker.SetTasks(tasks, selected);
 
     public void UpdateDisplay(string name, string timerText, string statusText)
     {

@@ -1,0 +1,89 @@
+<Window x:Class="BijouHub.Views.TasksPopoutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="BijouHub Tasks"
+        WindowStyle="None"
+        ResizeMode="CanResizeWithGrip"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Width="340" Height="480"
+        MinWidth="260" MinHeight="300"
+        WindowStartupLocation="Manual"
+        Background="{DynamicResource BgBrush}">
+    <Border BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5">
+        <Grid Margin="12,10,12,12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Drag here. Tasks / Calendar on the left, close on the right. -->
+            <DockPanel Grid.Row="0" Background="Transparent" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Button DockPanel.Dock="Right" Click="Close_Click" Focusable="False" Cursor="Hand" ToolTip="Close the task list"
+                        AutomationProperties.Name="Close task list">
+                    <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent" Padding="6,2"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                    <TextBlock Text="✕" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"/>
+                </Button>
+                <StackPanel x:Name="HeaderPills" Orientation="Horizontal"/>
+            </DockPanel>
+
+            <!-- Section tabs (Tasks) or the day picker (Calendar). -->
+            <StackPanel x:Name="TopBar" Grid.Row="1" Margin="0,10,0,6"/>
+
+            <Grid Grid.Row="2">
+                <ScrollViewer x:Name="TasksScroll" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <ItemsControl x:Name="TasksList" Focusable="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox IsChecked="{Binding Done, Mode=TwoWay}" VerticalAlignment="Top" Margin="0,2,10,0"
+                                                  AutomationProperties.Name="{Binding Text}"/>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="13"/>
+                                            <TextBlock Text="{Binding DueChip}" FontSize="11" Foreground="{DynamicResource MutedTextBrush}"
+                                                       Visibility="{Binding DueChip, Converter={StaticResource EmptyToCollapsedConverter}}"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Text="{Binding ChipText}" FontSize="11" Margin="8,2,0,0" VerticalAlignment="Top"
+                                                   Foreground="{DynamicResource AccentBrush}" TextTrimming="CharacterEllipsis" MaxWidth="90"
+                                                   Visibility="{Binding ChipText, Converter={StaticResource EmptyToCollapsedConverter}}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock x:Name="EmptyText" Text="Nothing left here." FontSize="12" Foreground="{DynamicResource MutedTextBrush}"
+                                   Margin="0,6,0,0" Visibility="Collapsed"/>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <ScrollViewer x:Name="AgendaScroll" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+                    <StackPanel x:Name="AgendaHost"/>
+                </ScrollViewer>
+            </Grid>
+
+            <Grid Grid.Row="3" Margin="0,8,16,0">
+                <Grid x:Name="AddRow">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="AddBox" Padding="8,5" VerticalContentAlignment="Center" KeyDown="AddBox_KeyDown"
+                             AutomationProperties.AutomationId="PopoutAddBox" AutomationProperties.Name="Add a task"/>
+                    <TextBlock x:Name="AddHint" Text="＋  Add a task" IsHitTestVisible="False" Margin="10,0,0,0" VerticalAlignment="Center"
+                               FontSize="13" Foreground="{DynamicResource MutedTextBrush}"/>
+                    <Button Grid.Column="1" Content="＋" Padding="11,5" Margin="6,0,0,0" Click="AddButton_Click"
+                            ToolTip="Add the task" AutomationProperties.Name="Add task from pop-out"/>
+                </Grid>
+                <Button x:Name="OpenCalendarButton" Content="Open in Calendar ›" Padding="10,5" Visibility="Collapsed"
+                        HorizontalAlignment="Left" Click="OpenCalendar_Click" AutomationProperties.Name="Open in Calendar"/>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

@@ -81,6 +81,7 @@ public partial class MainWindow : Window
 
             if (NotesPanel.Visibility == Visibility.Visible) SaveFreeformNotes();
             _timerPopout?.Close();
+            _tasksPopout?.Close();
             _deckBridge.Dispose();
             if (_notesSaveTimer?.IsEnabled == true) SaveDailyPlan(); // notes typed in the last second
             _dailyStore.Flush(); // goal saves are written in the background
@@ -129,6 +130,7 @@ public partial class MainWindow : Window
         InitNotesToolbar();
         InitDailyGoals();
         InitDue();
+        InitSessionTask();
         InitTasksPage();
         InitGoogleTasks();
         InitGoalScopes();
@@ -536,6 +538,7 @@ public partial class MainWindow : Window
 
         var popout = new TimerPopoutWindow();
         popout.UpdateDisplay(_activeProject?.Name ?? _activeMode?.Name ?? "Session", TimerDisplay.Text, ActiveStatus.Text);
+        WireSessionTaskPopout(popout);
         popout.DockRequested += () => popout.Close();
         popout.FinishRequested += () =>
         {
@@ -566,6 +569,7 @@ public partial class MainWindow : Window
         if (_activeProject != null)
             LoadFreeformNotes(_activeProject);
         UpdateNotesPanelVisibility();
+        RefreshSessionTaskPickers();
     }
 
     private static void FadeIn(UIElement element)
@@ -1220,6 +1224,8 @@ public partial class MainWindow : Window
         _activeMode = mode;
         _activeProject = project;
         _activeGoal = goal;
+        _activeTask = null;
+        RefreshSessionTaskPickers();
         StartPomodoro(pomodoro);
         _targetMinutes = pomodoro == null ? targetMinutes : null;
         _countDownMode = countDown && _targetMinutes != null;
@@ -1333,6 +1339,8 @@ public partial class MainWindow : Window
             ProjectName = _activeProject?.Name,
             GoalId = _activeGoal?.Id,
             GoalName = _activeGoal?.Name,
+            TaskId = _activeTask?.Id,
+            TaskName = _activeTask?.Text,
             ActiveSeconds = _activeSeconds,
             IdleSeconds = _idleSeconds
         };
@@ -1376,6 +1384,8 @@ public partial class MainWindow : Window
                 ProjectName = _activeProject?.Name,
                 GoalId = _activeGoal?.Id,
                 GoalName = _activeGoal?.Name,
+                TaskId = _activeTask?.Id,
+                TaskName = _activeTask?.Text,
                 Note = null
             });
         }
@@ -1406,6 +1416,8 @@ public partial class MainWindow : Window
                     ProjectName = checkpoint.ProjectName,
                     GoalId = checkpoint.GoalId,
                     GoalName = checkpoint.GoalName,
+                    TaskId = checkpoint.TaskId,
+                    TaskName = checkpoint.TaskName,
                     Note = "Recovered after BijouHub closed unexpectedly"
                 });
 
@@ -1651,6 +1663,8 @@ public partial class MainWindow : Window
             ProjectName = finishedProject?.Name,
             GoalId = _activeGoal?.Id,
             GoalName = _activeGoal?.Name,
+            TaskId = _activeTask?.Id,
+            TaskName = _activeTask?.Text,
             Note = note
         });
         InvalidateTodayLogged();
@@ -1660,6 +1674,7 @@ public partial class MainWindow : Window
         _activeMode = null;
         _activeProject = null;
         _activeGoal = null;
+        _activeTask = null;
         _targetMinutes = null;
         _countDownMode = false;
         _paused = false;
@@ -1713,6 +1728,8 @@ public partial class MainWindow : Window
             if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Move && !_reorderingGoals)
                 PinStarredGoals();
             SaveDailyPlan();
+            RefreshSessionTaskPickers();
+            RefreshTasksPopout();
         };
 
         // The dropdown's popup takes focus outside the bar; keep the picker shown, then hand typing back.
@@ -1798,6 +1815,11 @@ public partial class MainWindow : Window
             or nameof(DailyGoal.DueChip) or nameof(DailyGoal.DueOverdue) or nameof(DailyGoal.ChannelColor)) return;
         if (e.PropertyName == nameof(DailyGoal.Starred)) PinStarredGoals();
         SaveDailyPlan();
+        if (e.PropertyName is nameof(DailyGoal.Done) or nameof(DailyGoal.Text) or nameof(DailyGoal.Due) or nameof(DailyGoal.Group))
+        {
+            RefreshSessionTaskPickers();
+            RefreshTasksPopout();
+        }
         if (sender is DailyGoal goal) PushGoalChange(goal, e.PropertyName);
     }
 

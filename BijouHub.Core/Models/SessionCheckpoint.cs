@@ -11,6 +11,8 @@ public class SessionCheckpoint
     public string? ProjectName { get; set; }
     public string? GoalId { get; set; }
     public string? GoalName { get; set; }
+    public string? TaskId { get; set; }
+    public string? TaskName { get; set; }
     public int ActiveSeconds { get; set; }
     public int IdleSeconds { get; set; }
 }

@@ -68,6 +68,8 @@ public partial class MainWindow
         _activeMode = mode;
         _activeProject = project;
         _activeGoal = goal;
+        _activeTask = null;
+        RefreshSessionTaskPickers();
         StartPomodoro(pomodoro);
         _targetMinutes = pomodoro == null ? targetMinutes : null;
         _countDownMode = countDown && _targetMinutes != null;
@@ -97,6 +99,7 @@ public partial class MainWindow
     {
         _detailProject = _activeProject;
         ShowOnly(SessionPanel);
+        RefreshSessionTaskPickers();
     }
 
     private void UpdateSessionContext()
@@ -252,11 +255,14 @@ public partial class MainWindow
             ProjectId = project?.Id,
             ProjectName = project?.Name,
             GoalId = _activeGoal?.Id,
-            GoalName = _activeGoal?.Name
+            GoalName = _activeGoal?.Name,
+            TaskId = _activeTask?.Id,
+            TaskName = _activeTask?.Text
         };
         _activeMode = null;
         _activeProject = null;
         _activeGoal = null;
+        _activeTask = null;
         _targetMinutes = null;
         _countDownMode = false;
         _paused = false;
@@ -301,6 +307,7 @@ public partial class MainWindow
         if (_popout != null) return;
 
         _popout = new TimerPopoutWindow();
+        WireSessionTaskPopout(_popout);
         _popout.Update(SessionTitleText.Text ?? "", TimerDisplay, SessionStatusText.Text ?? "");
         _popout.PauseRequested += TogglePause;
         _popout.FinishRequested += () => _ = FinishSessionAsync(askForNote: true);
@@ -331,6 +338,8 @@ public partial class MainWindow
             ProjectName = _activeProject?.Name,
             GoalId = _activeGoal?.Id,
             GoalName = _activeGoal?.Name,
+            TaskId = _activeTask?.Id,
+            TaskName = _activeTask?.Text,
             ActiveSeconds = _activeSeconds,
             IdleSeconds = _idleSeconds
         };
@@ -368,7 +377,9 @@ public partial class MainWindow
                 ProjectId = _activeProject?.Id,
                 ProjectName = _activeProject?.Name,
                 GoalId = _activeGoal?.Id,
-                GoalName = _activeGoal?.Name
+                GoalName = _activeGoal?.Name,
+                TaskId = _activeTask?.Id,
+                TaskName = _activeTask?.Text
             });
         }
         ClearCheckpoint();
@@ -393,6 +404,8 @@ public partial class MainWindow
                     ProjectName = checkpoint.ProjectName,
                     GoalId = checkpoint.GoalId,
                     GoalName = checkpoint.GoalName,
+                    TaskId = checkpoint.TaskId,
+                    TaskName = checkpoint.TaskName,
                     Note = "Recovered after BijouHub closed unexpectedly"
                 });
                 var minutes = Math.Max(1, checkpoint.ActiveSeconds / 60);

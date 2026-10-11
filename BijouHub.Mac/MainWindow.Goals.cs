@@ -54,6 +54,8 @@ public partial class MainWindow
         {
             if (_loadingDailyPlan || _applyingRemote) return;
             SaveDailyPlan();
+            RefreshSessionTaskPickers();
+            RefreshTasksPopout();
         };
 
         _notesSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -137,6 +139,12 @@ public partial class MainWindow
         // Ticking a goal moves it between the open list and Completed (after the click finishes).
         if (e.PropertyName == nameof(DailyGoal.Done)) Dispatcher.UIThread.Post(SyncVisibleGoals);
         SaveDailyPlan();
+        if (e.PropertyName is nameof(DailyGoal.Done) or nameof(DailyGoal.Text) or nameof(DailyGoal.Due) or nameof(DailyGoal.Group))
+            Dispatcher.UIThread.Post(() =>
+            {
+                RefreshSessionTaskPickers();
+                RefreshTasksPopout();
+            });
         if (sender is DailyGoal goal) PushGoalChange(goal, e.PropertyName);
     }
 
@@ -508,6 +516,8 @@ public partial class MainWindow
         var groups = ScopeGroups();
         if (_goalScope != AllScope && !groups.Contains(_goalScope)) _goalScope = EditingGroup;
         SyncVisibleGoals();
+        RefreshSessionTaskPickers();
+        RefreshTasksPopout();
         foreach (var goal in _dailyGoals)
         {
             goal.ChipText = ChipFor(goal);

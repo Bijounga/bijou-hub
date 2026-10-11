@@ -12,5 +12,9 @@ public class SessionRecord
     public string? ProjectName { get; set; }
     public string? GoalId { get; set; }
     public string? GoalName { get; set; }
+
+    // The task (from the task list) being worked on when the session ended, if one was picked.
+    public string? TaskId { get; set; }
+    public string? TaskName { get; set; }
     public string? Note { get; set; }
 }

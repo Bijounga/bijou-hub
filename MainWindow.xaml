@@ -451,6 +451,8 @@
                     <Border Background="{DynamicResource TimerScreenGlassBrush}" CornerRadius="{DynamicResource TimerScreenRadius}"
                             Margin="{DynamicResource TimerScreenBorderThickness}" IsHitTestVisible="False"/>
                 </Grid>
+                <!-- What you're working on: pick an open task, or add one. -->
+                <views:SessionTaskPicker x:Name="SessionTaskPicker" HorizontalAlignment="Left" Width="340" Margin="0,-12,0,24"/>
                 <StackPanel x:Name="BlockNotifications" Margin="0,0,0,28"/>
 
                 <StackPanel Orientation="Horizontal">
@@ -602,6 +604,11 @@
                                 </StackPanel>
                                 <TextBlock x:Name="DailyProgressText" DockPanel.Dock="Right" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="12" VerticalAlignment="Bottom"/>
+                                <Button DockPanel.Dock="Right" Margin="0,0,12,0" Click="TasksPopoutToggle_Click" Cursor="Hand" VerticalAlignment="Bottom"
+                                        ToolTip="Pop out the task list" AutomationProperties.Name="Pop out the task list on Home">
+                                    <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                                    <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8A7;" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"/>
+                                </Button>
                                 <Button DockPanel.Dock="Right" Margin="0,0,12,0" Click="NavTasks_Click" Cursor="Hand" VerticalAlignment="Bottom"
                                         ToolTip="Open every list, full size" AutomationProperties.Name="Open all tasks">
                                     <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
@@ -1074,6 +1081,12 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <DockPanel Margin="0,0,0,16">
+                        <Button x:Name="TasksPopoutButton" DockPanel.Dock="Right" Click="TasksPopoutToggle_Click" Cursor="Hand" Focusable="False"
+                                VerticalAlignment="Bottom" Margin="4,0,0,2" ToolTip="Pop out the task list" AutomationProperties.Name="Pop out the task list">
+                            <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                            <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8A7;" FontSize="16" Margin="6,4"
+                                       Foreground="{DynamicResource MutedTextBrush}"/>
+                        </Button>
                         <Button x:Name="TasksRefreshButton" DockPanel.Dock="Right" Click="TasksRefresh_Click" Cursor="Hand" Focusable="False"
                                 VerticalAlignment="Bottom" Margin="4,0,0,2" ToolTip="Refresh tasks" AutomationProperties.Name="Refresh tasks">
                             <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Button.Template>

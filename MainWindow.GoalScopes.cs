@@ -97,6 +97,8 @@ public partial class MainWindow
         }
         RefreshDueChips();
         BuildScopeTabs(groups);
+        RefreshSessionTaskPickers();
+        RefreshTasksPopout();
     }
 
     private string? ChipFor(DailyGoal goal)

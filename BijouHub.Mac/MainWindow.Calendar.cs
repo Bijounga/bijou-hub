@@ -39,7 +39,7 @@ public partial class MainWindow
 
     private void NavCalendar_Click(object? sender, RoutedEventArgs e) => ShowCalendar();
 
-    private void ShowCalendar()
+    private void ShowCalendar(DateTime? day = null, CalendarMode? mode = null)
     {
         ModesList.SelectedItem = null;
         ProjectsList.SelectedItem = null;
@@ -47,8 +47,9 @@ public partial class MainWindow
         ShowOnly(CalendarPanel);
 
         _events = _eventStore.Load();
-        _calMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-        _calDay = DateTime.Today;
+        _calDay = (day ?? DateTime.Today).Date;
+        _calMonth = new DateTime(_calDay.Year, _calDay.Month, 1);
+        if (mode != null) _calMode = mode.Value;
         _gridScroll = -1;
         _editEvent = null;
         _eventEditorPanel = null;
@@ -304,7 +305,7 @@ public partial class MainWindow
         };
     }
 
-    private Control BuildEntryRow(ActivityEntry entry)
+    private Control BuildEntryRow(ActivityEntry entry, bool interactive = true)
     {
         var glyph = new TextBlock
         {
@@ -342,7 +343,7 @@ public partial class MainWindow
         row.Children.Add(text);
 
         // An event opens in the editor (on its day).
-        if (entry.Kind == ActivityKind.Event && entry.SourceId != null)
+        if (interactive && entry.Kind == ActivityKind.Event && entry.SourceId != null)
         {
             var id = entry.SourceId;
             var open = new Button

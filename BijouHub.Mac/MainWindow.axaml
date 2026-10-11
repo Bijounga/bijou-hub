@@ -390,6 +390,10 @@
                                         </StackPanel>
                                         <TextBlock Name="DailyProgressText" DockPanel.Dock="Right" Classes="muted" VerticalAlignment="Bottom"/>
                                         <Button DockPanel.Dock="Right" Classes="ghost" Padding="5,2" Margin="0,0,8,-3" VerticalAlignment="Bottom"
+                                                Click="TasksPopoutToggle_Click" ToolTip.Tip="Pop out the task list" AutomationProperties.Name="Pop out the task list on Home">
+                                            <controls:LineIcon Kind="popout" Width="13" Height="13"/>
+                                        </Button>
+                                        <Button DockPanel.Dock="Right" Classes="ghost" Padding="5,2" Margin="0,0,8,-3" VerticalAlignment="Bottom"
                                                 Click="NavTasks_Click" ToolTip.Tip="Open every list, full size" AutomationProperties.Name="Open all tasks">
                                             <controls:LineIcon Kind="expand" Width="13" Height="13"/>
                                         </Button>
@@ -631,6 +635,10 @@
                                         Click="TasksRefresh_Click" ToolTip.Tip="Refresh tasks" AutomationProperties.Name="Refresh tasks">
                                     <controls:LineIcon Kind="refresh" Width="16" Height="16"/>
                                 </Button>
+                                <Button Name="TasksPopoutButton" DockPanel.Dock="Right" Classes="ghost" Padding="6" Margin="4,0,0,0" VerticalAlignment="Bottom"
+                                        Click="TasksPopoutToggle_Click" ToolTip.Tip="Pop out the task list" AutomationProperties.Name="Pop out the task list">
+                                    <controls:LineIcon Kind="popout" Width="16" Height="16"/>
+                                </Button>
                                 <Button Name="TasksListMenuButton" DockPanel.Dock="Right" Classes="ghost" Padding="6" Margin="10,0,0,0" VerticalAlignment="Bottom"
                                         Click="TasksListMenu_Click" ToolTip.Tip="List options" AutomationProperties.Name="List options">
                                     <controls:LineIcon Kind="more" Width="16" Height="16"/>
@@ -773,7 +781,10 @@
                             <TextBlock Name="SessionContextText" Classes="muted" Margin="0,0,0,4"/>
                             <TextBlock Name="SessionStatusText" Classes="muted" Margin="0,0,0,22"/>
                             <TextBlock Name="SessionTimerText" FontFamily="{DynamicResource TimerFont}" FontSize="64" FontWeight="SemiBold"
-                                       Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,26"/>
+                                       Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,18"/>
+
+                            <!-- What you're working on: pick an open task, or add one. -->
+                            <controls:SessionTaskPicker Name="SessionTaskPicker" HorizontalAlignment="Left" Width="360" Margin="0,0,0,24"/>
 
                             <!-- Time's up: extend or finish, without leaving the page. -->
                             <Border Name="TimeUpBanner" Classes="card" Padding="14,10" Margin="0,0,0,20" IsVisible="False" MaxWidth="520" HorizontalAlignment="Left"

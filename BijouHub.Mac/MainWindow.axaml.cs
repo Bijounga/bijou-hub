@@ -46,6 +46,7 @@ public partial class MainWindow : Window
         InitSession();
         InitSidebarMenus();
         InitDue();
+        InitSessionTask();
         InitGoals();
         InitTasksPage();
         InitGoogleTasks();
@@ -82,6 +83,7 @@ public partial class MainWindow : Window
             _dailyStore.Flush();
             _deckBridge?.Dispose();
             _popout?.Close();
+            _tasksPopout?.Close();
             if (IsSessionActive) FinalizeSessionSilently();
         };
     }
