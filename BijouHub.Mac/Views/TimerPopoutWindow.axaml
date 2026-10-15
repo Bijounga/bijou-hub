@@ -17,7 +17,7 @@
         <DockPanel Grid.Row="3">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4">
                 <Button Classes="ghost" Padding="6" Click="Pause_Click" ToolTip.Tip="Pause / resume"><controls:LineIcon Kind="pause" Width="13" Height="13"/></Button>
-                <Button Classes="ghost" Padding="6" Click="Finish_Click" ToolTip.Tip="Finish"><controls:LineIcon Kind="stop" Width="13" Height="13"/></Button>
+                <Button Classes="ghost" Padding="6" Click="Finish_Click" ToolTip.Tip="Finish" AutomationProperties.Name="Finish"><controls:LineIcon Kind="stop" Width="13" Height="13"/></Button>
             </StackPanel>
             <TextBlock Name="StatusText" Classes="faint" VerticalAlignment="Center"/>
         </DockPanel>

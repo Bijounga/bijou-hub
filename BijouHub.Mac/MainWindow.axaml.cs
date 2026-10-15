@@ -70,7 +70,7 @@ public partial class MainWindow : Window
         {
             // Kept running for the Stream Deck: the close button hides it to the menu bar. Quit
             // (Cmd+Q or the menu), an update or a logout still close it.
-            if (_keepRunning && !_quitting && e.CloseReason == WindowCloseReason.WindowClosing && !e.IsProgrammatic)
+            if ((_keepRunning || AnyWidgetOpen) && !_quitting && e.CloseReason == WindowCloseReason.WindowClosing && !e.IsProgrammatic)
             {
                 e.Cancel = true;
                 HideToTray();
@@ -82,8 +82,10 @@ public partial class MainWindow : Window
             SaveDailyPlanNow();
             _dailyStore.Flush();
             _deckBridge?.Dispose();
+            _shuttingDown = true;
             _popout?.Close();
             _tasksPopout?.Close();
+            _timerWidget?.Close();
             if (IsSessionActive) FinalizeSessionSilently();
         };
     }

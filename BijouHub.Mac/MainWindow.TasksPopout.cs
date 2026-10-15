@@ -33,6 +33,15 @@ public partial class MainWindow
         }
 
         var window = new TasksPopoutWindow();
+        window.Positioned = BijouHub.Mac.Services.WidgetPlacement.Attach(window, _settingsStore.Load().TaskWidget, true, () => Screens, place =>
+        {
+            var settings = _settingsStore.Load();
+            settings.TaskWidget.X = place.X;
+            settings.TaskWidget.Y = place.Y;
+            settings.TaskWidget.Width = place.Width;
+            settings.TaskWidget.Height = place.Height;
+            _settingsStore.Save(settings);
+        });
         window.AddRequested += text =>
         {
             LoadDailyPlan(); // past midnight, it belongs to the new day

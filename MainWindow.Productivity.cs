@@ -146,7 +146,7 @@ public partial class MainWindow
     private void PromptDailyTarget()
     {
         var now = _dailyTargetMinutes is int current ? $" It's {DurationText.Format(current)} now." : "";
-        var dialog = new TextPromptWindow("Daily target", $"How long do you want to work each day? Like 4h or 3:30, or 0 for none.{now}") { Owner = this };
+        var dialog = new TextPromptWindow("Daily target", $"How long do you want to work each day? Like 4h or 3:30, or 0 for none.{now}") { Owner = DialogOwner };
         if (dialog.ShowDialog() != true) return;
 
         var text = dialog.Value.Trim();

@@ -305,6 +305,10 @@
                             AutomationProperties.Name="Theme">
                         <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE790;" FontSize="16"/>
                     </Button>
+                    <Button x:Name="WidgetsButton" Style="{DynamicResource GhostIconButton}" Click="OpenWidgets_Click" ToolTip="Widgets for a second monitor"
+                            AutomationProperties.Name="Widgets">
+                        <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE7C4;" FontSize="16"/>
+                    </Button>
                     <Button x:Name="StreamDeckButton" Style="{DynamicResource GhostIconButton}" Click="OpenStreamDeck_Click" ToolTip="Stream Deck"
                             AutomationProperties.Name="Stream Deck">
                         <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8A9;" FontSize="16"/>

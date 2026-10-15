@@ -37,9 +37,12 @@ public partial class App : Application
 
         StartupService.UpgradeEntry();
         var window = new MainWindow();
-        // Started at sign-in with "keep running in the background" on: straight to the tray.
-        if (e.Args.Contains(StartupService.TrayArgument) && settings.KeepRunningWhenClosed) window.StartInTray();
+        // Started at sign-in with "keep running in the background" on, or with widgets set to open at
+        // startup: straight to the tray, with just the widgets showing.
+        var widgetsAtStartup = settings.TaskWidget.ShowAtStartup || settings.TimerWidget.ShowAtStartup;
+        if (e.Args.Contains(StartupService.TrayArgument) && (settings.KeepRunningWhenClosed || widgetsAtStartup)) window.StartInTray();
         else window.Show();
+        window.OpenStartupWidgets();
     }
 
     protected override void OnSessionEnding(SessionEndingCancelEventArgs e)

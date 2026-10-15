@@ -17,6 +17,7 @@ public static class StartupService
     // (a test build must never take over the user's startup entry).
     public static void UpgradeEntry()
     {
+        if (TestMarker != null) return;
         try
         {
             using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: true);
@@ -30,10 +31,16 @@ public static class StartupService
         }
     }
 
+    // A test instance (BIJOUHUB_DATA_DIR set) keeps this in a marker file: it must never touch the
+    // real startup entry, which would then point at a test build.
+    private static string? TestMarker =>
+        Environment.GetEnvironmentVariable("BIJOUHUB_DATA_DIR") is { Length: > 0 } dir ? System.IO.Path.Combine(dir, "login_on") : null;
+
     public static bool IsEnabled
     {
         get
         {
+            if (TestMarker is { } marker) return System.IO.File.Exists(marker);
             using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: false);
             return key?.GetValue(ValueName) is string;
         }
@@ -41,6 +48,13 @@ public static class StartupService
 
     public static void SetEnabled(bool enabled)
     {
+        if (TestMarker is { } marker)
+        {
+            if (enabled) System.IO.File.WriteAllText(marker, "");
+            else System.IO.File.Delete(marker);
+            return;
+        }
+
         using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: true)
             ?? Registry.CurrentUser.CreateSubKey(RunKeyPath);
 

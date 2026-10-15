@@ -1,0 +1,47 @@
+<Window x:Class="BijouHub.Views.WidgetsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Widgets" Width="470" SizeToContent="Height" WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize" ShowInTaskbar="False" Background="{DynamicResource BgBrush}">
+    <StackPanel Margin="20,18,20,18">
+        <TextBlock Text="Small windows to keep on a second monitor. They stay on top, remember where you put them, and can come back every time BijouHub starts."
+                   TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,16"/>
+
+        <Border Padding="14,12" CornerRadius="8" BorderThickness="1" Margin="0,0,0,10"
+                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource SoftBorderBrush}">
+            <StackPanel>
+                <TextBlock Text="Task list" FontSize="14" FontWeight="SemiBold"/>
+                <TextBlock Text="Today's tasks with the section tabs, an add box and a calendar view." FontSize="12" TextWrapping="Wrap"
+                           Foreground="{DynamicResource MutedTextBrush}" Margin="0,2,0,8"/>
+                <CheckBox x:Name="TaskShowBox" Content="Show it on screen now" Margin="0,0,0,4" Checked="TaskShow_Click" Unchecked="TaskShow_Click"
+                          AutomationProperties.AutomationId="TaskShowBox"/>
+                <CheckBox x:Name="TaskStartupBox" Content="Open it when BijouHub starts" Checked="Startup_Click" Unchecked="Startup_Click"
+                          AutomationProperties.AutomationId="TaskStartupBox"/>
+            </StackPanel>
+        </Border>
+
+        <Border Padding="14,12" CornerRadius="8" BorderThickness="1" Margin="0,0,0,10"
+                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource SoftBorderBrush}">
+            <StackPanel>
+                <TextBlock Text="Start timer" FontSize="14" FontWeight="SemiBold"/>
+                <TextBlock Text="Pick a project and press Start. The timer pops out in its place." FontSize="12" TextWrapping="Wrap"
+                           Foreground="{DynamicResource MutedTextBrush}" Margin="0,2,0,8"/>
+                <CheckBox x:Name="TimerShowBox" Content="Show it on screen now" Margin="0,0,0,4" Checked="TimerShow_Click" Unchecked="TimerShow_Click"
+                          AutomationProperties.AutomationId="TimerShowBox"/>
+                <CheckBox x:Name="TimerStartupBox" Content="Open it when BijouHub starts" Checked="Startup_Click" Unchecked="Startup_Click"
+                          AutomationProperties.AutomationId="TimerStartupBox"/>
+            </StackPanel>
+        </Border>
+
+        <CheckBox x:Name="LoginBox" Content="Start BijouHub when I sign in to Windows" Margin="2,6,0,0" Checked="Login_Click" Unchecked="Login_Click"
+                  AutomationProperties.AutomationId="LoginBox"/>
+        <TextBlock Text="With widgets set to open at startup, it starts quietly in the notification area: just the widgets, no main window."
+                   FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" Margin="24,2,0,0"/>
+
+        <TextBlock x:Name="LoginHint" Visibility="Collapsed" FontSize="11" TextWrapping="Wrap" Margin="24,6,0,0" Foreground="{DynamicResource HazardBrush}"
+                   Text="Turn this on for the widgets to appear when your computer starts. Otherwise they only appear when you open BijouHub."/>
+
+        <Button Content="Done" HorizontalAlignment="Right" MinWidth="90" Padding="12,6" Margin="0,18,0,0" IsDefault="True" IsCancel="True"
+                Click="Done_Click" Style="{DynamicResource AccentButton}" AutomationProperties.Name="Done"/>
+    </StackPanel>
+</Window>

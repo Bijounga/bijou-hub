@@ -331,6 +331,10 @@
                     <Button Classes="ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="Theme_Click" ToolTip.Tip="Theme">
                         <controls:LineIcon Kind="palette" Width="17" Height="17"/>
                     </Button>
+                    <Button Classes="ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="OpenWidgets_Click" ToolTip.Tip="Widgets for a second monitor"
+                            AutomationProperties.Name="Widgets">
+                        <controls:LineIcon Kind="widgets" Width="17" Height="17"/>
+                    </Button>
                     <Button Classes="ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="StreamDeck_Click" ToolTip.Tip="Stream Deck">
                         <controls:LineIcon Kind="deck" Width="17" Height="17"/>
                     </Button>

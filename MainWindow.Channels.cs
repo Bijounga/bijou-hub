@@ -76,6 +76,7 @@ public partial class MainWindow
         {
             _rebuildingProjectRows = false;
         }
+        UpdateTimerWidgetOptions();
         ApplyGoalChannelColors();
     }
 
@@ -93,7 +94,7 @@ public partial class MainWindow
 
     private void OpenChannelsManager(bool addOne = false)
     {
-        var window = new ChannelsWindow(_channelStore.Load(), addOne) { Owner = this };
+        var window = new ChannelsWindow(_channelStore.Load(), addOne) { Owner = DialogOwner };
         if (window.ShowDialog() != true) return;
         ReloadChannels();
         RebuildProjectRows();

@@ -14,6 +14,9 @@ public class TasksPopoutWindow : Window
     public event Action<string>? AddRequested;
     public event Action? OpenCalendarRequested;
 
+    // Set when a saved position was restored, so the default top-right corner isn't applied over it.
+    public bool Positioned { get; set; }
+
     public StackPanel HeaderPills { get; } = new() { Orientation = Orientation.Horizontal };
     public StackPanel TopBar { get; } = new() { Margin = new Thickness(0, 10, 0, 6) };
     public StackPanel TasksHost { get; } = new();
@@ -96,7 +99,7 @@ public class TasksPopoutWindow : Window
 
         Opened += (_, _) =>
         {
-            if (Screens.Primary is { } screen)
+            if (!Positioned && Screens.Primary is { } screen)
                 Position = new PixelPoint(screen.WorkingArea.Right - (int)(Width * screen.Scaling) - 16, screen.WorkingArea.Y + 16);
         };
     }

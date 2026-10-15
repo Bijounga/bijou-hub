@@ -70,8 +70,8 @@ public partial class MainWindow : Window
         _deckBridge = new StreamDeckBridge(command => Dispatcher.InvokeAsync(command).Task, HandleDeckCommand);
         Closing += (_, e) =>
         {
-            // Kept running for the Stream Deck: the close button hides it to the tray.
-            if (_keepRunning && !App.Quitting)
+            // Kept running for the Stream Deck or the widgets: the close button hides it to the tray.
+            if ((_keepRunning || AnyWidgetOpen) && !App.Quitting)
             {
                 e.Cancel = true;
                 HideToTray();
@@ -80,8 +80,10 @@ public partial class MainWindow : Window
             _tray?.Dispose();
 
             if (NotesPanel.Visibility == Visibility.Visible) SaveFreeformNotes();
+            _shuttingDown = true;
             _timerPopout?.Close();
             _tasksPopout?.Close();
+            _timerWidget?.Close();
             _deckBridge.Dispose();
             if (_notesSaveTimer?.IsEnabled == true) SaveDailyPlan(); // notes typed in the last second
             _dailyStore.Flush(); // goal saves are written in the background
@@ -291,7 +293,7 @@ public partial class MainWindow : Window
     private void NewMode_Click(object sender, RoutedEventArgs e)
     {
         var mode = new WorkMode();
-        var editor = new ModeEditorWindow(mode) { Owner = this };
+        var editor = new ModeEditorWindow(mode) { Owner = DialogOwner };
         if (editor.ShowDialog() != true) return;
 
         _modes.Add(mode);
@@ -322,7 +324,7 @@ public partial class MainWindow : Window
     {
         if (ModesList.SelectedItem is not WorkMode mode) return;
 
-        var editor = new ModeEditorWindow(mode) { Owner = this };
+        var editor = new ModeEditorWindow(mode) { Owner = DialogOwner };
         if (editor.ShowDialog() != true) return;
 
         PersistAndRefreshModeList();
@@ -384,7 +386,7 @@ public partial class MainWindow : Window
     private void NewProject_Click(object sender, RoutedEventArgs e)
     {
         var project = new Project();
-        var editor = new ProjectEditorWindow(project, _modes) { Owner = this };
+        var editor = new ProjectEditorWindow(project, _modes) { Owner = DialogOwner };
         if (editor.ShowDialog() != true) return;
 
         _projects.Add(project);
@@ -397,7 +399,7 @@ public partial class MainWindow : Window
     {
         if (ProjectsList.SelectedItem is not Project project) return;
 
-        var editor = new ProjectEditorWindow(project, _modes) { Owner = this };
+        var editor = new ProjectEditorWindow(project, _modes) { Owner = DialogOwner };
         if (editor.ShowDialog() != true) return;
 
         ChannelRows.SetMain(_projects, project, project.IsMain);
@@ -409,7 +411,7 @@ public partial class MainWindow : Window
     {
         if (ProjectsList.SelectedItem is not Project project) return;
 
-        var dlg = new LogTimeWindow { Owner = this };
+        var dlg = new LogTimeWindow { Owner = DialogOwner };
         if (dlg.ShowDialog() != true) return;
 
         var end = DateTime.Now;
@@ -537,6 +539,7 @@ public partial class MainWindow : Window
         if (_timerPopout != null) return;
 
         var popout = new TimerPopoutWindow();
+        var widgetSpot = WidgetStepsAsideFor(popout);
         popout.UpdateDisplay(_activeProject?.Name ?? _activeMode?.Name ?? "Session", TimerDisplay.Text, ActiveStatus.Text);
         WireSessionTaskPopout(popout);
         popout.DockRequested += () => popout.Close();
@@ -545,16 +548,19 @@ public partial class MainWindow : Window
             popout.Close();
             FinishSession_Click(this, new RoutedEventArgs());
         };
+        popout.Closing += (_, _) => _lastPopoutSpot = WidgetPlacement.Position(popout);
         popout.Closed += (_, _) =>
         {
             _timerPopout = null;
             BroadcastDeckState();
+            WidgetReturnsAfterPopout();
             SetIconButton(PopoutToggleButton, "\uE8A7", "Pop out the timer");
         };
 
         _timerPopout = popout;
         SetIconButton(PopoutToggleButton, "\uE73F", "Dock the timer");
         popout.Show();
+        if (widgetSpot is { } spot) WidgetPlacement.MoveTo(popout, spot.X, spot.Y);
         BroadcastDeckState();
     }
 
@@ -1192,7 +1198,7 @@ public partial class MainWindow : Window
     {
         if (ProjectsList.SelectedItem is not Project project) return;
 
-        var dlg = new StartSessionWindow(project, _modes) { Owner = this };
+        var dlg = new StartSessionWindow(project, _modes) { Owner = DialogOwner };
         if (dlg.ShowDialog() != true) return;
 
         await BeginSession(dlg.SelectedMode, project, dlg.SelectedGoal, dlg.TargetMinutes, dlg.CountDown);
@@ -1226,6 +1232,7 @@ public partial class MainWindow : Window
         _activeGoal = goal;
         _activeTask = null;
         RefreshSessionTaskPickers();
+        UpdateTimerWidget();
         StartPomodoro(pomodoro);
         _targetMinutes = pomodoro == null ? targetMinutes : null;
         _countDownMode = countDown && _targetMinutes != null;
@@ -1309,6 +1316,7 @@ public partial class MainWindow : Window
             ActiveSessionBannerText.Text = TimerDisplay.Text;
 
         _timerPopout?.UpdateDisplay(_activeProject?.Name ?? _activeMode?.Name ?? "Session", TimerDisplay.Text, ActiveStatus.Text);
+        UpdateTimerWidget();
 
         if (_targetMinutes is int target && !_budgetAlertShown && _activeSeconds >= target * 60)
         {
@@ -1641,7 +1649,7 @@ public partial class MainWindow : Window
         var finishedProject = _activeProject;
         if (finishedProject != null && askForNote)
         {
-            var noteDlg = new FinishNoteWindow { Owner = this };
+            var noteDlg = new FinishNoteWindow { Owner = DialogOwner };
             if (noteDlg.ShowDialog() == true)
                 note = noteDlg.Note;
 
@@ -1682,6 +1690,7 @@ public partial class MainWindow : Window
         StartPomodoro(null);
         DoNotDisturb.Restore();
         EndKeyLight();
+        UpdateTimerWidget();
         UpdateTaskbarProgress();
         BroadcastDeckState();
 
@@ -2518,7 +2527,7 @@ public partial class MainWindow : Window
 
     private void OpenStreamDeck_Click(object sender, RoutedEventArgs e)
     {
-        var win = new StreamDeckWindow(() => _deckBridge.ClientCount) { Owner = this };
+        var win = new StreamDeckWindow(() => _deckBridge.ClientCount) { Owner = DialogOwner };
         win.ShowDialog();
     }
 
@@ -2526,7 +2535,7 @@ public partial class MainWindow : Window
 
     private void SessionLog_Click(object sender, RoutedEventArgs e)
     {
-        var win = new SessionLogWindow(_logService, _projects) { Owner = this };
+        var win = new SessionLogWindow(_logService, _projects) { Owner = DialogOwner };
         win.ShowDialog();
 
         // Time moved onto a project changes its "time spent" and the home totals.
@@ -2800,14 +2809,14 @@ public partial class MainWindow : Window
 
     private void OpenKeybinds_Click(object sender, RoutedEventArgs e)
     {
-        var win = new KeybindsWindow(_keybindStore) { Owner = this };
+        var win = new KeybindsWindow(_keybindStore) { Owner = DialogOwner };
         win.KeybindsChanged += ApplyNoteKeybinds;
         win.ShowDialog();
     }
 
     private void OpenTheme_Click(object sender, RoutedEventArgs e)
     {
-        var win = new ThemeWindow(_settingsStore) { Owner = this };
+        var win = new ThemeWindow(_settingsStore) { Owner = DialogOwner };
         win.ShowDialog();
     }
 

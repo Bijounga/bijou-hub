@@ -77,7 +77,7 @@ public partial class MainWindow
     private void GoogleSync_Click(object sender, RoutedEventArgs e)
     {
         if (_googleAuth == null) return;
-        var window = new GoogleTasksWindow(_googleAuth) { Owner = this };
+        var window = new GoogleTasksWindow(_googleAuth) { Owner = DialogOwner };
         window.ShowDialog();
 
         if (GoogleMode)

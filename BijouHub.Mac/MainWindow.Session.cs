@@ -58,6 +58,8 @@ public partial class MainWindow
         {
             var failures = await MacPlatform.LaunchAsync(mode);
             if (failures.Count > 0)
+                EnsureOwnerVisible();
+            if (failures.Count > 0)
                 _ = PromptWindow.Notice(this, "Launch", "Some items in this mode didn't open:\n\n" + string.Join("\n", failures));
         }
 
@@ -70,6 +72,7 @@ public partial class MainWindow
         _activeGoal = goal;
         _activeTask = null;
         RefreshSessionTaskPickers();
+        UpdateTimerWidget();
         StartPomodoro(pomodoro);
         _targetMinutes = pomodoro == null ? targetMinutes : null;
         _countDownMode = countDown && _targetMinutes != null;
@@ -153,6 +156,7 @@ public partial class MainWindow
         }
         SessionTimerText.Text = TimerDisplay;
         _popout?.Update(SessionTitleText.Text ?? "", TimerDisplay, SessionStatusText.Text ?? "");
+        UpdateTimerWidget();
         if (HomePanel.IsVisible) UpdateTodayCard();
         UpdateTrayToolTip();
 
@@ -218,6 +222,7 @@ public partial class MainWindow
         SessionStatusText.Text = _paused ? "Paused" : _pomodoro != null ? PomodoroStatus : "Active";
         SetPauseButton();
         _popout?.Update(SessionTitleText.Text ?? "", TimerDisplay, SessionStatusText.Text ?? "");
+        UpdateTimerWidget();
         BroadcastDeckState();
     }
 
@@ -268,6 +273,7 @@ public partial class MainWindow
         _paused = false;
         _deckKeyId = null;
         StartPomodoro(null);
+        UpdateTimerWidget();
         MacDoNotDisturb.Restore();
         EndKeyLight();
         BroadcastDeckState();
@@ -275,6 +281,7 @@ public partial class MainWindow
         if (project != null && askForNote)
         {
             var dialog = new FinishNoteWindow();
+            EnsureOwnerVisible();
             if (await dialog.ShowDialog<bool>(this) && !string.IsNullOrEmpty(dialog.Note))
             {
                 record.Note = dialog.Note;
@@ -306,17 +313,26 @@ public partial class MainWindow
         }
         if (_popout != null) return;
 
+        var widgetSpot = WidgetStepsAside();
         _popout = new TimerPopoutWindow();
+        if (widgetSpot is { } spot)
+        {
+            _popout.WindowStartupLocation = Avalonia.Controls.WindowStartupLocation.Manual;
+            _popout.Position = spot;
+        }
+        var popoutWindow = _popout;
         WireSessionTaskPopout(_popout);
         _popout.Update(SessionTitleText.Text ?? "", TimerDisplay, SessionStatusText.Text ?? "");
         _popout.PauseRequested += TogglePause;
         _popout.FinishRequested += () => _ = FinishSessionAsync(askForNote: true);
+        _popout.Closing += (_, _) => _lastPopoutSpot = popoutWindow.Position;
         _popout.Closed += (_, _) =>
         {
             _popout = null;
             PopoutIcon.Kind = "popout";
             ToolTip.SetTip(PopoutButton, "Pop out the timer");
             BroadcastDeckState();
+            WidgetReturnsAfterPopout();
         };
         PopoutIcon.Kind = "dock";
         ToolTip.SetTip(PopoutButton, "Dock the timer");

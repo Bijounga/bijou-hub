@@ -1,0 +1,49 @@
+<Window x:Class="BijouHub.Views.TimerWidgetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="BijouHub Start Timer"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        SizeToContent="Height"
+        Width="250"
+        WindowStartupLocation="Manual"
+        Background="{DynamicResource BgBrush}">
+    <Border BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5">
+        <StackPanel Margin="14,10,14,14">
+            <!-- Drag here. -->
+            <DockPanel Background="Transparent" MouseLeftButtonDown="Header_MouseLeftButtonDown" Margin="0,0,0,10">
+                <Button DockPanel.Dock="Right" Click="Close_Click" Focusable="False" Cursor="Hand" ToolTip="Hide this widget"
+                        AutomationProperties.Name="Close timer widget">
+                    <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent" Padding="6,2"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                    <TextBlock Text="✕" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"/>
+                </Button>
+                <TextBlock x:Name="HeaderText" Text="START WORKING" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}"/>
+            </DockPanel>
+
+            <!-- Pick a project and go. -->
+            <StackPanel x:Name="StartView">
+                <TextBlock Text="PROJECT" FontSize="10" Margin="0,0,0,3" Foreground="{DynamicResource MutedTextBrush}"/>
+                <ComboBox x:Name="ProjectBox" DisplayMemberPath="Name" Margin="0,0,0,8" AutomationProperties.Name="Widget project"/>
+                <TextBlock Text="MODE" FontSize="10" Margin="0,0,0,3" Foreground="{DynamicResource MutedTextBrush}"/>
+                <ComboBox x:Name="ModeBox" DisplayMemberPath="Name" Margin="0,0,0,8" AutomationProperties.Name="Widget mode"/>
+                <TextBlock Text="FOR" FontSize="10" Margin="0,0,0,3" Foreground="{DynamicResource MutedTextBrush}"/>
+                <ComboBox x:Name="LengthBox" DisplayMemberPath="Label" Margin="0,0,0,12" AutomationProperties.Name="Widget length"/>
+                <Button x:Name="StartButton" Content="▶  Start" Padding="12,8" Click="Start_Click" Style="{DynamicResource AccentButton}"
+                        AutomationProperties.Name="Start timer"/>
+            </StackPanel>
+
+            <!-- A session is running: its time, and a way back to the pop-out timer. -->
+            <StackPanel x:Name="RunningView" Visibility="Collapsed">
+                <TextBlock x:Name="RunningName" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                <TextBlock x:Name="RunningTime" Text="00:00:00" FontSize="30" Margin="0,2,0,10"
+                           FontFamily="{DynamicResource TimerFont}" Foreground="{DynamicResource TimerTextBrush}"/>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Show timer" Padding="12,6" Click="ShowTimer_Click" AutomationProperties.Name="Show timer"/>
+                    <Button Content="Finish" Margin="8,0,0,0" Padding="12,6" Click="Finish_Click" AutomationProperties.Name="Finish timer"/>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

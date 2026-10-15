@@ -85,6 +85,8 @@ public partial class MainWindow
         Add("Open BijouHub", BringToFront);
         Add("Quick capture", ShowQuickCapture);
         Add(_tasksPopout == null ? "Task list" : "Close task list", ToggleTasksPopout);
+        Add(_timerWidgetWanted ? "Hide start-timer widget" : "Start-timer widget", () => SetTimerWidget(!_timerWidgetWanted));
+        Add("Widgets…", () => OpenWidgets_Click(this, new RoutedEventArgs()));
         if (IsSessionActive)
         {
             menu.Items.Add(new Separator());

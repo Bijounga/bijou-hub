@@ -39,8 +39,28 @@ public class AppSettings
     // Switch the light off again when the session that lit it ends.
     public bool KeyLightOffWhenDone { get; set; } = true;
 
+    public WidgetSettings TaskWidget { get; set; } = new();
+    public WidgetSettings TimerWidget { get; set; } = new();
+
+    // What the start-timer widget last had picked (project id, mode id, minutes; 0 for open-ended).
+    public string? WidgetProjectId { get; set; }
+    public string? WidgetModeId { get; set; }
+    public int WidgetMinutes { get; set; }
+
     // The one-time "still running in the hidden icons" notice has been shown.
     public bool TrayHintShown { get; set; }
+}
+
+// A desktop widget (the task list, the start-timer): whether it comes back when BijouHub starts, and
+// where the user left it (screen pixels for the position; the size in the window's own units), so a
+// widget kept on a second monitor is there again next time. Per computer: this file isn't synced.
+public class WidgetSettings
+{
+    public bool ShowAtStartup { get; set; }
+    public int? X { get; set; }
+    public int? Y { get; set; }
+    public double? Width { get; set; }
+    public double? Height { get; set; }
 }
 
 public class AppSettingsStore

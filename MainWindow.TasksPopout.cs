@@ -32,6 +32,15 @@ public partial class MainWindow
         }
 
         var window = new TasksPopoutWindow();
+        WidgetPlacement.Attach(window, _settingsStore.Load().TaskWidget, true, place =>
+        {
+            var settings = _settingsStore.Load();
+            settings.TaskWidget.X = place.X;
+            settings.TaskWidget.Y = place.Y;
+            settings.TaskWidget.Width = place.Width;
+            settings.TaskWidget.Height = place.Height;
+            _settingsStore.Save(settings);
+        });
         _popoutView = new ListCollectionView(_dailyGoals)
         {
             Filter = item => item is DailyGoal g && !g.Done && !g.IsPlannedAfter(TodayKey) && PopoutInScope(g),

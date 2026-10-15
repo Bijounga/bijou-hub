@@ -71,6 +71,7 @@ public partial class MainWindow
         {
             _rebuildingProjectRows = false;
         }
+        UpdateTimerWidgetOptions();
         ApplyGoalChannelColors();
         RefreshChannelsNotice();
     }

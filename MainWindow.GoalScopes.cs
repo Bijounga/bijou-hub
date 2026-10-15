@@ -158,7 +158,7 @@ public partial class MainWindow
     private async void AddCategory()
     {
         var dialog = new TextPromptWindow("New category",
-            "Name it, like Life or Work. It's added to Google Tasks as a \"LIFE - General\"-style list, so it shows on your phone too.") { Owner = this };
+            "Name it, like Life or Work. It's added to Google Tasks as a \"LIFE - General\"-style list, so it shows on your phone too.") { Owner = DialogOwner };
         if (dialog.ShowDialog() != true || _googleSync == null) return;
 
         var group = dialog.Value.Trim().Trim('-').Trim().ToUpperInvariant();
@@ -308,7 +308,7 @@ public partial class MainWindow
             "" => "Name for the new list:",
             _ => $"Name for the new list (saved as \"{group} - name\"):"
         };
-        var dialog = new TextPromptWindow("New list", prompt) { Owner = this };
+        var dialog = new TextPromptWindow("New list", prompt) { Owner = DialogOwner };
         if (dialog.ShowDialog() != true || string.IsNullOrWhiteSpace(dialog.Value) || _googleSync == null)
         {
             RefreshDailyProjectCombo();
