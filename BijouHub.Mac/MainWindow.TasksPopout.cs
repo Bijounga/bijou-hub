@@ -32,7 +32,8 @@ public partial class MainWindow
             return;
         }
 
-        var window = new TasksPopoutWindow();
+        var window = new TasksPopoutWindow { ShowActivated = !_openingAtStartup };
+        BijouHub.Mac.Services.WidgetPlacement.Layer(window, () => _widgetsOnTop);
         window.Positioned = BijouHub.Mac.Services.WidgetPlacement.Attach(window, _settingsStore.Load().TaskWidget, true, () => Screens, place =>
         {
             var settings = _settingsStore.Load();

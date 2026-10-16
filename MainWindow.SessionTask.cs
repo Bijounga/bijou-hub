@@ -13,6 +13,7 @@ public partial class MainWindow
 
     private void InitSessionTask()
     {
+        _widgetsOnTop = _settingsStore.Load().WidgetsOnTop;
         SessionTaskPicker.TaskPicked += SessionTask_Picked;
         SessionTaskPicker.TaskAdded += SessionTask_Added;
         SessionTaskPicker.DoneClicked += SessionTask_Done;

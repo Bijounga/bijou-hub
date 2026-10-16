@@ -33,6 +33,9 @@
             </StackPanel>
         </Border>
 
+        <CheckBox x:Name="OnTopBox" Content="Keep widgets on top of other windows" Margin="2,0,0,10" Checked="OnTop_Click" Unchecked="OnTop_Click"
+                  AutomationProperties.AutomationId="OnTopBox"
+                  ToolTip="Off: they sit on the desktop behind your windows, and come forward when you click one."/>
         <CheckBox x:Name="LoginBox" Content="Start BijouHub when I sign in to Windows" Margin="2,6,0,0" Checked="Login_Click" Unchecked="Login_Click"
                   AutomationProperties.AutomationId="LoginBox"/>
         <TextBlock Text="With widgets set to open at startup, it starts quietly in the notification area: just the widgets, no main window."

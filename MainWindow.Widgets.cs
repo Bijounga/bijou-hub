@@ -20,14 +20,35 @@ public partial class MainWindow
     // tray for its widgets): a window that was never shown can't own anything.
     private Window? DialogOwner => IsVisible ? this : null;
 
+    private bool _widgetsOnTop;
+    private bool _openingAtStartup;
+
+    private void SetWidgetsOnTop(bool on)
+    {
+        _widgetsOnTop = on;
+        var settings = _settingsStore.Load();
+        settings.WidgetsOnTop = on;
+        _settingsStore.Save(settings);
+        WidgetPlacement.Reapply(_tasksPopout);
+        WidgetPlacement.Reapply(_timerWidget);
+    }
+
     private bool AnyWidgetOpen => _tasksPopout != null || _timerWidgetWanted;
 
     // At launch: whichever widgets were set to come back.
     public void OpenStartupWidgets()
     {
         var settings = _settingsStore.Load();
-        if (settings.TaskWidget.ShowAtStartup) SetTaskWidget(true);
-        if (settings.TimerWidget.ShowAtStartup) SetTimerWidget(true);
+        _openingAtStartup = true; // they appear without taking focus from what you're doing
+        try
+        {
+            if (settings.TaskWidget.ShowAtStartup) SetTaskWidget(true);
+            if (settings.TimerWidget.ShowAtStartup) SetTimerWidget(true);
+        }
+        finally
+        {
+            _openingAtStartup = false;
+        }
     }
 
     private void SetTaskWidget(bool on)
@@ -51,7 +72,8 @@ public partial class MainWindow
 
     private void CreateTimerWidget()
     {
-        var widget = new TimerWidgetWindow();
+        var widget = new TimerWidgetWindow { ShowActivated = !_openingAtStartup };
+        WidgetPlacement.Layer(widget, () => _widgetsOnTop);
         WidgetPlacement.Attach(widget, _settingsStore.Load().TimerWidget, false, place =>
         {
             var settings = _settingsStore.Load();
@@ -119,6 +141,6 @@ public partial class MainWindow
     private void OpenWidgets_Click(object sender, RoutedEventArgs e)
     {
         BringToFront();
-        new WidgetsWindow(_tasksPopout != null, _timerWidgetWanted, SetTaskWidget, SetTimerWidget) { Owner = DialogOwner }.ShowDialog();
+        new WidgetsWindow(_tasksPopout != null, _timerWidgetWanted, SetTaskWidget, SetTimerWidget, _widgetsOnTop, SetWidgetsOnTop) { Owner = DialogOwner }.ShowDialog();
     }
 }

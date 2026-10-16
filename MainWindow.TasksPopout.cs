@@ -31,7 +31,8 @@ public partial class MainWindow
             return;
         }
 
-        var window = new TasksPopoutWindow();
+        var window = new TasksPopoutWindow { ShowActivated = !_openingAtStartup };
+        WidgetPlacement.Layer(window, () => _widgetsOnTop);
         WidgetPlacement.Attach(window, _settingsStore.Load().TaskWidget, true, place =>
         {
             var settings = _settingsStore.Load();

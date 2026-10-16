@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform;
@@ -10,6 +11,41 @@ namespace BijouHub.Mac.Services;
 // it's moved to. A saved spot that's no longer on any connected screen is ignored. Same behavior as Windows.
 public static class WidgetPlacement
 {
+    [DllImport("/usr/lib/libobjc.dylib")] private static extern IntPtr sel_registerName(string name);
+    [DllImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")] private static extern void MsgSendNInt(IntPtr receiver, IntPtr selector, nint argument);
+
+    // Widgets either float on top, or sit on the desktop: below every normal window but above the
+    // wallpaper and desktop icons (and still there when you push the windows aside). On a Mac that's
+    // the window's level; elsewhere (a test run) it's just "not topmost".
+    public static void Layer(Window window, Func<bool> onTop)
+    {
+        void Apply()
+        {
+            var top = onTop();
+            window.Topmost = top;
+            if (!OperatingSystem.IsMacOS()) return;
+            try
+            {
+                if (window.TryGetPlatformHandle() is { } handle && handle.HandleDescriptor == "NSWindow")
+                {
+                    // 0 is a normal window, 3 a floating one; -1 is just under normal windows.
+                    MsgSendNInt(handle.Handle, sel_registerName("setLevel:"), top ? 3 : -1);
+                    // On every Space, so it's there on whichever desktop is showing.
+                    MsgSendNInt(handle.Handle, sel_registerName("setCollectionBehavior:"), top ? 0 : 1);
+                }
+            }
+            catch
+            {
+                // no native layering available: it stays an ordinary window
+            }
+        }
+        window.Opened += (_, _) => Apply();
+        window.Tag = (Action)Apply;
+    }
+
+    // After the setting changed.
+    public static void Reapply(Window? window) => (window?.Tag as Action)?.Invoke();
+
     public static bool OnScreen(Screens? screens, PixelPoint at) =>
         screens == null || screens.All.Any(s => s.Bounds.Contains(new PixelPoint(at.X + 20, at.Y + 20)));
 

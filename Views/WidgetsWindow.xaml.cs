@@ -10,11 +10,14 @@ public partial class WidgetsWindow : Window
     private readonly Action<bool> _setTask;
     private readonly Action<bool> _setTimer;
 
-    public WidgetsWindow(bool taskShown, bool timerShown, Action<bool> setTask, Action<bool> setTimer)
+    private readonly Action<bool> _setOnTop;
+
+    public WidgetsWindow(bool taskShown, bool timerShown, Action<bool> setTask, Action<bool> setTimer, bool onTop, Action<bool> setOnTop)
     {
         InitializeComponent();
         DarkTitleBar.Apply(this);
         _loading = true;
+        _setOnTop = setOnTop;
         _setTask = setTask;
         _setTimer = setTimer;
         var settings = _store.Load();
@@ -22,6 +25,7 @@ public partial class WidgetsWindow : Window
         TimerShowBox.IsChecked = timerShown;
         TaskStartupBox.IsChecked = settings.TaskWidget.ShowAtStartup;
         TimerStartupBox.IsChecked = settings.TimerWidget.ShowAtStartup;
+        OnTopBox.IsChecked = onTop;
         LoginBox.IsChecked = StartupService.IsEnabled;
         UpdateHint();
         _loading = false;
@@ -42,6 +46,8 @@ public partial class WidgetsWindow : Window
 
         UpdateHint();
     }
+
+    private void OnTop_Click(object sender, RoutedEventArgs e) { if (!_loading) _setOnTop(OnTopBox.IsChecked == true); }
 
     private void Login_Click(object sender, RoutedEventArgs e)
     {

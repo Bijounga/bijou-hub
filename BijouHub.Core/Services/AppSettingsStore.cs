@@ -39,6 +39,10 @@ public class AppSettings
     // Switch the light off again when the session that lit it ends.
     public bool KeyLightOffWhenDone { get; set; } = true;
 
+    // Widgets float above other windows. Off (the default): they sit on the desktop, behind everything,
+    // and come forward only while you're using one.
+    public bool WidgetsOnTop { get; set; }
+
     public WidgetSettings TaskWidget { get; set; } = new();
     public WidgetSettings TimerWidget { get; set; } = new();
 

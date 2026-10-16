@@ -16,11 +16,12 @@ public class WidgetsWindow : Window
     private readonly CheckBox _timerShow = new() { Content = "Show it on screen now" };
     private readonly CheckBox _taskStartup = new() { Content = "Open it when BijouHub starts" };
     private readonly CheckBox _timerStartup = new() { Content = "Open it when BijouHub starts" };
+    private readonly CheckBox _onTop = new() { Content = "Keep widgets on top of other windows" };
     private readonly CheckBox _login = new() { Content = "Start BijouHub when I log in" };
     private readonly TextBlock _hint = new() { FontSize = 11, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(24, 6, 0, 0), IsVisible = false };
     private bool _loading = true;
 
-    public WidgetsWindow(bool taskShown, bool timerShown, Action<bool> setTask, Action<bool> setTimer)
+    public WidgetsWindow(bool taskShown, bool timerShown, Action<bool> setTask, Action<bool> setTimer, bool onTop, Action<bool> setOnTop)
     {
         Title = "Widgets";
         Width = 470;
@@ -37,7 +38,9 @@ public class WidgetsWindow : Window
         _taskStartup.IsChecked = settings.TaskWidget.ShowAtStartup;
         _timerStartup.IsChecked = settings.TimerWidget.ShowAtStartup;
         _login.IsChecked = MacPlatform.StartsAtLogin;
-        foreach (var (box, id) in new[] { (_taskShow, "TaskShowBox"), (_timerShow, "TimerShowBox"), (_taskStartup, "TaskStartupBox"), (_timerStartup, "TimerStartupBox"), (_login, "LoginBox") })
+        _onTop.IsChecked = onTop;
+        ToolTip.SetTip(_onTop, "Off: they sit on the desktop behind your windows, and come forward when you click one.");
+        foreach (var (box, id) in new[] { (_taskShow, "TaskShowBox"), (_timerShow, "TimerShowBox"), (_taskStartup, "TaskStartupBox"), (_timerStartup, "TimerStartupBox"), (_onTop, "OnTopBox"), (_login, "LoginBox") })
             Avalonia.Automation.AutomationProperties.SetAutomationId(box, id);
         Avalonia.Automation.AutomationProperties.SetAutomationId(_hint, "LoginHint");
 
@@ -52,6 +55,7 @@ public class WidgetsWindow : Window
             _store.Save(s);
             UpdateHint();
         }
+        _onTop.IsCheckedChanged += (_, _) => { if (!_loading) setOnTop(_onTop.IsChecked == true); };
         _taskStartup.IsCheckedChanged += (_, _) => StartupChanged();
         _timerStartup.IsCheckedChanged += (_, _) => StartupChanged();
         _login.IsCheckedChanged += (_, _) =>
@@ -86,6 +90,8 @@ public class WidgetsWindow : Window
         });
         panel.Children.Add(Card("Task list", "Today's tasks with the section tabs, an add box and a calendar view.", _taskShow, _taskStartup));
         panel.Children.Add(Card("Start timer", "Pick a project and press Start. The timer pops out in its place.", _timerShow, _timerStartup));
+        _onTop.Margin = new Thickness(2, 0, 0, 10);
+        panel.Children.Add(_onTop);
         _login.Margin = new Thickness(2, 6, 0, 0);
         panel.Children.Add(_login);
         panel.Children.Add(new TextBlock

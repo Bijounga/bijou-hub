@@ -21,10 +21,38 @@ public static class WidgetPlacement
     [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
     [DllImport("user32.dll")] private static extern IntPtr MonitorFromPoint(Point point, uint flags);
 
+    private static readonly IntPtr HwndBottom = new(1);
+    private const uint SwpNoMove = 0x0002;
     private const uint SwpNoSize = 0x0001;
     private const uint SwpNoZOrder = 0x0004;
     private const uint SwpNoActivate = 0x0010;
     private const uint MonitorDefaultToNull = 0;
+
+    // Sends the window behind every other window (above only the desktop itself).
+    public static void SendToBottom(Window window)
+    {
+        var hwnd = new WindowInteropHelper(window).Handle;
+        if (hwnd != IntPtr.Zero) SetWindowPos(hwnd, HwndBottom, 0, 0, 0, 0, SwpNoMove | SwpNoSize | SwpNoActivate);
+    }
+
+    // Widgets either float on top, or sit on the desktop: behind everything, coming forward while
+    // they're used (clicked) and sinking again when something else is. `onTop` is read each time.
+    public static void Layer(Window window, Func<bool> onTop)
+    {
+        void Apply()
+        {
+            var top = onTop();
+            window.Topmost = top;
+            if (!top) SendToBottom(window);
+        }
+        window.SourceInitialized += (_, _) => Apply();
+        window.IsVisibleChanged += (_, _) => { if (window.IsVisible) Apply(); };
+        window.Deactivated += (_, _) => { if (!onTop()) SendToBottom(window); };
+        window.Tag = (Action)Apply;
+    }
+
+    // After the setting changed.
+    public static void Reapply(Window? window) => (window?.Tag as Action)?.Invoke();
 
     // The window's top-left corner in screen pixels, once it has a handle.
     public static (int X, int Y)? Position(Window window)
