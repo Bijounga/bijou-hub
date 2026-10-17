@@ -144,9 +144,32 @@ public partial class MainWindow
         widget.Show();
     }
 
+    // Brings the widgets that are open onto the screen the main window is on (or the main screen):
+    // for when one was left on a monitor that's gone, off to the side, or squashed. They come to the
+    // front for a few seconds so you can see where they landed.
+    private void RecenterWidgets()
+    {
+        var screen = (IsVisible ? Screens.ScreenFromWindow(this) : null) ?? Screens.Primary;
+        if (screen == null) return;
+        var area = screen.WorkingArea;
+        foreach (var widget in new Window?[] { _tasksPopout, _timerWidget })
+        {
+            if (widget is not { IsVisible: true }) continue;
+            if (widget is TimerWidgetWindow) widget.Width = 250; // a squashed one gets its width back
+            var width = (int)(widget.Bounds.Width * screen.Scaling);
+            var height = (int)(widget.Bounds.Height * screen.Scaling);
+            widget.Position = new PixelPoint(area.X + (area.Width - width) / 2, area.Y + (area.Height - height) / 2);
+            widget.Topmost = true;
+            var back = new Avalonia.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+            back.Tick += (_, _) => { back.Stop(); WidgetPlacement.Reapply(widget); };
+            back.Start();
+        }
+        if (_timerWidgetWanted && _timerWidget is { IsVisible: false } && _popout == null) _timerWidget.Show();
+    }
+
     private async void OpenWidgets_Click(object? sender, RoutedEventArgs e)
     {
         EnsureOwnerVisible();
-        await new WidgetsWindow(_tasksPopout != null, _timerWidgetWanted, SetTaskWidget, SetTimerWidget, _widgetsOnTop, SetWidgetsOnTop).ShowDialog(this);
+        await new WidgetsWindow(_tasksPopout != null, _timerWidgetWanted, SetTaskWidget, SetTimerWidget, _widgetsOnTop, SetWidgetsOnTop, RecenterWidgets).ShowDialog(this);
     }
 }

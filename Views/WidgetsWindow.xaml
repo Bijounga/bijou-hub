@@ -33,6 +33,9 @@
             </StackPanel>
         </Border>
 
+        <Button x:Name="RecenterButton" Content="Bring widgets to this screen" HorizontalAlignment="Left" Padding="12,6" Margin="2,0,0,12"
+                Click="Recenter_Click" AutomationProperties.Name="Bring widgets to this screen"
+                ToolTip="Can't see a widget? This moves the open ones to the middle of the screen this window is on."/>
         <CheckBox x:Name="OnTopBox" Content="Keep widgets on top of other windows" Margin="2,0,0,10" Checked="OnTop_Click" Unchecked="OnTop_Click"
                   AutomationProperties.AutomationId="OnTopBox"
                   ToolTip="Off: they sit on the desktop behind your windows, and come forward when you click one."/>

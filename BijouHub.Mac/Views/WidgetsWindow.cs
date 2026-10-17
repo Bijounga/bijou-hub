@@ -21,7 +21,7 @@ public class WidgetsWindow : Window
     private readonly TextBlock _hint = new() { FontSize = 11, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(24, 6, 0, 0), IsVisible = false };
     private bool _loading = true;
 
-    public WidgetsWindow(bool taskShown, bool timerShown, Action<bool> setTask, Action<bool> setTimer, bool onTop, Action<bool> setOnTop)
+    public WidgetsWindow(bool taskShown, bool timerShown, Action<bool> setTask, Action<bool> setTimer, bool onTop, Action<bool> setOnTop, Action recenter)
     {
         Title = "Widgets";
         Width = 470;
@@ -90,6 +90,11 @@ public class WidgetsWindow : Window
         });
         panel.Children.Add(Card("Task list", "Today's tasks with the section tabs, an add box and a calendar view.", _taskShow, _taskStartup));
         panel.Children.Add(Card("Start timer", "Pick a project and press Start. The timer pops out in its place.", _timerShow, _timerStartup));
+        var bring = new Button { Content = "Bring widgets to this screen", Padding = new Thickness(12, 6), Margin = new Thickness(2, 0, 0, 12), HorizontalAlignment = HorizontalAlignment.Left };
+        Avalonia.Automation.AutomationProperties.SetName(bring, "Bring widgets to this screen");
+        ToolTip.SetTip(bring, "Can't see a widget? This moves the open ones to the middle of the screen this window is on.");
+        bring.Click += (_, _) => recenter();
+        panel.Children.Add(bring);
         _onTop.Margin = new Thickness(2, 0, 0, 10);
         panel.Children.Add(_onTop);
         _login.Margin = new Thickness(2, 6, 0, 0);

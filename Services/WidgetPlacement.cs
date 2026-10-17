@@ -20,6 +20,11 @@ public static class WidgetPlacement
     [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr hwnd, out Rect rect);
     [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
     [DllImport("user32.dll")] private static extern IntPtr MonitorFromPoint(Point point, uint flags);
+    [DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
+    [DllImport("user32.dll")] private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MonitorInfo { public int Size; public Rect Monitor; public Rect Work; public uint Flags; }
 
     private const uint GwHwndNext = 2;
     private const uint GwHwndPrev = 3;
@@ -71,8 +76,10 @@ public static class WidgetPlacement
             window.Topmost = top;
             if (!top) SendToBottom(window);
         }
-        window.SourceInitialized += (_, _) => Apply();
-        window.IsVisibleChanged += (_, _) => { if (window.IsVisible) Apply(); };
+        // Not while the window is still being created: changing its stacking before WPF has sized it
+        // (a window that sizes to its content) leaves it a pixel or two wide.
+        window.ContentRendered += (_, _) => Apply();
+        window.IsVisibleChanged += (_, _) => { if (window.IsVisible && window.IsLoaded) Apply(); };
         window.Deactivated += (_, _) => { if (!onTop()) SendToBottom(window); };
         window.Tag = (Action)Apply;
     }
@@ -93,6 +100,30 @@ public static class WidgetPlacement
         var hwnd = new WindowInteropHelper(window).Handle;
         if (hwnd == IntPtr.Zero || !OnAMonitor(x + 20, y + 20)) return false;
         return SetWindowPos(hwnd, IntPtr.Zero, x, y, 0, 0, SwpNoSize | SwpNoZOrder | SwpNoActivate);
+    }
+
+    // Centers a widget on the usable area of the monitor `reference` is on (or the widget's own). A
+    // window changes size when it lands on a monitor with a different scale, so it's centered once
+    // more after that.
+    public static void CenterOn(Window widget, Window? reference)
+    {
+        CenterOnce(widget, reference);
+        var again = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+        again.Tick += (_, _) => { again.Stop(); CenterOnce(widget, reference); };
+        again.Start();
+    }
+
+    private static void CenterOnce(Window widget, Window? reference)
+    {
+        var widgetHandle = new WindowInteropHelper(widget).Handle;
+        var referenceHandle = reference != null ? new WindowInteropHelper(reference).Handle : IntPtr.Zero;
+        if (widgetHandle == IntPtr.Zero || !GetWindowRect(widgetHandle, out var size)) return;
+        var monitor = MonitorFromWindow(referenceHandle != IntPtr.Zero ? referenceHandle : widgetHandle, 2);
+        var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
+        if (!GetMonitorInfo(monitor, ref info)) return;
+        var x = info.Work.Left + (info.Work.Right - info.Work.Left - (size.Right - size.Left)) / 2;
+        var y = info.Work.Top + (info.Work.Bottom - info.Work.Top - (size.Bottom - size.Top)) / 2;
+        SetWindowPos(widgetHandle, IntPtr.Zero, x, y, 0, 0, SwpNoSize | SwpNoZOrder | SwpNoActivate);
     }
 
     private static bool OnAMonitor(int x, int y) => MonitorFromPoint(new Point { X = x, Y = y }, MonitorDefaultToNull) != IntPtr.Zero;

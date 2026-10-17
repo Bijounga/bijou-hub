@@ -11,12 +11,14 @@ public partial class WidgetsWindow : Window
     private readonly Action<bool> _setTimer;
 
     private readonly Action<bool> _setOnTop;
+    private readonly Action _recenter;
 
-    public WidgetsWindow(bool taskShown, bool timerShown, Action<bool> setTask, Action<bool> setTimer, bool onTop, Action<bool> setOnTop)
+    public WidgetsWindow(bool taskShown, bool timerShown, Action<bool> setTask, Action<bool> setTimer, bool onTop, Action<bool> setOnTop, Action recenter)
     {
         InitializeComponent();
         DarkTitleBar.Apply(this);
         _loading = true;
+        _recenter = recenter;
         _setOnTop = setOnTop;
         _setTask = setTask;
         _setTimer = setTimer;
@@ -60,6 +62,8 @@ public partial class WidgetsWindow : Window
     private void UpdateHint() =>
         LoginHint.Visibility = (TaskStartupBox.IsChecked == true || TimerStartupBox.IsChecked == true) && LoginBox.IsChecked != true
             ? Visibility.Visible : Visibility.Collapsed;
+
+    private void Recenter_Click(object sender, RoutedEventArgs e) => _recenter();
 
     private void Done_Click(object sender, RoutedEventArgs e) => Close();
 }

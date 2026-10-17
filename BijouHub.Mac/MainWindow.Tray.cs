@@ -75,6 +75,7 @@ public partial class MainWindow
         Add("Quick Capture", ShowQuickCapture);
         Add(_tasksPopout == null ? "Task List" : "Close Task List", ToggleTasksPopout);
         Add(_timerWidgetWanted ? "Hide Start-Timer Widget" : "Start-Timer Widget", () => SetTimerWidget(!_timerWidgetWanted));
+        Add("Bring Widgets to This Screen", RecenterWidgets);
         Add("Widgets…", () => OpenWidgets_Click(this, new RoutedEventArgs()));
         if (IsSessionActive)
         {

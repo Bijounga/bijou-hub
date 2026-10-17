@@ -138,9 +138,28 @@ public partial class MainWindow
         if (_lastPopoutSpot is { } spot) WidgetPlacement.MoveTo(widget, spot.X, spot.Y);
     }
 
+    // Brings the widgets that are open onto the screen the main window is on (or their own): for when
+    // one was left on a monitor that's gone, off to the side, or squashed. They come to the front for a
+    // few seconds so you can see where they landed.
+    private void RecenterWidgets()
+    {
+        var reference = IsVisible ? this : null;
+        foreach (var widget in new Window?[] { _tasksPopout, _timerWidget })
+        {
+            if (widget is not { IsVisible: true }) continue;
+            if (widget is TimerWidgetWindow) widget.Width = 250; // a squashed one gets its width back
+            WidgetPlacement.CenterOn(widget, reference);
+            widget.Topmost = true;
+            var back = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+            back.Tick += (_, _) => { back.Stop(); WidgetPlacement.Reapply(widget); };
+            back.Start();
+        }
+        if (_timerWidgetWanted && _timerWidget is { IsVisible: false } && _timerPopout == null) _timerWidget.Show();
+    }
+
     private void OpenWidgets_Click(object sender, RoutedEventArgs e)
     {
         BringToFront();
-        new WidgetsWindow(_tasksPopout != null, _timerWidgetWanted, SetTaskWidget, SetTimerWidget, _widgetsOnTop, SetWidgetsOnTop) { Owner = DialogOwner }.ShowDialog();
+        new WidgetsWindow(_tasksPopout != null, _timerWidgetWanted, SetTaskWidget, SetTimerWidget, _widgetsOnTop, SetWidgetsOnTop, RecenterWidgets) { Owner = DialogOwner }.ShowDialog();
     }
 }
