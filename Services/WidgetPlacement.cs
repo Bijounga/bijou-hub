@@ -21,18 +21,44 @@ public static class WidgetPlacement
     [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
     [DllImport("user32.dll")] private static extern IntPtr MonitorFromPoint(Point point, uint flags);
 
-    private static readonly IntPtr HwndBottom = new(1);
+    private const uint GwHwndNext = 2;
+    private const uint GwHwndPrev = 3;
+
+    [DllImport("user32.dll")] private static extern IntPtr GetWindow(IntPtr hwnd, uint command);
+    [DllImport("user32.dll")] private static extern IntPtr GetTopWindow(IntPtr hwnd);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(IntPtr hwnd, System.Text.StringBuilder text, int max);
     private const uint SwpNoMove = 0x0002;
     private const uint SwpNoSize = 0x0001;
     private const uint SwpNoZOrder = 0x0004;
     private const uint SwpNoActivate = 0x0010;
     private const uint MonitorDefaultToNull = 0;
 
-    // Sends the window behind every other window (above only the desktop itself).
+    // The desktop is itself a window (Progman, and the WorkerW windows that can hold the icons) at the
+    // very bottom of the stack; a widget put under it would be hidden by the wallpaper.
+    private static bool IsDesktopWindow(IntPtr hwnd)
+    {
+        var name = new System.Text.StringBuilder(64);
+        GetClassName(hwnd, name, name.Capacity);
+        return name.ToString() is "Progman" or "WorkerW";
+    }
+
+    // Sends the window behind every other window, but still in front of the desktop itself. (The
+    // desktop isn't at the bottom of the stack: plenty of hidden helper windows are beneath it, so
+    // "the bottom" would be behind the wallpaper and invisible.)
     public static void SendToBottom(Window window)
     {
         var hwnd = new WindowInteropHelper(window).Handle;
-        if (hwnd != IntPtr.Zero) SetWindowPos(hwnd, HwndBottom, 0, 0, 0, 0, SwpNoMove | SwpNoSize | SwpNoActivate);
+        if (hwnd == IntPtr.Zero) return;
+
+        // The highest desktop window, from the top of the stack down.
+        var desktop = GetTopWindow(IntPtr.Zero);
+        while (desktop != IntPtr.Zero && !IsDesktopWindow(desktop)) desktop = GetWindow(desktop, GwHwndNext);
+        if (desktop == IntPtr.Zero) return; // no desktop window found: leave it where it is
+
+        // Sit directly above it: after the window that is just above the desktop (HWND_TOP if none).
+        var above = GetWindow(desktop, GwHwndPrev);
+        if (above == hwnd) return; // already there
+        SetWindowPos(hwnd, above, 0, 0, 0, 0, SwpNoMove | SwpNoSize | SwpNoActivate);
     }
 
     // Widgets either float on top, or sit on the desktop: behind everything, coming forward while
