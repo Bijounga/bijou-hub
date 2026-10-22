@@ -156,6 +156,7 @@ public partial class MainWindow
         }
         SessionTimerText.Text = TimerDisplay;
         _popout?.Update(SessionTitleText.Text ?? "", TimerDisplay, SessionStatusText.Text ?? "");
+        UpdateBlackout();
         UpdateTimerWidget();
         if (HomePanel.IsVisible) UpdateTodayCard();
         UpdateTrayToolTip();
@@ -222,6 +223,7 @@ public partial class MainWindow
         SessionStatusText.Text = _paused ? "Paused" : _pomodoro != null ? PomodoroStatus : "Active";
         SetPauseButton();
         _popout?.Update(SessionTitleText.Text ?? "", TimerDisplay, SessionStatusText.Text ?? "");
+        UpdateBlackout();
         UpdateTimerWidget();
         BroadcastDeckState();
     }
@@ -274,6 +276,7 @@ public partial class MainWindow
         _deckKeyId = null;
         StartPomodoro(null);
         UpdateTimerWidget();
+        UpdateBlackout();
         MacDoNotDisturb.Restore();
         EndKeyLight();
         BroadcastDeckState();

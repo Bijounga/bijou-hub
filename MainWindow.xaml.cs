@@ -84,6 +84,7 @@ public partial class MainWindow : Window
             _timerPopout?.Close();
             _tasksPopout?.Close();
             _timerWidget?.Close();
+            _blackout?.Close();
             _deckBridge.Dispose();
             if (_notesSaveTimer?.IsEnabled == true) SaveDailyPlan(); // notes typed in the last second
             _dailyStore.Flush(); // goal saves are written in the background
@@ -1318,6 +1319,7 @@ public partial class MainWindow : Window
 
         _timerPopout?.UpdateDisplay(_activeProject?.Name ?? _activeMode?.Name ?? "Session", TimerDisplay.Text, ActiveStatus.Text);
         UpdateTimerWidget();
+        UpdateBlackout();
 
         if (_targetMinutes is int target && !_budgetAlertShown && _activeSeconds >= target * 60)
         {
@@ -1692,6 +1694,7 @@ public partial class MainWindow : Window
         DoNotDisturb.Restore();
         EndKeyLight();
         UpdateTimerWidget();
+        UpdateBlackout();
         UpdateTaskbarProgress();
         BroadcastDeckState();
 
@@ -2342,6 +2345,7 @@ public partial class MainWindow : Window
         ActiveStatus.Text = _paused ? "Paused" : _pomodoro != null ? PomodoroStatus : "Active";
         SetIconButton(PauseToggleButton, _paused ? "\uE768" : "\uE769", _paused ? "Resume" : "Pause");
         _timerPopout?.UpdateDisplay(_activeProject?.Name ?? _activeMode?.Name ?? "Session", TimerDisplay.Text, ActiveStatus.Text);
+        UpdateBlackout();
         BroadcastDeckState();
     }
 
@@ -2625,6 +2629,18 @@ public partial class MainWindow : Window
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.F11)
+        {
+            ToggleFullscreen();
+            e.Handled = true;
+            return;
+        }
+        if (e.Key == Key.Escape && _fullscreen && Keyboard.FocusedElement is not System.Windows.Controls.TextBox)
+        {
+            ToggleFullscreen();
+            e.Handled = true;
+            return;
+        }
         if (e.Key == Key.Tab && Keyboard.Modifiers.HasFlag(ModifierKeys.Control) &&
             HomePanel.Visibility == Visibility.Visible && GoalScopeTabs.Visibility == Visibility.Visible)
         {

@@ -34,6 +34,8 @@ public partial class MainWindow
         var tasks = OpenTasksToday();
         SessionTaskPicker.SetTasks(tasks, _activeTask);
         _popout?.SetTasks(tasks, _activeTask);
+        _blackout?.SetTasks(tasks, _activeTask);
+        UpdateBlackout(); // the plan under the timer follows the picked task
     }
 
     private void SessionTask_Picked(DailyGoal? goal)

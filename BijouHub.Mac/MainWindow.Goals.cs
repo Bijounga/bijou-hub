@@ -625,6 +625,18 @@ public partial class MainWindow
 
     protected override void OnKeyDown(KeyEventArgs e)
     {
+        if (e.Key == Key.F11)
+        {
+            ToggleFullscreen();
+            e.Handled = true;
+            return;
+        }
+        if (e.Key == Key.Escape && WindowState == WindowState.FullScreen && FocusManager?.GetFocusedElement() is not TextBox)
+        {
+            ToggleFullscreen();
+            e.Handled = true;
+            return;
+        }
         // Ctrl+Tab / Ctrl+Shift+Tab cycle the goal tabs on Home (Cmd isn't free: it's tab switching on a Mac too).
         if (e.Key == Key.Tab && e.KeyModifiers.HasFlag(KeyModifiers.Control) && HomePanel.IsVisible && GoalScopeTabs.IsVisible)
         {

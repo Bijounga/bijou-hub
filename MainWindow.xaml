@@ -464,6 +464,7 @@
                     <Button x:Name="PauseToggleButton" Margin="8,0,0,0" Padding="12,8" Click="PauseToggle_Click" ToolTip="Pause" AutomationProperties.Name="Pause"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE769;" FontSize="14"/></Button>
                     <Button x:Name="NotesToggleButton" Margin="8,0,0,0" Padding="12,8" Click="NotesToggle_Click" ToolTip="Notes" AutomationProperties.Name="Notes"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE70B;" FontSize="14"/></Button>
                     <Button x:Name="PopoutToggleButton" Margin="8,0,0,0" Padding="12,8" Click="PopoutToggle_Click" ToolTip="Pop out the timer" AutomationProperties.Name="Pop out"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8A7;" FontSize="14"/></Button>
+                    <Button x:Name="BlackoutButton" Margin="8,0,0,0" Padding="12,8" Click="Blackout_Click" ToolTip="Black out the screen and show just the timer" AutomationProperties.Name="Focus screen"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE7F4;" FontSize="14"/></Button>
                 </StackPanel>
             </StackPanel>
 

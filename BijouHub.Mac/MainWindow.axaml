@@ -815,6 +815,7 @@
                                 <Button Name="PauseButton" Classes="icon" Click="Pause_Click" ToolTip.Tip="Pause"><controls:LineIcon Name="PauseIcon" Kind="pause"/></Button>
                                 <Button Name="SessionNotesToggle" Classes="icon" Click="NotesToggle_Click" ToolTip.Tip="Notes"><controls:LineIcon Kind="note"/></Button>
                                 <Button Name="PopoutButton" Classes="icon" Click="Popout_Click" ToolTip.Tip="Pop out the timer"><controls:LineIcon Name="PopoutIcon" Kind="popout"/></Button>
+                                <Button Name="BlackoutButton" Classes="icon" Click="Blackout_Click" ToolTip.Tip="Black out the screen and show just the timer" AutomationProperties.Name="Focus screen"><controls:LineIcon Kind="screen"/></Button>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>

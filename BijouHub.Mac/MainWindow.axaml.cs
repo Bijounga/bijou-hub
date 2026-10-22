@@ -86,6 +86,7 @@ public partial class MainWindow : Window
             _popout?.Close();
             _tasksPopout?.Close();
             _timerWidget?.Close();
+            _blackout?.Close();
             if (IsSessionActive) FinalizeSessionSilently();
         };
     }
