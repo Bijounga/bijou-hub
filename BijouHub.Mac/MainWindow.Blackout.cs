@@ -33,6 +33,12 @@ public partial class MainWindow
         window.TaskPicked += SessionTask_Picked;
         window.TaskAdded += SessionTask_Added;
         window.TaskDone += SessionTask_Done;
+        window.LookChanged += look =>
+        {
+            var settings = _settingsStore.Load();
+            settings.FocusLook = look;
+            _settingsStore.Save(settings);
+        };
         window.Closed += (_, _) =>
         {
             _blackout = null;
@@ -47,6 +53,7 @@ public partial class MainWindow
             if (mine == null || screens[i].Bounds != mine.Bounds) start = i;
         _blackoutScreen = Math.Max(0, start);
 
+        window.SetLook(_settingsStore.Load().FocusLook);
         _blackout = window;
         ToolTip.SetTip(BlackoutButton, "Leave the focus screen");
         PlaceBlackout(_blackoutScreen, show: true);

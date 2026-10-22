@@ -53,6 +53,31 @@ public class AppSettings
 
     // The one-time "still running in the hidden icons" notice has been shown.
     public bool TrayHintShown { get; set; }
+
+    // How the timer looks on the focus screen: size, font and color, kept between sessions.
+    public FocusLook FocusLook { get; set; } = new();
+}
+
+// The focus screen's timer look. Font and Color are null for "whatever the theme says".
+public class FocusLook
+{
+    public const double MinScale = 0.25, MaxScale = 3.0;
+
+    public double Scale { get; set; } = 1.0;
+    public string? Font { get; set; }
+    public string? Color { get; set; }
+
+    // One notch bigger (direction 1) or smaller (-1).
+    public static double Step(double scale, int direction) =>
+        Math.Round(Math.Clamp(direction > 0 ? scale * 1.15 : scale / 1.15, MinScale, MaxScale), 2);
+
+    // The colors offered for the timer, besides the theme's own.
+    public static readonly (string Name, string Hex)[] Colors =
+    {
+        ("White", "#F2F4F7"), ("Soft grey", "#8C96A3"), ("Cyan", "#33E1FF"), ("Teal", "#3FB5AA"),
+        ("Green", "#5CD68A"), ("Amber", "#FFB454"), ("Orange", "#FF8A4C"), ("Red", "#FF6B6B"),
+        ("Pink", "#FF7AB6"), ("Violet", "#A78BFA")
+    };
 }
 
 // A desktop widget (the task list, the start-timer): whether it comes back when BijouHub starts, and

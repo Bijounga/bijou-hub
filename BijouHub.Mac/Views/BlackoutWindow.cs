@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using BijouHub.Mac.Controls;
 using BijouHub.Models;
+using BijouHub.Services;
 
 namespace BijouHub.Mac.Views;
 
@@ -21,6 +22,23 @@ public class BlackoutWindow : Window
     public event Action<DailyGoal?>? TaskPicked;
     public event Action<string>? TaskAdded;
     public event Action? TaskDone;
+    public event Action<FocusLook>? LookChanged;
+
+    // The fonts on offer: what's shown, and the font family that goes with it. The first is the theme's own.
+    private static readonly (string Label, string? Family)[] Fonts =
+    {
+        ("Theme font", null), ("Inter", "fonts:Inter#Inter"), ("Avenir Next", "Avenir Next"), ("Helvetica Neue", "Helvetica Neue"),
+        ("Menlo", "Menlo"), ("Monaco", "Monaco"), ("Palatino", "Palatino"), ("Georgia", "Georgia"),
+        ("Courier New", "Courier New"), ("Impact", "Impact")
+    };
+
+    private FocusLook _look = new();
+    private bool _applying;
+    private readonly FontFamily _themeFont;
+    private readonly IBrush? _themeBrush;
+    private readonly Viewbox _timeBox = new() { Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly };
+    private readonly ComboBox _fontBox = new() { Width = 170, Margin = new Thickness(14, 0, 14, 0) };
+    private readonly StackPanel _swatches = new() { Orientation = Orientation.Horizontal };
 
     private readonly TextBlock _time = new() { Text = "00:00:00", FontSize = 200, HorizontalAlignment = HorizontalAlignment.Center, Opacity = 0.85 };
     private readonly TextBlock _goal = new() { FontSize = 20, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, MaxWidth = 900, Margin = new Thickness(0, 14, 0, 0), IsVisible = false, Foreground = new SolidColorBrush(Color.Parse("#8C96A3")) };
@@ -45,12 +63,17 @@ public class BlackoutWindow : Window
         if (this.TryFindResource("TimerFont", ActualThemeVariant, out var font) && font is FontFamily family) _time.FontFamily = family;
         if (this.TryFindResource("AccentBrush", ActualThemeVariant, out var accent) && accent is IBrush accentBrush) _time.Foreground = accentBrush;
 
+        // remembered so the theme's own timer font and color can be put back
+        _themeFont = _time.FontFamily;
+        _themeBrush = _time.Foreground;
+        _timeBox.Child = _time;
+
         var center = new StackPanel
         {
             VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, IsHitTestVisible = false,
             Children =
             {
-                new Viewbox { MaxWidth = 1400, MaxHeight = 360, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly, Child = _time },
+                _timeBox,
                 _goal,
                 _status
             }
@@ -78,15 +101,43 @@ public class BlackoutWindow : Window
         _controls.VerticalAlignment = VerticalAlignment.Bottom;
         _controls.HorizontalAlignment = HorizontalAlignment.Center;
         _controls.Margin = new Thickness(0, 0, 0, 40);
+        Avalonia.Automation.AutomationProperties.SetName(_fontBox, "Blackout font");
+        ToolTip.SetTip(_fontBox, "Timer font");
+        foreach (var (label, _) in Fonts) _fontBox.Items.Add(label);
+        _fontBox.SelectionChanged += (_, _) =>
+        {
+            if (_applying || _fontBox.SelectedIndex < 0) return;
+            var index = _fontBox.SelectedIndex;
+            Change(l => l.Font = index == 0 ? null : Fonts[index].Label);
+        };
+        AddSwatch("Theme color", null);
+        foreach (var (name, hex) in FocusLook.Colors) AddSwatch(name, hex);
+
         _controls.Child = new StackPanel
         {
-            Orientation = Orientation.Horizontal,
             Children =
             {
-                _picker, _pause,
-                Make("Finish", "Blackout finish", () => FinishRequested?.Invoke()),
-                Make("Other screen", "Blackout other screen", () => NextScreenRequested?.Invoke(), "Move this to another monitor"),
-                Make("Exit", "Blackout exit", () => ExitRequested?.Invoke(), "Back to BijouHub (Esc)")
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Children =
+                    {
+                        _picker, _pause,
+                        Make("Finish", "Blackout finish", () => FinishRequested?.Invoke()),
+                        Make("Other screen", "Blackout other screen", () => NextScreenRequested?.Invoke(), "Move this to another monitor"),
+                        Make("Exit", "Blackout exit", () => ExitRequested?.Invoke(), "Back to BijouHub (Esc)")
+                    }
+                },
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 10, 0, 0),
+                    Children =
+                    {
+                        Make("A−", "Blackout smaller", () => Change(l => l.Scale = FocusLook.Step(l.Scale, -1)), "Smaller timer (-, or scroll down)"),
+                        Make("A+", "Blackout bigger", () => Change(l => l.Scale = FocusLook.Step(l.Scale, 1)), "Bigger timer (+, or scroll up)"),
+                        _fontBox, _swatches
+                    }
+                }
             }
         };
 
@@ -102,6 +153,12 @@ public class BlackoutWindow : Window
             ShowControls();
         };
         PointerPressed += (_, _) => ShowControls();
+        PointerWheelChanged += (_, e) =>
+        {
+            if (e.Delta.Y == 0) return;
+            Change(l => l.Scale = FocusLook.Step(l.Scale, e.Delta.Y > 0 ? 1 : -1));
+            ShowControls();
+        };
         KeyDown += (_, e) =>
         {
             if (e.Key == Key.Escape)
@@ -110,8 +167,69 @@ public class BlackoutWindow : Window
                 else ExitRequested?.Invoke();
                 e.Handled = true;
             }
+            else if (!_controls.IsKeyboardFocusWithin && e.Key is Key.OemPlus or Key.Add) { Change(l => l.Scale = FocusLook.Step(l.Scale, 1)); ShowControls(); e.Handled = true; }
+            else if (!_controls.IsKeyboardFocusWithin && e.Key is Key.OemMinus or Key.Subtract) { Change(l => l.Scale = FocusLook.Step(l.Scale, -1)); ShowControls(); e.Handled = true; }
             else ShowControls();
         };
+    }
+
+    // How the timer looks (set before showing).
+    public void SetLook(FocusLook look)
+    {
+        _look = new FocusLook { Scale = Math.Clamp(look.Scale, FocusLook.MinScale, FocusLook.MaxScale), Font = look.Font, Color = look.Color };
+        ApplyLook();
+    }
+
+    private void ApplyLook()
+    {
+        _applying = true;
+        _time.FontSize = 200 * _look.Scale;
+        FitTimer();
+
+        var index = Array.FindIndex(Fonts, f => f.Label == _look.Font);
+        if (index < 0) index = 0;
+        _time.FontFamily = Fonts[index].Family is { } family ? new FontFamily(family) : _themeFont;
+        _fontBox.SelectedIndex = index;
+
+        _time.Foreground = _look.Color != null && Color.TryParse(_look.Color, out var color) ? new SolidColorBrush(color) : _themeBrush;
+        foreach (Button swatch in _swatches.Children)
+            swatch.BorderBrush = (string?)swatch.Tag == _look.Color ? Brushes.White : new SolidColorBrush(Color.Parse("#323A45"));
+        _applying = false;
+    }
+
+    // Big timers still have to fit the screen, with room left for the plan under them.
+    private void FitTimer()
+    {
+        _timeBox.MaxWidth = Math.Max(200, Bounds.Width - 80);
+        _timeBox.MaxHeight = Math.Max(100, Bounds.Height * 0.62);
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == BoundsProperty) FitTimer();
+    }
+
+    private void AddSwatch(string name, string? hex)
+    {
+        var swatch = new Button
+        {
+            Width = 24, Height = 24, MinHeight = 0, MinWidth = 0, Margin = new Thickness(0, 0, 6, 0), Padding = new Thickness(0), Tag = hex,
+            Background = hex == null ? Brushes.Transparent : new SolidColorBrush(Color.Parse(hex)), BorderThickness = new Thickness(2),
+            CornerRadius = new CornerRadius(12),
+            Content = hex == null ? new TextBlock { Text = "A", FontSize = 11, Foreground = Brushes.Gray, HorizontalAlignment = HorizontalAlignment.Center } : null
+        };
+        ToolTip.SetTip(swatch, name);
+        Avalonia.Automation.AutomationProperties.SetName(swatch, "Blackout color " + name);
+        swatch.Click += (_, _) => Change(l => l.Color = hex);
+        _swatches.Children.Add(swatch);
+    }
+
+    private void Change(Action<FocusLook> edit)
+    {
+        edit(_look);
+        ApplyLook();
+        LookChanged?.Invoke(new FocusLook { Scale = _look.Scale, Font = _look.Font, Color = _look.Color });
     }
 
     public void Update(string time, string status, bool paused, string? goal)

@@ -10,11 +10,12 @@
         Background="Black"
         WindowStartupLocation="Manual"
         Width="800" Height="450"
-        KeyDown="Window_KeyDown" MouseMove="Window_MouseMove" MouseLeftButtonDown="Window_MouseDown">
+        KeyDown="Window_KeyDown" MouseMove="Window_MouseMove" MouseLeftButtonDown="Window_MouseDown"
+        MouseWheel="Window_MouseWheel" SizeChanged="Window_SizeChanged">
     <Grid Background="Black">
         <!-- The timer, the plan under it, and what state it's in: nothing else. -->
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False">
-            <Viewbox MaxWidth="1400" MaxHeight="360" Stretch="Uniform" StretchDirection="DownOnly">
+            <Viewbox x:Name="TimeBox" MaxWidth="1400" MaxHeight="360" Stretch="Uniform" StretchDirection="DownOnly">
                 <TextBlock x:Name="TimeText" Text="00:00:00" FontSize="200" HorizontalAlignment="Center" Opacity="0.85"
                            FontFamily="{DynamicResource TimerFont}" FontWeight="{DynamicResource TimerFontWeight}"
                            Foreground="{DynamicResource TimerTextBrush}"/>
@@ -27,6 +28,7 @@
         <!-- Appear when the mouse moves, and go again after a few seconds. -->
         <Border x:Name="Controls" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,40" Padding="14,10" CornerRadius="10"
                 Background="#14181D" BorderBrush="#232A33" BorderThickness="1" Opacity="0" IsHitTestVisible="False">
+            <StackPanel>
             <StackPanel Orientation="Horizontal">
                 <local:SessionTaskPicker x:Name="TaskPicker" Width="320" Margin="0,0,14,0"/>
                 <Button x:Name="PauseButton" Content="Pause" Padding="12,6" Click="Pause_Click" AutomationProperties.Name="Blackout pause"/>
@@ -34,6 +36,14 @@
                 <Button Content="Other screen" Padding="12,6" Margin="8,0,0,0" Click="NextScreen_Click" AutomationProperties.Name="Blackout other screen"
                         ToolTip="Move this to another monitor"/>
                 <Button Content="Exit" Padding="12,6" Margin="8,0,0,0" Click="Exit_Click" AutomationProperties.Name="Blackout exit" ToolTip="Back to BijouHub (Esc)"/>
+            </StackPanel>
+            <!-- How the timer looks: size, font, color. Kept between sessions. -->
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0" HorizontalAlignment="Center">
+                <Button Content="A−" Padding="10,4" Click="Smaller_Click" AutomationProperties.Name="Blackout smaller" ToolTip="Smaller timer (-, or scroll down)"/>
+                <Button Content="A+" Padding="10,4" Margin="6,0,0,0" Click="Bigger_Click" AutomationProperties.Name="Blackout bigger" ToolTip="Bigger timer (+, or scroll up)"/>
+                <ComboBox x:Name="FontBox" Width="170" Margin="14,0,14,0" AutomationProperties.Name="Blackout font" ToolTip="Timer font" SelectionChanged="Font_Changed"/>
+                <StackPanel x:Name="Swatches" Orientation="Horizontal"/>
+            </StackPanel>
             </StackPanel>
         </Border>
     </Grid>
