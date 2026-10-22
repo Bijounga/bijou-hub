@@ -97,6 +97,7 @@ public partial class MainWindow
         RefreshGoalScope();
         RefreshCarryOver();
         UpdateDailyProgress();
+        RefreshPastNotes();
     }
 
     private void SaveDailyPlan()

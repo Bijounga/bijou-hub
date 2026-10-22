@@ -13,9 +13,31 @@ public partial class App : Application
     // running when closed" doesn't just minimize it.
     public static bool Quitting { get; set; }
 
+    private SingleInstance? _instance;
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool AllowSetForegroundWindow(int processId);
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Already running (maybe hidden in the tray)? Ask it to show its window and stop here, so the
+        // app icon or a Stream Deck "open app" button brings the window up instead of starting a copy.
+        // (A start at sign-in, with --tray, just leaves the running one alone.)
+        _instance = SingleInstance.Acquire(DataPaths.LocalDir);
+        if (!_instance.IsFirst)
+        {
+            var quiet = e.Args.Contains(StartupService.TrayArgument);
+            if (quiet) { Shutdown(); return; }
+            AllowSetForegroundWindow(-1); // let the running one come to the front
+            if (_instance.HandOver(TimeSpan.FromSeconds(3)) || !_instance.TakeOver(TimeSpan.FromSeconds(8)))
+            {
+                Shutdown();
+                return;
+            }
+            // The running one was on its way out and has let go: carry on as the first.
+        }
 
         // A bug in a side window (a popup, an alert) shouldn't take down a running session: log
         // it and carry on.
@@ -42,6 +64,7 @@ public partial class App : Application
         var widgetsAtStartup = settings.TaskWidget.ShowAtStartup || settings.TimerWidget.ShowAtStartup;
         if (e.Args.Contains(StartupService.TrayArgument) && (settings.KeepRunningWhenClosed || widgetsAtStartup)) window.StartInTray();
         else window.Show();
+        _instance?.Listen(() => Dispatcher.Invoke(window.ShowFromAnotherStart));
         window.OpenStartupWidgets();
     }
 

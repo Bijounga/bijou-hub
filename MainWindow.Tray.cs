@@ -19,6 +19,9 @@ public partial class MainWindow
         if (_keepRunning) ShowTrayIcon();
     }
 
+    // BijouHub was started again while it was already running: bring up its window.
+    public void ShowFromAnotherStart() => BringToFront();
+
     private void ShowTrayIcon()
     {
         if (_tray == null)

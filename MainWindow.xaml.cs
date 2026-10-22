@@ -900,6 +900,7 @@ public partial class MainWindow : Window
         HomePanel.Visibility = Visibility.Visible;
         FadeIn(HomePanel);
         SetNavHighlight();
+        RefreshPastNotes();
 
         _detailProject = null;
         UpdateNotesPanelVisibility();
@@ -1788,6 +1789,7 @@ public partial class MainWindow : Window
         RefreshGoalScope();
         RefreshCarryOver();
         UpdateDailyProgress();
+        RefreshPastNotes();
     }
 
     private void SaveDailyPlan()

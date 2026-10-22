@@ -456,6 +456,12 @@
                                             <TextBlock Name="DailyNotesLabel" Classes="label" Text="NOTES FOR TODAY" Margin="2,14,0,4"/>
                                             <TextBox Name="DailyNotesBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="56" MaxHeight="220"
                                                      TextChanged="DailyNotesBox_TextChanged" LostFocus="DailyNotesBox_LostFocus"/>
+
+                                            <!-- Notes from earlier days, kept (greyed) until you delete them. -->
+                                            <StackPanel Name="PastNotesPanel" IsVisible="False">
+                                                <TextBlock Classes="label" Text="EARLIER NOTES" Margin="2,14,0,4"/>
+                                                <StackPanel Name="PastNotesList"/>
+                                            </StackPanel>
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>

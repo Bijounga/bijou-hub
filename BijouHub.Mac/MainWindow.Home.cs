@@ -24,6 +24,7 @@ public partial class MainWindow
     {
         ShowOnly(HomePanel);
         _detailProject = null;
+        RefreshPastNotes();
         HomeDateText.Text = DateTime.Today.ToString("dddd, MMMM d");
         HomeGreetingText.Text = Greetings.Random();
 

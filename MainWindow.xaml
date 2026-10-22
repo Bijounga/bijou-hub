@@ -896,6 +896,12 @@
                                     <TextBox x:Name="DailyNotesBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="54" MaxHeight="220"
                                              VerticalScrollBarVisibility="Auto" Padding="8,6" TextChanged="DailyNotesBox_TextChanged"
                                              LostKeyboardFocus="DailyNotesBox_LostKeyboardFocus" AutomationProperties.Name="Notes for today"/>
+
+                                    <!-- Notes from earlier days, kept (greyed) until you delete them. -->
+                                    <StackPanel x:Name="PastNotesPanel" Visibility="Collapsed">
+                                        <TextBlock Text="EARLIER NOTES" Foreground="{DynamicResource MutedTextBrush}" FontSize="10" Margin="2,14,0,4"/>
+                                        <StackPanel x:Name="PastNotesList"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
