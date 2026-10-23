@@ -600,7 +600,7 @@
                             </Button>
 
                             <WrapPanel>
-                                <Button Classes="primary" Padding="18,8" Margin="0,0,8,8" Click="StartProjectSession_Click">
+                                <Button Classes="primary" Padding="18,8" Margin="0,0,8,8" Click="StartProjectSession_Click" AutomationProperties.Name="Start session">
                                     <StackPanel Orientation="Horizontal" Spacing="8"><controls:LineIcon Kind="play" Width="12" Height="12"/><TextBlock Text="Start Session"/></StackPanel>
                                 </Button>
                                 <Button Classes="icon" Margin="0,0,8,8" Click="LogTime_Click" ToolTip.Tip="Log time you worked away from BijouHub"><controls:LineIcon Kind="clock"/></Button>

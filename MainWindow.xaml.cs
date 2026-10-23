@@ -1203,7 +1203,7 @@ public partial class MainWindow : Window
         var dlg = new StartSessionWindow(project, _modes) { Owner = DialogOwner };
         if (dlg.ShowDialog() != true) return;
 
-        await BeginSession(dlg.SelectedMode, project, dlg.SelectedGoal, dlg.TargetMinutes, dlg.CountDown);
+        await BeginSession(dlg.SelectedMode, project, dlg.SelectedGoal, dlg.TargetMinutes, dlg.CountDown, pomodoro: dlg.Pomodoro);
     }
 
     private async Task BeginSession(WorkMode? mode, Project? project, Goal? goal, int? targetMinutes, bool countDown = false,

@@ -28,10 +28,10 @@
         <TextBlock Grid.Row="3" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="WORKING ON"/></TextBlock>
         <ComboBox Grid.Row="4" x:Name="GoalCombo" Margin="0,0,0,16" DisplayMemberPath="Label"/>
 
-        <TextBlock Grid.Row="5" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="TIME BUDGET"/></TextBlock>
+        <TextBlock Grid.Row="5" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="TIMER"/></TextBlock>
         <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,0,0,8">
-            <ComboBox x:Name="BudgetCombo" Width="140" SelectionChanged="BudgetCombo_SelectionChanged"/>
-            <TextBox x:Name="CustomBudgetBox" Width="80" Margin="8,0,0,0" Visibility="Collapsed"/>
+            <ComboBox x:Name="BudgetCombo" Width="190" SelectionChanged="BudgetCombo_SelectionChanged"/>
+            <TextBox x:Name="CustomBudgetBox" Width="110" Margin="8,0,0,0" Visibility="Collapsed"/>
         </StackPanel>
 
         <CheckBox Grid.Row="7" x:Name="CountDownCheckBox" Content="Count down instead of up" VerticalAlignment="Top"

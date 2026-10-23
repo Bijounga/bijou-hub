@@ -17,7 +17,7 @@ public partial class BlackoutWindow : Window
     public event Action? ExitRequested;
     public event Action? PauseRequested;
     public event Action? FinishRequested;
-    public event Action? NextScreenRequested;
+    public event Action<int>? ScreenChosen;
     public event Action<DailyGoal?>? TaskPicked;
     public event Action<string>? TaskAdded;
     public event Action? TaskDone;
@@ -58,6 +58,26 @@ public partial class BlackoutWindow : Window
         PauseButton.Content = paused ? "Resume" : "Pause";
         GoalText.Text = goal ?? "";
         GoalText.Visibility = string.IsNullOrWhiteSpace(goal) ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    // The monitors to move to, left to right (what each is, for its tooltip), and which one this is on.
+    public void SetScreens(IReadOnlyList<string> descriptions, int current)
+    {
+        ScreenButtons.Children.Clear();
+        ScreenButtons.Children.Add(new TextBlock { Text = "Screen", Foreground = new SolidColorBrush(Color.FromRgb(0x8C, 0x96, 0xA3)), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(6, 0, 8, 0) });
+        for (var i = 0; i < descriptions.Count; i++)
+        {
+            var index = i;
+            var button = new Button
+            {
+                Content = (i + 1).ToString(), Padding = new Thickness(11, 6, 11, 6), Margin = new Thickness(0, 0, 4, 0), ToolTip = descriptions[i],
+                BorderBrush = i == current ? (Brush)FindResource("AccentBrush") : new SolidColorBrush(Color.FromRgb(0x32, 0x3A, 0x45)),
+                BorderThickness = new Thickness(i == current ? 2 : 1)
+            };
+            AutomationProperties.SetName(button, $"Blackout screen {i + 1}");
+            button.Click += (_, _) => ScreenChosen?.Invoke(index);
+            ScreenButtons.Children.Add(button);
+        }
     }
 
     // How the timer looks (set before showing, and again whenever it changes).
@@ -184,6 +204,5 @@ public partial class BlackoutWindow : Window
 
     private void Pause_Click(object sender, RoutedEventArgs e) => PauseRequested?.Invoke();
     private void Finish_Click(object sender, RoutedEventArgs e) => FinishRequested?.Invoke();
-    private void NextScreen_Click(object sender, RoutedEventArgs e) => NextScreenRequested?.Invoke();
     private void Exit_Click(object sender, RoutedEventArgs e) => ExitRequested?.Invoke();
 }

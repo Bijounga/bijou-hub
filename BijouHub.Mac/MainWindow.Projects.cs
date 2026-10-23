@@ -148,6 +148,6 @@ public partial class MainWindow
         if (_detailProject is not Project project) return;
         var dialog = new StartSessionWindow(project, _modes.ToList());
         if (!await dialog.ShowDialog<bool>(this)) return;
-        await BeginSession(dialog.SelectedMode, project, dialog.SelectedGoal, dialog.TargetMinutes, dialog.CountDown);
+        await BeginSession(dialog.SelectedMode, project, dialog.SelectedGoal, dialog.TargetMinutes, dialog.CountDown, pomodoro: dialog.Pomodoro);
     }
 }

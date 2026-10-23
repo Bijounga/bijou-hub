@@ -33,8 +33,8 @@
                 <local:SessionTaskPicker x:Name="TaskPicker" Width="320" Margin="0,0,14,0"/>
                 <Button x:Name="PauseButton" Content="Pause" Padding="12,6" Click="Pause_Click" AutomationProperties.Name="Blackout pause"/>
                 <Button Content="Finish" Padding="12,6" Margin="8,0,0,0" Click="Finish_Click" AutomationProperties.Name="Blackout finish"/>
-                <Button Content="Other screen" Padding="12,6" Margin="8,0,0,0" Click="NextScreen_Click" AutomationProperties.Name="Blackout other screen"
-                        ToolTip="Move this to another monitor"/>
+                <!-- One button per monitor; click one to move this there. -->
+                <StackPanel x:Name="ScreenButtons" Orientation="Horizontal" Margin="8,0,0,0"/>
                 <Button Content="Exit" Padding="12,6" Margin="8,0,0,0" Click="Exit_Click" AutomationProperties.Name="Blackout exit" ToolTip="Back to BijouHub (Esc)"/>
             </StackPanel>
             <!-- How the timer looks: size, font, color. Kept between sessions. -->

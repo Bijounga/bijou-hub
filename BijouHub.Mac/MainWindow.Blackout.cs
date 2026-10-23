@@ -29,7 +29,7 @@ public partial class MainWindow
         window.ExitRequested += () => window.Close();
         window.PauseRequested += TogglePause;
         window.FinishRequested += () => _ = FinishSessionAsync(askForNote: true);
-        window.NextScreenRequested += () => PlaceBlackout(_blackoutScreen + 1);
+        window.ScreenChosen += index => PlaceBlackout(index);
         window.TaskPicked += SessionTask_Picked;
         window.TaskAdded += SessionTask_Added;
         window.TaskDone += SessionTask_Done;
@@ -70,6 +70,10 @@ public partial class MainWindow
         _blackoutScreen = (index % screens.Count + screens.Count) % screens.Count;
         var screen = screens[_blackoutScreen];
 
+        var mine = IsVisible ? Screens.ScreenFromWindow(this) : null;
+        window.SetScreens(screens.Select((s, i) =>
+            $"Screen {i + 1}: {s.Bounds.Width}×{s.Bounds.Height}" + (s.IsPrimary ? ", main" : "") + (mine != null && s.Bounds == mine.Bounds ? " — BijouHub is on this one" : "")).ToList(), _blackoutScreen);
+
         window.WindowState = WindowState.Normal;
         window.Position = screen.Bounds.TopLeft;
         if (show) window.Show();
@@ -97,6 +101,16 @@ public partial class MainWindow
 
     // ---------- F11: full screen ----------
 
-    private void ToggleFullscreen() =>
-        WindowState = WindowState == WindowState.FullScreen ? WindowState.Normal : WindowState.FullScreen;
+    private WindowState _stateBeforeFullscreen = WindowState.Normal;
+
+    private void ToggleFullscreen()
+    {
+        if (WindowState == WindowState.FullScreen)
+        {
+            WindowState = _stateBeforeFullscreen;
+            return;
+        }
+        _stateBeforeFullscreen = WindowState;
+        WindowState = WindowState.FullScreen;
+    }
 }

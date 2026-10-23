@@ -16,10 +16,16 @@ public static class DisplayInfo
     [DllImport("user32.dll")] private static extern bool EnumDisplayMonitors(IntPtr dc, IntPtr clip, MonitorEnumProc proc, IntPtr data);
     [DllImport("user32.dll")] private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
     [DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
+    [StructLayout(LayoutKind.Sequential)] private struct Point { public int X, Y; }
+    [StructLayout(LayoutKind.Sequential)] private struct Placement { public int Length, Flags, ShowCmd; public Point MinPosition, MaxPosition; public Rect Normal; }
+    [DllImport("user32.dll")] private static extern bool GetWindowPlacement(IntPtr hwnd, ref Placement placement);
+    [DllImport("user32.dll")] private static extern bool SetWindowPlacement(IntPtr hwnd, ref Placement placement);
     [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
 
     private static readonly IntPtr HwndTopmost = new(-1);
     private static readonly IntPtr HwndNoTopmost = new(-2);
+    private const uint SwpNoSize = 0x0001;
+    private const uint SwpNoMove = 0x0002;
     private const uint SwpNoActivate = 0x0010;
     private const uint SwpShowWindow = 0x0040;
 
@@ -48,20 +54,63 @@ public static class DisplayInfo
             : null;
     }
 
-    // Covers a monitor completely with the window, above the taskbar (the taskbar steps out of the way
-    // of a window that fills its monitor). Applied again a moment later, since Windows rescales a window
-    // that lands on a monitor with a different scale.
+    // Where a window is and whether it's maximized, in screen pixels, to put it back exactly later. (A
+    // window's Left/Width are scaled units that mean different things on monitors with different scaling.)
+    public readonly record struct Saved(object Placement);
+
+    public static Saved? Save(Window window)
+    {
+        var hwnd = new WindowInteropHelper(window).Handle;
+        var placement = new Placement { Length = Marshal.SizeOf<Placement>() };
+        return hwnd != IntPtr.Zero && GetWindowPlacement(hwnd, ref placement) ? new Saved(placement) : null;
+    }
+
+    public static void Restore(Window window, Saved saved)
+    {
+        var hwnd = new WindowInteropHelper(window).Handle;
+        if (hwnd == IntPtr.Zero || saved.Placement is not Placement placement) return;
+        // Not minimized: it was on screen when F11 was pressed.
+        if (placement.ShowCmd == 2) placement.ShowCmd = 1;
+        SetWindowPlacement(hwnd, ref placement);
+    }
+
+    // Covers a monitor completely with the window, over the taskbar (a borderless maximized window does
+    // that). The window must have no border (WindowStyle None).
+    //
+    // Onto another monitor, it lands there as a small window first and is maximized once Windows has
+    // rescaled it for that monitor. Resizing it by hand while it crosses to a monitor with a different
+    // scale ends with WPF's layout at twice the real size, the content spilling far past the monitor.
     public static void Cover(Window window, Screen screen, bool topmost)
     {
-        void Place()
+        var handle = new WindowInteropHelper(window).Handle;
+        if (handle == IntPtr.Zero) return;
+        var after = topmost ? HwndTopmost : HwndNoTopmost;
+        void Maximize()
         {
-            var hwnd = new WindowInteropHelper(window).Handle;
-            if (hwnd == IntPtr.Zero) return;
-            SetWindowPos(hwnd, topmost ? HwndTopmost : HwndNoTopmost, screen.X, screen.Y, screen.Width, screen.Height, SwpNoActivate | SwpShowWindow);
+            window.WindowState = WindowState.Maximized;
+            SetWindowPos(handle, after, 0, 0, 0, 0, SwpNoMove | SwpNoSize | SwpNoActivate | SwpShowWindow);
         }
-        Place();
-        var again = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
-        again.Tick += (_, _) => { again.Stop(); Place(); };
-        again.Start();
+
+        var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
+        var elsewhere = GetMonitorInfo(MonitorFromWindow(handle, 2), ref info) && (info.Monitor.Left != screen.X || info.Monitor.Top != screen.Y);
+        if (window.WindowState == WindowState.Maximized && !elsewhere) return;
+        window.WindowState = WindowState.Normal;
+        if (!elsewhere) { Maximize(); return; }
+
+        var done = false;
+        void Settled()
+        {
+            if (done) return;
+            done = true;
+            window.DpiChanged -= OnDpiChanged;
+            window.Dispatcher.BeginInvoke(Maximize, System.Windows.Threading.DispatcherPriority.Background);
+        }
+        void OnDpiChanged(object? sender, DpiChangedEventArgs e) => Settled();
+        window.DpiChanged += OnDpiChanged;
+        SetWindowPos(handle, after, screen.X + 20, screen.Y + 20, 200, 120, SwpNoActivate | SwpShowWindow);
+        // (no such message when both monitors have the same scale)
+        var fallback = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        fallback.Tick += (_, _) => { fallback.Stop(); Settled(); };
+        fallback.Start();
     }
 }

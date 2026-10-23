@@ -25,6 +25,7 @@ public partial class StartSessionWindow : Window
     public Goal? SelectedGoal { get; private set; }
     public int? TargetMinutes { get; private set; }
     public bool CountDown { get; private set; }
+    public PomodoroPlan? Pomodoro { get; private set; }
 
     public StartSessionWindow() : this(new Project(), new List<WorkMode>()) { }
 
@@ -55,7 +56,7 @@ public partial class StartSessionWindow : Window
 
     private void DurationBox_TextChanged(object? sender, TextChangedEventArgs e)
     {
-        var hasLength = DurationText.TryParseMinutes(DurationBox.Text) != null;
+        var hasLength = DurationText.TryParseMinutes(DurationBox.Text) != null && DurationText.TryParsePomodoro(DurationBox.Text) == null;
         CountDownCheck.IsEnabled = hasLength;
         if (!hasLength) CountDownCheck.IsChecked = false;
     }
@@ -64,7 +65,8 @@ public partial class StartSessionWindow : Window
     {
         SelectedMode = (ModeCombo.SelectedItem as ModeOption)?.Mode;
         SelectedGoal = (GoalCombo.SelectedItem as GoalOption)?.Goal;
-        TargetMinutes = DurationText.TryParseMinutes(DurationBox.Text);
+        Pomodoro = DurationText.TryParsePomodoro(DurationBox.Text);
+        TargetMinutes = Pomodoro != null ? null : DurationText.TryParseMinutes(DurationBox.Text);
         CountDown = TargetMinutes != null && CountDownCheck.IsChecked == true;
         Close(true);
     }

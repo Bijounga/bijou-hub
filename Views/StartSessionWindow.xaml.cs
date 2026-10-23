@@ -20,6 +20,12 @@ public partial class StartSessionWindow : Window
     public int? TargetMinutes { get; private set; }
     public bool CountDown { get; private set; }
     public WorkMode? SelectedMode { get; private set; }
+    public PomodoroPlan? Pomodoro { get; private set; }
+
+    private const string CustomMinutes = "Custom...";
+    private const string Pomodoro25 = "Pomodoro 25 / 5  ×4";
+    private const string Pomodoro50 = "Pomodoro 50 / 10  ×3";
+    private const string PomodoroCustom = "Pomodoro custom...";
 
     public StartSessionWindow(Project project, List<WorkMode> modes)
     {
@@ -42,7 +48,10 @@ public partial class StartSessionWindow : Window
         BudgetCombo.Items.Add("30 min");
         BudgetCombo.Items.Add("60 min");
         BudgetCombo.Items.Add("90 min");
-        BudgetCombo.Items.Add("Custom...");
+        BudgetCombo.Items.Add(CustomMinutes);
+        BudgetCombo.Items.Add(Pomodoro25);
+        BudgetCombo.Items.Add(Pomodoro50);
+        BudgetCombo.Items.Add(PomodoroCustom);
 
         if (project.DefaultTargetMinutes is int defaultMinutes)
         {
@@ -74,15 +83,17 @@ public partial class StartSessionWindow : Window
 
     private void BudgetCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        CustomBudgetBox.Visibility = BudgetCombo.SelectedItem as string == "Custom..."
-            ? Visibility.Visible
-            : Visibility.Collapsed;
+        var choice = BudgetCombo.SelectedItem as string;
+        CustomBudgetBox.Visibility = choice is CustomMinutes or PomodoroCustom ? Visibility.Visible : Visibility.Collapsed;
+        CustomBudgetBox.ToolTip = choice == PomodoroCustom ? "Focus/break, e.g. 25/5 or 25/5x4 (rounds)" : "Minutes";
+        if (choice == PomodoroCustom && CustomBudgetBox.Text.Length == 0) CustomBudgetBox.Text = "25/5x4";
         UpdateCountDownAvailability();
     }
 
     private void UpdateCountDownAvailability()
     {
-        var hasBudget = BudgetCombo.SelectedItem as string != "No budget";
+        var choice = BudgetCombo.SelectedItem as string;
+        var hasBudget = choice != "No budget" && choice?.StartsWith("Pomodoro") != true;
         CountDownCheckBox.IsEnabled = hasBudget;
         if (!hasBudget) CountDownCheckBox.IsChecked = false;
     }
@@ -92,7 +103,22 @@ public partial class StartSessionWindow : Window
         SelectedMode = ModeCombo.SelectedItem is WorkMode { Id: not "" } selectedMode ? selectedMode : null;
         SelectedGoal = (GoalCombo.SelectedItem as GoalOption)?.Goal;
 
-        TargetMinutes = BudgetCombo.SelectedItem as string switch
+        Pomodoro = BudgetCombo.SelectedItem as string switch
+        {
+            Pomodoro25 => new PomodoroPlan(25, 5, 4),
+            Pomodoro50 => new PomodoroPlan(50, 10, 3),
+            PomodoroCustom => DurationText.TryParsePomodoro(CustomBudgetBox.Text),
+            _ => null
+        };
+        if (BudgetCombo.SelectedItem as string == PomodoroCustom && Pomodoro == null)
+        {
+            // not something that reads as focus/break: keep the dialog open on it
+            CustomBudgetBox.Focus();
+            CustomBudgetBox.SelectAll();
+            return;
+        }
+
+        TargetMinutes = Pomodoro != null ? null : BudgetCombo.SelectedItem as string switch
         {
             "30 min" => 30,
             "60 min" => 60,

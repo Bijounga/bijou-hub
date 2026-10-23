@@ -18,7 +18,7 @@ public class BlackoutWindow : Window
     public event Action? ExitRequested;
     public event Action? PauseRequested;
     public event Action? FinishRequested;
-    public event Action? NextScreenRequested;
+    public event Action<int>? ScreenChosen;
     public event Action<DailyGoal?>? TaskPicked;
     public event Action<string>? TaskAdded;
     public event Action? TaskDone;
@@ -39,6 +39,7 @@ public class BlackoutWindow : Window
     private readonly Viewbox _timeBox = new() { Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly };
     private readonly ComboBox _fontBox = new() { Width = 170, Margin = new Thickness(14, 0, 14, 0) };
     private readonly StackPanel _swatches = new() { Orientation = Orientation.Horizontal };
+    private readonly StackPanel _screenButtons = new() { Orientation = Orientation.Horizontal, Margin = new Thickness(8, 0, 0, 0) };
 
     private readonly TextBlock _time = new() { Text = "00:00:00", FontSize = 200, HorizontalAlignment = HorizontalAlignment.Center, Opacity = 0.85 };
     private readonly TextBlock _goal = new() { FontSize = 20, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, MaxWidth = 900, Margin = new Thickness(0, 14, 0, 0), IsVisible = false, Foreground = new SolidColorBrush(Color.Parse("#8C96A3")) };
@@ -124,7 +125,7 @@ public class BlackoutWindow : Window
                     {
                         _picker, _pause,
                         Make("Finish", "Blackout finish", () => FinishRequested?.Invoke()),
-                        Make("Other screen", "Blackout other screen", () => NextScreenRequested?.Invoke(), "Move this to another monitor"),
+                        _screenButtons,
                         Make("Exit", "Blackout exit", () => ExitRequested?.Invoke(), "Back to BijouHub (Esc)")
                     }
                 },
@@ -171,6 +172,27 @@ public class BlackoutWindow : Window
             else if (!_controls.IsKeyboardFocusWithin && e.Key is Key.OemMinus or Key.Subtract) { Change(l => l.Scale = FocusLook.Step(l.Scale, -1)); ShowControls(); e.Handled = true; }
             else ShowControls();
         };
+    }
+
+    // The monitors to move to, left to right (what each is, for its tooltip), and which one this is on.
+    public void SetScreens(IReadOnlyList<string> descriptions, int current)
+    {
+        _screenButtons.Children.Clear();
+        _screenButtons.Children.Add(new TextBlock { Text = "Screen", Foreground = new SolidColorBrush(Color.Parse("#8C96A3")), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(6, 0, 8, 0) });
+        for (var i = 0; i < descriptions.Count; i++)
+        {
+            var index = i;
+            var button = new Button
+            {
+                Content = (i + 1).ToString(), Padding = new Thickness(11, 6), Margin = new Thickness(0, 0, 4, 0),
+                BorderBrush = i == current && this.TryFindResource("AccentBrush", ActualThemeVariant, out var accent) && accent is IBrush accentBrush ? accentBrush : new SolidColorBrush(Color.Parse("#323A45")),
+                BorderThickness = new Thickness(i == current ? 2 : 1)
+            };
+            ToolTip.SetTip(button, descriptions[i]);
+            Avalonia.Automation.AutomationProperties.SetName(button, $"Blackout screen {i + 1}");
+            button.Click += (_, _) => ScreenChosen?.Invoke(index);
+            _screenButtons.Children.Add(button);
+        }
     }
 
     // How the timer looks (set before showing).

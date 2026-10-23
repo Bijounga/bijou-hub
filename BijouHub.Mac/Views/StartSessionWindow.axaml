@@ -14,8 +14,8 @@
         <ComboBox Name="GoalCombo" Grid.Row="4" Margin="0,4,0,14" HorizontalAlignment="Stretch"/>
 
         <TextBlock Grid.Row="5" Text="HOW LONG" Classes="label"/>
-        <TextBox Name="DurationBox" Grid.Row="6" Margin="0,4,0,4" Width="160" HorizontalAlignment="Left"
-                 Watermark="45, 1:30, 2h — or leave empty" TextChanged="DurationBox_TextChanged"/>
+        <TextBox Name="DurationBox" Grid.Row="6" Margin="0,4,0,4" Width="280" HorizontalAlignment="Left"
+                 Watermark="45, 1:30, 2h — or 25/5 for a Pomodoro" TextChanged="DurationBox_TextChanged"/>
         <CheckBox Name="CountDownCheck" Grid.Row="7" Content="Count down" IsEnabled="False"
                   ToolTip.Tip="Show time remaining instead of time elapsed"/>
 

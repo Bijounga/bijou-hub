@@ -29,7 +29,7 @@ public partial class MainWindow
         window.ExitRequested += () => window.Close();
         window.PauseRequested += TogglePause;
         window.FinishRequested += () => FinishSession_Click(this, new RoutedEventArgs());
-        window.NextScreenRequested += () => PlaceBlackout(_blackoutScreen + 1);
+        window.ScreenChosen += PlaceBlackout;
         window.TaskPicked += SessionTask_Picked;
         window.TaskAdded += SessionTask_Added;
         window.TaskDone += SessionTask_Done;
@@ -67,6 +67,10 @@ public partial class MainWindow
         if (screens.Count == 0) return;
         _blackoutScreen = (index % screens.Count + screens.Count) % screens.Count;
         DisplayInfo.Cover(window, screens[_blackoutScreen], topmost: true);
+
+        var mine = IsVisible ? DisplayInfo.Of(this) : null;
+        window.SetScreens(screens.Select((s, i) =>
+            $"Screen {i + 1}: {s.Width}×{s.Height}" + (s.Primary ? ", main" : "") + (mine == s ? " — BijouHub is on this one" : "")).ToList(), _blackoutScreen);
     }
 
     // The plan under the timer: the task picked for this session, or else the project's next goal.
@@ -91,17 +95,15 @@ public partial class MainWindow
     // ---------- F11: full screen ----------
 
     private bool _fullscreen;
-    private Rect _restoreBounds;
-    private WindowState _restoreState;
+    private DisplayInfo.Saved? _restoreSpot;
 
     private void ToggleFullscreen()
     {
         if (!_fullscreen)
         {
-            _restoreState = WindowState;
-            _restoreBounds = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
             var screen = DisplayInfo.Of(this);
-            if (screen == null) return;
+            _restoreSpot = DisplayInfo.Save(this);
+            if (screen == null || _restoreSpot == null) return;
             _fullscreen = true;
             WindowState = WindowState.Normal;
             WindowStyle = WindowStyle.None;
@@ -114,11 +116,7 @@ public partial class MainWindow
             WindowStyle = WindowStyle.SingleBorderWindow;
             ResizeMode = ResizeMode.CanResize;
             DarkTitleBar.Apply(this);
-            Left = _restoreBounds.Left;
-            Top = _restoreBounds.Top;
-            Width = _restoreBounds.Width;
-            Height = _restoreBounds.Height;
-            WindowState = _restoreState;
+            if (_restoreSpot is { } spot) DisplayInfo.Restore(this, spot);
         }
     }
 }
