@@ -117,7 +117,6 @@ public partial class MainWindow
         BoardSummary.Children.Clear();
         BoardSummary.Children.Add(SummaryPill(board.ReadyToPublish, "ready to publish", "SuccessBrush"));
         BoardSummary.Children.Add(SummaryPill(board.BehindPace, "behind pace", "DangerBrush"));
-        BoardSummary.Children.Add(SummaryPill(board.NeedMusic, "need music", "HazardBrush"));
         BoardSummary.Children.Add(SummaryPill(board.Active, board.Active == 1 ? "active project" : "active projects", "AccentBrush"));
         BoardCards.ItemsSource = board.Cards.OrderByDescending(c => c.Project.IsMain).Select(BuildCard).ToList(); // each channel's main project first
         BoardEmptyText.Text = _board.Cards.Count > 0 ? "No projects in this channel yet." : "No projects yet — add one with the + next to Projects.";
@@ -219,33 +218,29 @@ public partial class MainWindow
                     new TextBlock { Text = card.Project.ChannelName, FontSize = 11, Foreground = Brush("MutedTextBrush") }
                 }
             });
-        body.Children.Add(new TextBlock { Text = card.Subtitle, FontSize = 11, Foreground = Brush("MutedTextBrush"), Margin = new Thickness(0, 3, 0, card.DueLabel.Length > 0 ? 10 : 14) });
+        var subtitle = new TextBlock { Text = card.Subtitle, FontSize = 11, Foreground = Brush("MutedTextBrush"), Margin = new Thickness(0, 3, 0, 0) };
+        body.Children.Add(subtitle);
         if (card.DueLabel.Length > 0)
         {
-            // When it's due: the date and how far off it is, in a tone that warms as it nears.
+            // When it's due: a quiet line, colored only as the date gets close.
             var dueBrush = (IBrush)Brush(ToneKey(card.DueTone));
-            var dueSoft = dueBrush is ISolidColorBrush dueSolid
-                ? new SolidColorBrush(Color.FromArgb(0x2E, dueSolid.Color.R, dueSolid.Color.G, dueSolid.Color.B))
-                : Brush("CardHoverBrush");
-            var dueRow = new DockPanel();
-            dueRow.Children.Add(new LineIcon { Kind = "calendar", Width = 14, Height = 14, Margin = new Thickness(0, 0, 8, 0), Foreground = dueBrush, VerticalAlignment = VerticalAlignment.Center, [DockPanel.DockProperty] = Dock.Left });
-            dueRow.Children.Add(new TextBlock { Text = card.DueRelative, FontSize = 12, FontWeight = FontWeight.Bold, Foreground = dueBrush, VerticalAlignment = VerticalAlignment.Center, [DockPanel.DockProperty] = Dock.Right });
-            dueRow.Children.Add(new TextBlock { Text = card.DueLabel, FontSize = 13, FontWeight = FontWeight.SemiBold, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis });
-            var dueStrip = new Border
-            {
-                CornerRadius = new CornerRadius(6), Padding = new Thickness(10, 6), Margin = new Thickness(0, 0, 0, 14),
-                BorderThickness = new Thickness(1), BorderBrush = dueBrush, Background = dueSoft, Child = dueRow
-            };
-            Avalonia.Automation.AutomationProperties.SetName(dueStrip, card.DueLabel);
-            body.Children.Add(dueStrip);
+            var dueRow = new DockPanel { Margin = new Thickness(0, 8, 0, 0) };
+            dueRow.Children.Add(new LineIcon { Kind = "calendar", Width = 13, Height = 13, Margin = new Thickness(0, 0, 7, 0), Foreground = dueBrush, VerticalAlignment = VerticalAlignment.Center, [DockPanel.DockProperty] = Dock.Left });
+            dueRow.Children.Add(new TextBlock { Text = card.DueRelative, FontSize = 11, FontWeight = FontWeight.SemiBold, Foreground = dueBrush, VerticalAlignment = VerticalAlignment.Center, [DockPanel.DockProperty] = Dock.Right });
+            dueRow.Children.Add(new TextBlock { Text = card.DueLabel, FontSize = 12, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis });
+            Avalonia.Automation.AutomationProperties.SetName(dueRow, card.DueLabel);
+            body.Children.Add(dueRow);
         }
-        body.Children.Add(Row("SCRIPT", card.ScriptTone, card.ScriptLabel, card.ScriptDetail));
-        body.Children.Add(Row("MUSIC", card.MusicTone, card.MusicLabel, card.MusicDetail));
-        body.Children.Add(Row("TIME", "", card.TimeThisWeek, "this week"));
-        body.Children.Add(new TextBlock { Text = card.GoalsText, FontSize = 12, Margin = new Thickness(0, 7, 0, 6) });
-        body.Children.Add(progress);
+
+        // The rest; a project that hasn't been started keeps it tucked away until the pointer is on it.
+        var details = new StackPanel { Margin = new Thickness(0, 14, 0, 0) };
+        details.Children.Add(Row("SCRIPT", card.ScriptTone, card.ScriptLabel, card.ScriptDetail));
+        details.Children.Add(Row("TIME", "", card.TimeThisWeek, "this week"));
+        details.Children.Add(new TextBlock { Text = card.GoalsText, FontSize = 12, Margin = new Thickness(0, 7, 0, 6) });
+        details.Children.Add(progress);
         if (card.NextGoal.Length > 0)
-            body.Children.Add(new TextBlock { Text = card.NextGoal, FontSize = 11, Foreground = Brush("MutedTextBrush"), Margin = new Thickness(0, 8, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis });
+            details.Children.Add(new TextBlock { Text = card.NextGoal, FontSize = 11, Foreground = Brush("MutedTextBrush"), Margin = new Thickness(0, 8, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis });
+        body.Children.Add(details);
 
         var border = new Border
         {
@@ -263,6 +258,18 @@ public partial class MainWindow
             if (card.Project == _activeProject && IsSessionActive) ShowSession();
             else SelectProject(card.Project);
         };
+        if (card.StatusLabel == "Not started")
+        {
+            void Rest(bool hovered)
+            {
+                details.IsVisible = hovered;
+                subtitle.IsVisible = hovered;
+                border.Opacity = hovered ? 1 : 0.8;
+            }
+            Rest(false);
+            border.PointerEntered += (_, _) => Rest(true);
+            border.PointerExited += (_, _) => Rest(false);
+        }
         return border;
     }
 

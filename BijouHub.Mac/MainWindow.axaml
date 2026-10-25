@@ -496,7 +496,7 @@
                             <DockPanel Margin="0,0,0,10" LastChildFill="False">
                                 <TextBlock Name="BoardLabel" Classes="label" Text="PROJECTS" VerticalAlignment="Center"/>
                                 <Button DockPanel.Dock="Right" Classes="ghost" Padding="6" Click="RefreshBoard_Click"
-                                        ToolTip.Tip="Refresh — script progress comes from BijouDocs and tracks from BijouMusic, matched by project name">
+                                        ToolTip.Tip="Refresh — script progress comes from BijouDocs, matched by project name">
                                     <controls:LineIcon Kind="refresh" Width="14" Height="14"/>
                                 </Button>
                             </DockPanel>

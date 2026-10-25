@@ -957,7 +957,7 @@
                     <DockPanel Margin="0,0,0,10" LastChildFill="False">
                         <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Center"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="PROJECTS"/></TextBlock>
                         <Button DockPanel.Dock="Right" Style="{DynamicResource GhostIconButton}" HorizontalAlignment="Right" Padding="7,5" Click="RefreshBoard_Click"
-                                ToolTip="Refresh — script progress comes from BijouDocs and tracks from BijouMusic, matched by project name"
+                                ToolTip="Refresh — script progress comes from BijouDocs, matched by project name"
                                 AutomationProperties.Name="Refresh projects"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE72C;" FontSize="13"/></Button>
                     </DockPanel>
                     <WrapPanel x:Name="BoardChannelPills" Margin="0,0,0,2"/>
@@ -970,7 +970,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Width="{DynamicResource BoardCardWidth}" Margin="0,0,14,14" Padding="16,14" BorderThickness="1"
+                                <Border x:Name="CardBorder" Width="{DynamicResource BoardCardWidth}" Margin="0,0,14,14" Padding="16,14" BorderThickness="1"
                                         CornerRadius="{DynamicResource CornerRadiusBase}" Cursor="Hand" MouseLeftButtonUp="BoardCard_Click"
                                         AutomationProperties.Name="{Binding Title}">
                                     <Border.Style>
@@ -978,9 +978,13 @@
                                             <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
                                             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                                             <Style.Triggers>
+                                                <DataTrigger Binding="{Binding StatusLabel}" Value="Not started">
+                                                    <Setter Property="Opacity" Value="0.8"/>
+                                                </DataTrigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
                                                     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                                    <Setter Property="Opacity" Value="1"/>
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>
@@ -1006,30 +1010,26 @@
                                             <Ellipse Width="7" Height="7" Margin="0,0,6,0" VerticalAlignment="Center" Fill="{Binding Project.ChannelColor}"/>
                                             <TextBlock Text="{Binding Project.ChannelName}" FontSize="11" Foreground="{DynamicResource MutedTextBrush}"/>
                                         </StackPanel>
-                                        <TextBlock Text="{Binding Subtitle}" FontSize="11" Foreground="{DynamicResource MutedTextBrush}" Margin="0,3,0,14"/>
+                                        <TextBlock x:Name="SubtitleText" Text="{Binding Subtitle}" FontSize="11" Foreground="{DynamicResource MutedTextBrush}" Margin="0,3,0,0"/>
 
-                                        <!-- When it's due: the date and how far off it is, in a tone that warms as it nears. -->
-                                        <Border CornerRadius="6" Padding="10,6" Margin="0,-4,0,14" BorderThickness="1"
-                                                Background="{Binding DueTone, Converter={StaticResource ToneBrushConverter}, ConverterParameter=Soft}"
-                                                BorderBrush="{Binding DueTone, Converter={StaticResource ToneBrushConverter}}"
-                                                Visibility="{Binding DueLabel, Converter={StaticResource EmptyToCollapsedConverter}}"
-                                                AutomationProperties.Name="{Binding DueLabel}">
-                                            <DockPanel>
-                                                <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE787;" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center"
-                                                           Foreground="{Binding DueTone, Converter={StaticResource ToneBrushConverter}}"/>
-                                                <TextBlock DockPanel.Dock="Right" Text="{Binding DueRelative}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"
-                                                           Foreground="{Binding DueTone, Converter={StaticResource ToneBrushConverter}}"/>
-                                                <TextBlock Text="{Binding DueLabel}" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                            </DockPanel>
-                                        </Border>
+                                        <!-- When it's due: a quiet line, colored only as the date gets close. -->
+                                        <DockPanel Margin="0,8,0,0" Visibility="{Binding DueLabel, Converter={StaticResource EmptyToCollapsedConverter}}"
+                                                   AutomationProperties.Name="{Binding DueLabel}">
+                                            <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE787;" FontSize="12" Margin="0,0,7,0" VerticalAlignment="Center"
+                                                       Foreground="{Binding DueTone, Converter={StaticResource ToneBrushConverter}}"/>
+                                            <TextBlock DockPanel.Dock="Right" Text="{Binding DueRelative}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"
+                                                       Foreground="{Binding DueTone, Converter={StaticResource ToneBrushConverter}}"/>
+                                            <TextBlock Text="{Binding DueLabel}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                        </DockPanel>
 
+                                        <!-- The rest; a project that hasn't been started keeps it tucked away until the pointer is on it. -->
+                                        <StackPanel x:Name="Details" Margin="0,14,0,0">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="62"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
@@ -1042,17 +1042,8 @@
                                                            Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"
                                                            ToolTip="{Binding ScriptDetail}"/>
                                             </DockPanel>
-                                            <TextBlock Grid.Row="1" Text="MUSIC" FontSize="10" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center" Margin="0,0,0,7"/>
-                                            <DockPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,7">
-                                                <Ellipse Width="6" Height="6" Margin="0,0,7,0" VerticalAlignment="Center"
-                                                         Fill="{Binding MusicTone, Converter={StaticResource ToneBrushConverter}}"/>
-                                                <TextBlock Text="{Binding MusicLabel}" FontSize="13"/>
-                                                <TextBlock Text="{Binding MusicDetail, StringFormat=' — {0}'}" FontSize="12" TextTrimming="CharacterEllipsis"
-                                                           Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"
-                                                           ToolTip="{Binding MusicDetail}"/>
-                                            </DockPanel>
-                                            <TextBlock Grid.Row="2" Text="TIME" FontSize="10" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"/>
-                                            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+                                            <TextBlock Grid.Row="1" Text="TIME" FontSize="10" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
                                                 <TextBlock Text="{Binding TimeThisWeek}" FontSize="13" FontWeight="SemiBold"/>
                                                 <TextBlock Text=" this week" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"/>
                                             </StackPanel>
@@ -1070,8 +1061,23 @@
                                         <TextBlock Text="{Binding NextGoal}" FontSize="11" Foreground="{DynamicResource MutedTextBrush}" Margin="0,8,0,0"
                                                    TextTrimming="CharacterEllipsis"
                                                    Visibility="{Binding NextGoal, Converter={StaticResource EmptyToCollapsedConverter}}"/>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding StatusLabel}" Value="Not started">
+                                        <Setter TargetName="Details" Property="Visibility" Value="Collapsed"/>
+                                        <Setter TargetName="SubtitleText" Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding StatusLabel}" Value="Not started"/>
+                                            <Condition Binding="{Binding IsMouseOver, ElementName=CardBorder}" Value="True"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter TargetName="Details" Property="Visibility" Value="Visible"/>
+                                        <Setter TargetName="SubtitleText" Property="Visibility" Value="Visible"/>
+                                    </MultiDataTrigger>
+                                </DataTemplate.Triggers>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>

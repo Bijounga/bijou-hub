@@ -2,14 +2,13 @@ using System.Globalization;
 using System.IO;
 using System.Text.Json;
 using BijouHub.Models;
-using Microsoft.Data.Sqlite;
 
 namespace BijouHub.Services;
 
 // The home page's project board (formerly the separate BijouBoard app): one card per BijouHub
-// project, joined by exact project name (case/space-insensitive) to its BijouDocs script and
-// BijouMusic project. No fuzzy matching on purpose — a near-miss name shows as "not linked"
-// rather than a wrong guess. Everything outside BijouHub is opened read-only.
+// project, joined by exact project name (case/space-insensitive) to its BijouDocs script. No fuzzy
+// matching on purpose — a near-miss name shows as "not linked" rather than a wrong guess.
+// Everything outside BijouHub is opened read-only.
 public static class ProjectBoardService
 {
     public sealed record Card(
@@ -21,9 +20,6 @@ public static class ProjectBoardService
         string ScriptLabel,
         string ScriptTone,
         string ScriptDetail,
-        string MusicLabel,
-        string MusicTone,
-        string MusicDetail,
         string TimeThisWeek,
         string GoalsText,
         double GoalsFraction,
@@ -35,7 +31,7 @@ public static class ProjectBoardService
         public string StatusPillText => StatusLabel.ToUpperInvariant();
     }
 
-    public sealed record Board(IReadOnlyList<Card> Cards, int ReadyToPublish, int BehindPace, int NeedMusic, int Active)
+    public sealed record Board(IReadOnlyList<Card> Cards, int ReadyToPublish, int BehindPace, int Active)
     {
         // The same board for just some projects (a channel), with its counts recomputed.
         public Board Filtered(Func<Card, bool> keep) => Summarize(Cards.Where(keep).ToList());
@@ -45,24 +41,17 @@ public static class ProjectBoardService
         cards,
         cards.Count(c => c.StatusLabel == "Ready to publish"),
         cards.Count(c => c.StatusLabel == "Behind pace"),
-        cards.Count(c => c.MusicTone == "warning" && c.StatusLabel != "Not started"),
         cards.Count);
 
     private sealed record Script(string Title, int Done, int Total, DateTime? Due, DateTime? Updated);
 
-    private sealed record MusicProject(string Name, int Tracks, DateTime? Updated);
-
     public static Board Build(IReadOnlyList<Project> projects, IReadOnlyList<SessionRecord> sessions)
     {
         var scripts = ReadBijouDocs(out var docsFound);
-        var music = ReadBijouMusic(out var musicFound);
 
         var scriptByTitle = scripts
             .GroupBy(s => Normalize(s.Title))
             .ToDictionary(g => g.Key, g => g.OrderByDescending(s => s.Updated).First());
-        var musicByName = music
-            .GroupBy(m => Normalize(m.Name))
-            .ToDictionary(g => g.Key, g => g.First());
 
         var weekStart = StartOfWeek(DateTime.Now);
         var cards = new List<Card>();
@@ -70,7 +59,6 @@ public static class ProjectBoardService
         foreach (var project in projects)
         {
             scriptByTitle.TryGetValue(Normalize(project.Name), out var script);
-            musicByName.TryGetValue(Normalize(project.Name), out var track);
 
             var projectSessions = sessions.Where(s => s.ProjectId == project.Id).ToList();
             var secondsThisWeek = projectSessions.Where(s => s.StartTime >= weekStart).Sum(s => s.ActiveSeconds);
@@ -80,16 +68,15 @@ public static class ProjectBoardService
             var goalsDone = leaves.Count(g => g.IsComplete);
 
             var scriptReady = script is { Total: > 0 } && script.Done == script.Total;
-            var hasMusic = track is { Tracks: > 0 };
             var allGoalsDone = leaves.Count == 0 || goalsDone == leaves.Count;
-            var nothingStarted = (script == null || script.Total == 0) && !hasMusic && projectSessions.Count == 0 && goalsDone == 0;
+            var nothingStarted = (script == null || script.Total == 0) && projectSessions.Count == 0 && goalsDone == 0;
 
             // The project's own date wins; a script's date in BijouDocs is the fallback.
             var dueDay = DueText.Day(project.DueDate) ?? script?.Due?.Date;
 
             var (statusLabel, statusTone) =
                 nothingStarted ? ("Not started", "neutral")
-                : scriptReady && hasMusic && allGoalsDone ? ("Ready to publish", "success")
+                : scriptReady && allGoalsDone ? ("Ready to publish", "success")
                 : dueDay is DateTime due && (due - DateTime.Today).TotalDays < 2 && !scriptReady ? ("Behind pace", "critical")
                 : ("In progress", "accent");
 
@@ -99,11 +86,6 @@ public static class ProjectBoardService
                 : script.Total == 0 ? ("Not started", "neutral", "No sections yet")
                 : scriptReady ? ("Ready", "success", $"{script.Done}/{script.Total} sections scripted")
                 : ("Drafting", "warning", $"{script.Done}/{script.Total} sections scripted");
-
-            var (musicLabel, musicTone, musicDetail) =
-                !musicFound ? ("—", "neutral", "BijouMusic not found")
-                : hasMusic ? ($"{track!.Tracks} track{(track.Tracks == 1 ? "" : "s")}", "success", "Attached in BijouMusic")
-                : ("None yet", "warning", "No tracks attached");
 
             var goalsText = leaves.Count == 0
                 ? "No goals set"
@@ -120,9 +102,6 @@ public static class ProjectBoardService
                 scriptLabel,
                 scriptTone,
                 scriptDetail,
-                musicLabel,
-                musicTone,
-                musicDetail,
                 FormatHours(secondsThisWeek),
                 goalsText,
                 Math.Clamp(project.Completion, 0, 1),
@@ -140,7 +119,7 @@ public static class ProjectBoardService
 
     // The due strip on a card: the date ("Due Wed, Nov 10"), how far off it is ("in 5 days",
     // "2 days overdue") and a tone for it: red when overdue or within a day, amber within a
-    // week, green once the project is ready to publish. All empty when there's no date.
+    // week, quiet grey beyond that, green once the project is ready to publish. All empty when there's no date.
     private static (string Label, string Relative, string Tone) DueInfo(DateTime? day, bool ready)
     {
         if (day is not DateTime due) return ("", "", "");
@@ -159,7 +138,7 @@ public static class ProjectBoardService
             < 60 => $"in {days / 7} weeks",
             _ => $"in {days / 30} months"
         };
-        var tone = ready && days >= 0 ? "success" : days <= 1 ? "critical" : days <= 7 ? "warning" : "accent";
+        var tone = ready && days >= 0 ? "success" : days <= 1 ? "critical" : days <= 7 ? "warning" : "neutral";
         return (label, relative, tone);
     }
 
@@ -200,7 +179,7 @@ public static class ProjectBoardService
     private static string Normalize(string? name) =>
         string.Join(' ', (name ?? "").Trim().ToLowerInvariant().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 
-    // Where Electron apps (BijouDocs, BijouMusic) keep their data: %APPDATA% on Windows,
+    // Where Electron apps (BijouDocs) keep their data: %APPDATA% on Windows,
     // ~/Library/Application Support on a Mac.
     private static string ElectronAppData() =>
         OperatingSystem.IsMacOS()
@@ -269,46 +248,6 @@ public static class ProjectBoardService
             {
                 // Not a script, or mid-write — skip it this time.
             }
-        }
-        return result;
-    }
-
-    // ---------- BijouMusic: its SQLite library, opened read-only ----------
-
-    private static List<MusicProject> ReadBijouMusic(out bool found)
-    {
-        var result = new List<MusicProject>();
-        var dbPath = Path.Combine(ElectronAppData(), "music-browser", "library.sqlite3");
-        found = File.Exists(dbPath);
-        if (!found) return result;
-
-        try
-        {
-            var connectionString = new SqliteConnectionStringBuilder
-            {
-                DataSource = dbPath,
-                Mode = SqliteOpenMode.ReadOnly,
-                Pooling = false,
-                DefaultTimeout = 2
-            }.ToString();
-            using var connection = new SqliteConnection(connectionString);
-            connection.Open();
-            using var command = connection.CreateCommand();
-            command.CommandText =
-                @"SELECT p.name, p.updated_at, (SELECT COUNT(*) FROM project_tracks pt WHERE pt.project_id = p.id)
-                  FROM projects p WHERE p.archived = 0";
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
-            {
-                DateTime? updated = reader.IsDBNull(1) ? null : DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64(1)).LocalDateTime;
-                result.Add(new MusicProject(reader.GetString(0), reader.GetInt32(2), updated));
-            }
-        }
-        catch
-        {
-            // Locked mid-write or an older schema — show music as unavailable rather than fail the board.
-            found = false;
-            result.Clear();
         }
         return result;
     }

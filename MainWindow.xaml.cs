@@ -1011,7 +1011,6 @@ public partial class MainWindow : Window
         BoardSummary.Children.Clear();
         BoardSummary.Children.Add(BuildSummaryPill(board.ReadyToPublish, "ready to publish", "SuccessBrush"));
         BoardSummary.Children.Add(BuildSummaryPill(board.BehindPace, "behind pace", "DangerBrush"));
-        BoardSummary.Children.Add(BuildSummaryPill(board.NeedMusic, "need music", "HazardBrush"));
         BoardSummary.Children.Add(BuildSummaryPill(board.Active, board.Active == 1 ? "active project" : "active projects", "AccentBrush"));
     }
 
