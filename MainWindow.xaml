@@ -978,8 +978,11 @@
                                             <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
                                             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                                             <Style.Triggers>
+                                                <!-- Not started: kept small and a little quiet; the rest is in its tooltip, so nothing moves under the pointer. -->
                                                 <DataTrigger Binding="{Binding StatusLabel}" Value="Not started">
                                                     <Setter Property="Opacity" Value="0.8"/>
+                                                    <Setter Property="ToolTip" Value="{Binding Summary}"/>
+                                                    <Setter Property="ToolTipService.InitialShowDelay" Value="500"/>
                                                 </DataTrigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter Property="Background" Value="{DynamicResource CardHoverBrush}"/>
@@ -1022,7 +1025,7 @@
                                             <TextBlock Text="{Binding DueLabel}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                                         </DockPanel>
 
-                                        <!-- The rest; a project that hasn't been started keeps it tucked away until the pointer is on it. -->
+                                        <!-- The rest; a project that hasn't been started leaves it out (see its tooltip). -->
                                         <StackPanel x:Name="Details" Margin="0,14,0,0">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
@@ -1069,14 +1072,6 @@
                                         <Setter TargetName="Details" Property="Visibility" Value="Collapsed"/>
                                         <Setter TargetName="SubtitleText" Property="Visibility" Value="Collapsed"/>
                                     </DataTrigger>
-                                    <MultiDataTrigger>
-                                        <MultiDataTrigger.Conditions>
-                                            <Condition Binding="{Binding StatusLabel}" Value="Not started"/>
-                                            <Condition Binding="{Binding IsMouseOver, ElementName=CardBorder}" Value="True"/>
-                                        </MultiDataTrigger.Conditions>
-                                        <Setter TargetName="Details" Property="Visibility" Value="Visible"/>
-                                        <Setter TargetName="SubtitleText" Property="Visibility" Value="Visible"/>
-                                    </MultiDataTrigger>
                                 </DataTemplate.Triggers>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

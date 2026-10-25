@@ -232,7 +232,7 @@ public partial class MainWindow
             body.Children.Add(dueRow);
         }
 
-        // The rest; a project that hasn't been started keeps it tucked away until the pointer is on it.
+        // The rest; a project that hasn't been started leaves it out (see its tooltip), so nothing moves under the pointer.
         var details = new StackPanel { Margin = new Thickness(0, 14, 0, 0) };
         details.Children.Add(Row("SCRIPT", card.ScriptTone, card.ScriptLabel, card.ScriptDetail));
         details.Children.Add(Row("TIME", "", card.TimeThisWeek, "this week"));
@@ -260,15 +260,13 @@ public partial class MainWindow
         };
         if (card.StatusLabel == "Not started")
         {
-            void Rest(bool hovered)
-            {
-                details.IsVisible = hovered;
-                subtitle.IsVisible = hovered;
-                border.Opacity = hovered ? 1 : 0.8;
-            }
-            Rest(false);
-            border.PointerEntered += (_, _) => Rest(true);
-            border.PointerExited += (_, _) => Rest(false);
+            details.IsVisible = false;
+            subtitle.IsVisible = false;
+            border.Opacity = 0.8;
+            ToolTip.SetTip(border, card.Summary);
+            ToolTip.SetShowDelay(border, 500);
+            border.PointerEntered += (_, _) => border.Opacity = 1;
+            border.PointerExited += (_, _) => border.Opacity = 0.8;
         }
         return border;
     }

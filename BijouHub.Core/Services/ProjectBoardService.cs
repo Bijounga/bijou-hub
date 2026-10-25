@@ -29,6 +29,9 @@ public static class ProjectBoardService
         string DueTone)
     {
         public string StatusPillText => StatusLabel.ToUpperInvariant();
+
+        // The details a not-started card leaves out, for its tooltip (nothing moves when it shows).
+        public string Summary => $"Script: {ScriptLabel} — {ScriptDetail}{Environment.NewLine}Time this week: {TimeThisWeek}{Environment.NewLine}{GoalsText}";
     }
 
     public sealed record Board(IReadOnlyList<Card> Cards, int ReadyToPublish, int BehindPace, int Active)
