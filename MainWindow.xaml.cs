@@ -2411,12 +2411,7 @@ public partial class MainWindow : Window
     // Brings BijouHub forward when a key asks (e.g. tapping Current Session with nothing running).
     private void BringToFront()
     {
-        if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
-        Show();
-        Activate();
-        // Windows won't always let a background app take focus; a topmost flick still raises it.
-        Topmost = true;
-        Topmost = false;
+        ForegroundWindow.Raise(this);
         Focus();
     }
 
