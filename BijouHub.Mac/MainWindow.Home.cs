@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls;
@@ -173,15 +174,12 @@ public partial class MainWindow
             return grid;
         }
 
-        var progress = new Panel { Height = 6, Margin = new Thickness(0, 0, 0, 0) };
-        progress.Children.Add(new Border { CornerRadius = new CornerRadius(3), Background = Brush("SoftBorderBrush") });
-        progress.Children.Add(new Border
-        {
-            CornerRadius = new CornerRadius(3),
-            Background = Brush("AccentBrush"),
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Width = Math.Max(0, 306 * card.GoalsFraction)
-        });
+        // The fill is a share of the bar, so the card can be any width.
+        var done = card.GoalsFraction.ToString("0.####", CultureInfo.InvariantCulture);
+        var rest = (1 - card.GoalsFraction).ToString("0.####", CultureInfo.InvariantCulture);
+        var progress = new Grid { Height = 6, ColumnDefinitions = new ColumnDefinitions($"{done}*,{rest}*") };
+        progress.Children.Add(new Border { CornerRadius = new CornerRadius(3), Background = Brush("SoftBorderBrush"), [Grid.ColumnSpanProperty] = 2 });
+        progress.Children.Add(new Border { CornerRadius = new CornerRadius(3), Background = Brush("AccentBrush") });
 
         var body = new StackPanel();
         // A strip across the top in the channel's color.
@@ -221,7 +219,26 @@ public partial class MainWindow
                     new TextBlock { Text = card.Project.ChannelName, FontSize = 11, Foreground = Brush("MutedTextBrush") }
                 }
             });
-        body.Children.Add(new TextBlock { Text = card.Subtitle, FontSize = 11, Foreground = Brush("MutedTextBrush"), Margin = new Thickness(0, 3, 0, 14) });
+        body.Children.Add(new TextBlock { Text = card.Subtitle, FontSize = 11, Foreground = Brush("MutedTextBrush"), Margin = new Thickness(0, 3, 0, card.DueLabel.Length > 0 ? 10 : 14) });
+        if (card.DueLabel.Length > 0)
+        {
+            // When it's due: the date and how far off it is, in a tone that warms as it nears.
+            var dueBrush = (IBrush)Brush(ToneKey(card.DueTone));
+            var dueSoft = dueBrush is ISolidColorBrush dueSolid
+                ? new SolidColorBrush(Color.FromArgb(0x2E, dueSolid.Color.R, dueSolid.Color.G, dueSolid.Color.B))
+                : Brush("CardHoverBrush");
+            var dueRow = new DockPanel();
+            dueRow.Children.Add(new LineIcon { Kind = "calendar", Width = 14, Height = 14, Margin = new Thickness(0, 0, 8, 0), Foreground = dueBrush, VerticalAlignment = VerticalAlignment.Center, [DockPanel.DockProperty] = Dock.Left });
+            dueRow.Children.Add(new TextBlock { Text = card.DueRelative, FontSize = 12, FontWeight = FontWeight.Bold, Foreground = dueBrush, VerticalAlignment = VerticalAlignment.Center, [DockPanel.DockProperty] = Dock.Right });
+            dueRow.Children.Add(new TextBlock { Text = card.DueLabel, FontSize = 13, FontWeight = FontWeight.SemiBold, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis });
+            var dueStrip = new Border
+            {
+                CornerRadius = new CornerRadius(6), Padding = new Thickness(10, 6), Margin = new Thickness(0, 0, 0, 14),
+                BorderThickness = new Thickness(1), BorderBrush = dueBrush, Background = dueSoft, Child = dueRow
+            };
+            Avalonia.Automation.AutomationProperties.SetName(dueStrip, card.DueLabel);
+            body.Children.Add(dueStrip);
+        }
         body.Children.Add(Row("SCRIPT", card.ScriptTone, card.ScriptLabel, card.ScriptDetail));
         body.Children.Add(Row("MUSIC", card.MusicTone, card.MusicLabel, card.MusicDetail));
         body.Children.Add(Row("TIME", "", card.TimeThisWeek, "this week"));
@@ -232,7 +249,7 @@ public partial class MainWindow
 
         var border = new Border
         {
-            Width = 340,
+            Width = _boardCardWidth,
             Margin = new Thickness(0, 0, 14, 14),
             Padding = new Thickness(16, 14),
             CornerRadius = (CornerRadius)(this.TryFindResource("ControlCornerRadius", out var r) && r is CornerRadius cr ? cr : new CornerRadius(8)),

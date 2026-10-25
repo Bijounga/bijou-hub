@@ -18,6 +18,13 @@ public partial class DuePicker : UserControl
     private TimeOnly? _time;
     private DateTime _month;
 
+    // Off for things that are due on a day, not at a time (a project).
+    public bool ShowTime
+    {
+        get => TimeSection.Visibility == Visibility.Visible;
+        set => TimeSection.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     public DuePicker()
     {
         InitializeComponent();

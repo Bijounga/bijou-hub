@@ -80,6 +80,7 @@ public partial class MainWindow
         project.Name = copy.Name;
         project.Goals = copy.Goals;
         project.DefaultTargetMinutes = copy.DefaultTargetMinutes;
+        project.DueDate = copy.DueDate;
         project.LinkedModeId = copy.LinkedModeId;
         project.ChannelId = copy.ChannelId;
         ChannelRows.SetMain(_projects, project, copy.IsMain);

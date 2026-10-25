@@ -46,6 +46,7 @@ public partial class MainWindow : Window
         InitSession();
         InitSidebarMenus();
         InitDue();
+        InitHomeLayout();
         InitSessionTask();
         InitGoals();
         InitTasksPage();

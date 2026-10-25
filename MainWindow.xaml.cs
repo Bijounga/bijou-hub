@@ -133,6 +133,7 @@ public partial class MainWindow : Window
         InitNotesToolbar();
         InitDailyGoals();
         InitDue();
+        InitHomeLayout();
         InitSessionTask();
         InitTasksPage();
         InitGoogleTasks();

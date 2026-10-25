@@ -37,8 +37,37 @@ public partial class ProjectEditorWindow : Window
         FillChannels(_working.ChannelId);
         MainBox.IsChecked = _working.IsMain;
 
+        _due = DueText.Day(_working.DueDate);
+        ShowDue();
+        DuePickerControl.Picked += (date, _) =>
+        {
+            _due = date;
+            ShowDue();
+            DuePopup.IsOpen = false; // a day is all there is to pick
+        };
+
         GoalsList.ItemsSource = _working.Goals;
         ListReorderBehavior.Enable(GoalsList, _working.Goals);
+    }
+
+    private DateTime? _due;
+
+    private void ShowDue()
+    {
+        DueButtonText.Text = _due is DateTime day ? day.ToString("ddd, MMM d, yyyy", System.Globalization.CultureInfo.CurrentCulture) : "Set a date";
+        ClearDueButton.Visibility = _due != null ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void Due_Click(object sender, RoutedEventArgs e)
+    {
+        DuePickerControl.Load(_due, null);
+        DuePopup.IsOpen = true;
+    }
+
+    private void ClearDue_Click(object sender, RoutedEventArgs e)
+    {
+        _due = null;
+        ShowDue();
     }
 
     // "(none)" plus every channel, each with its color dot; keeps the chosen one across a Manage.
@@ -322,6 +351,7 @@ public partial class ProjectEditorWindow : Window
         Project.ChannelId = ChannelCombo.SelectedItem is Channel { Id: not "" } channel ? channel.Id : null;
         Project.IsMain = MainBox.IsChecked == true;
         Project.DefaultTargetMinutes = _working.DefaultTargetMinutes;
+        Project.DueDate = _due is DateTime due ? DueText.Key(due) : null;
         Project.Goals.Clear();
         foreach (var goal in _working.Goals)
             Project.Goals.Add(goal);

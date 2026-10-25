@@ -18,6 +18,15 @@
             <StackPanel>
                 <TextBlock Text="DEFAULT SESSION BUDGET (MINUTES, OPTIONAL)" Classes="label"/>
                 <TextBox Name="BudgetBox" Width="120" HorizontalAlignment="Left" Margin="0,4,0,0"/>
+                <TextBlock Text="DUE DATE (OPTIONAL)" Classes="label" Margin="0,12,0,0"/>
+                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
+                    <Button Name="DueButton" Click="Due_Click" MinWidth="150" HorizontalContentAlignment="Left"
+                            AutomationProperties.Name="Due date" ToolTip.Tip="Shown on the project's card on the home page">
+                        <TextBlock Name="DueButtonText" Text="Set a date"/>
+                    </Button>
+                    <Button Name="ClearDueButton" Content="✕" Click="ClearDue_Click" IsVisible="False"
+                            ToolTip.Tip="No due date" AutomationProperties.Name="Clear due date"/>
+                </StackPanel>
             </StackPanel>
             <StackPanel Grid.Column="1" Margin="24,0,0,0">
                 <TextBlock Text="CHANNEL" Classes="label"/>

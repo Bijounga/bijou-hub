@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Data.Converters;
 using Avalonia.Interactivity;
 using BijouHub.Models;
@@ -28,6 +29,40 @@ public partial class ProjectEditorWindow : Window
         GoalsList.ItemsSource = project.Goals;
         FillChannels(project.ChannelId);
         MainBox.IsChecked = project.IsMain;
+
+        _due = DueText.Day(project.DueDate);
+        ShowDue();
+        _duePicker = new DuePicker { ShowTime = false };
+        _dueFlyout = new Flyout { Content = _duePicker, Placement = PlacementMode.BottomEdgeAlignedLeft };
+        _dueFlyout.FlyoutPresenterClasses.Add("bare");
+        _duePicker.Picked += (date, _) =>
+        {
+            _due = date;
+            ShowDue();
+            _dueFlyout.Hide(); // a day is all there is to pick
+        };
+    }
+
+    private DateTime? _due;
+    private readonly DuePicker _duePicker;
+    private readonly Flyout _dueFlyout;
+
+    private void ShowDue()
+    {
+        DueButtonText.Text = _due is DateTime day ? day.ToString("ddd, MMM d, yyyy", CultureInfo.CurrentCulture) : "Set a date";
+        ClearDueButton.IsVisible = _due != null;
+    }
+
+    private void Due_Click(object? sender, RoutedEventArgs e)
+    {
+        _duePicker.Load(_due, null);
+        _dueFlyout.ShowAt(DueButton);
+    }
+
+    private void ClearDue_Click(object? sender, RoutedEventArgs e)
+    {
+        _due = null;
+        ShowDue();
     }
 
     // "(none)" plus every channel, each with its color dot; keeps the chosen one across a Manage.
@@ -82,6 +117,7 @@ public partial class ProjectEditorWindow : Window
         _project.DefaultTargetMinutes = int.TryParse(BudgetBox.Text, out var minutes) ? minutes : null;
         _project.ChannelId = ChannelCombo.SelectedItem is Channel { Id: not "" } channel ? channel.Id : null;
         _project.IsMain = MainBox.IsChecked == true;
+        _project.DueDate = _due is DateTime due ? DueText.Key(due) : null;
 
         Close(true);
     }

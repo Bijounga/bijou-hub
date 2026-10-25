@@ -112,12 +112,14 @@
                 </Border>
 
                 <Grid Grid.Row="1" Margin="{DynamicResource SidebarBodyMargin}">
+                <!-- Modes take what they need (up to a cap); projects get all the rest, so on a tall
+                     window the project list sits right under the modes instead of at the bottom. -->
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="2*"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="2*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
@@ -174,7 +176,7 @@
                     <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" VerticalAlignment="Center"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="MODES"/></TextBlock>
                 </DockPanel>
 
-                <ListBox x:Name="ModesList" Grid.Row="2"
+                <ListBox x:Name="ModesList" Grid.Row="2" MaxHeight="260"
                          AlternationCount="3"
                          SelectionChanged="ModesList_SelectionChanged"
                          PreviewMouseRightButtonDown="SidebarList_PreviewMouseRightButtonDown"
@@ -573,14 +575,18 @@
                                Foreground="{DynamicResource AccentBrush}"/>
 
                     <!-- Today: the day's goals (type, Enter, repeat) beside a glance at time worked. -->
-                    <Grid Margin="0,0,0,28">
+                    <Grid x:Name="TodayGrid" Margin="0,0,0,28">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" MaxWidth="720"/>
                             <ColumnDefinition Width="20"/>
                             <ColumnDefinition Width="260"/>
                         </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                        <StackPanel Grid.Column="0">
+                        <StackPanel x:Name="TodayGoalsColumn" Grid.Column="0">
                             <DockPanel Margin="0,0,0,8" LastChildFill="False">
                                 <!-- Today's goals, or tomorrow's plan. -->
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
@@ -907,7 +913,7 @@
                             </Border>
                         </StackPanel>
 
-                        <StackPanel Grid.Column="2">
+                        <StackPanel x:Name="TodayStatsColumn" Grid.Column="2">
                             <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="TODAY"/></TextBlock>
                             <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                     CornerRadius="{DynamicResource CornerRadiusBase}" Padding="16,14">
@@ -964,7 +970,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Width="340" Margin="0,0,14,14" Padding="16,14" BorderThickness="1"
+                                <Border Width="{DynamicResource BoardCardWidth}" Margin="0,0,14,14" Padding="16,14" BorderThickness="1"
                                         CornerRadius="{DynamicResource CornerRadiusBase}" Cursor="Hand" MouseLeftButtonUp="BoardCard_Click"
                                         AutomationProperties.Name="{Binding Title}">
                                     <Border.Style>
@@ -982,7 +988,7 @@
                                     <StackPanel>
                                         <Border Height="3" CornerRadius="2" Margin="-16,-14,-16,11" Background="{Binding Project.ChannelColor}"
                                                 Visibility="{Binding Project.ChannelColor, Converter={StaticResource EmptyToCollapsedConverter}}"/>
-                                        <StackPanel Orientation="Horizontal">
+                                        <WrapPanel Orientation="Horizontal">
                                             <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"
                                                        TextTrimming="CharacterEllipsis" MaxWidth="190"/>
                                             <Border CornerRadius="4" Padding="7,2" Margin="10,0,0,0" VerticalAlignment="Center"
@@ -995,12 +1001,27 @@
                                                     Visibility="{Binding Project.IsMain, Converter={StaticResource BoolToVisibilityConverter}}">
                                                 <TextBlock Text="★ MAIN" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource HazardBrush}"/>
                                             </Border>
-                                        </StackPanel>
+                                        </WrapPanel>
                                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0" Visibility="{Binding Project.ChannelName, Converter={StaticResource EmptyToCollapsedConverter}}">
                                             <Ellipse Width="7" Height="7" Margin="0,0,6,0" VerticalAlignment="Center" Fill="{Binding Project.ChannelColor}"/>
                                             <TextBlock Text="{Binding Project.ChannelName}" FontSize="11" Foreground="{DynamicResource MutedTextBrush}"/>
                                         </StackPanel>
                                         <TextBlock Text="{Binding Subtitle}" FontSize="11" Foreground="{DynamicResource MutedTextBrush}" Margin="0,3,0,14"/>
+
+                                        <!-- When it's due: the date and how far off it is, in a tone that warms as it nears. -->
+                                        <Border CornerRadius="6" Padding="10,6" Margin="0,-4,0,14" BorderThickness="1"
+                                                Background="{Binding DueTone, Converter={StaticResource ToneBrushConverter}, ConverterParameter=Soft}"
+                                                BorderBrush="{Binding DueTone, Converter={StaticResource ToneBrushConverter}}"
+                                                Visibility="{Binding DueLabel, Converter={StaticResource EmptyToCollapsedConverter}}"
+                                                AutomationProperties.Name="{Binding DueLabel}">
+                                            <DockPanel>
+                                                <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE787;" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center"
+                                                           Foreground="{Binding DueTone, Converter={StaticResource ToneBrushConverter}}"/>
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding DueRelative}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"
+                                                           Foreground="{Binding DueTone, Converter={StaticResource ToneBrushConverter}}"/>
+                                                <TextBlock Text="{Binding DueLabel}" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                            </DockPanel>
+                                        </Border>
 
                                         <Grid>
                                             <Grid.ColumnDefinitions>

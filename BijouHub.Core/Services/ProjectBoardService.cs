@@ -27,7 +27,10 @@ public static class ProjectBoardService
         string TimeThisWeek,
         string GoalsText,
         double GoalsFraction,
-        string NextGoal)
+        string NextGoal,
+        string DueLabel,
+        string DueRelative,
+        string DueTone)
     {
         public string StatusPillText => StatusLabel.ToUpperInvariant();
     }
@@ -81,10 +84,13 @@ public static class ProjectBoardService
             var allGoalsDone = leaves.Count == 0 || goalsDone == leaves.Count;
             var nothingStarted = (script == null || script.Total == 0) && !hasMusic && projectSessions.Count == 0 && goalsDone == 0;
 
+            // The project's own date wins; a script's date in BijouDocs is the fallback.
+            var dueDay = DueText.Day(project.DueDate) ?? script?.Due?.Date;
+
             var (statusLabel, statusTone) =
                 nothingStarted ? ("Not started", "neutral")
                 : scriptReady && hasMusic && allGoalsDone ? ("Ready to publish", "success")
-                : script?.Due is DateTime due && (due - DateTime.Today).TotalDays < 2 && !scriptReady ? ("Behind pace", "critical")
+                : dueDay is DateTime due && (due - DateTime.Today).TotalDays < 2 && !scriptReady ? ("Behind pace", "critical")
                 : ("In progress", "accent");
 
             var (scriptLabel, scriptTone, scriptDetail) =
@@ -103,10 +109,12 @@ public static class ProjectBoardService
                 ? "No goals set"
                 : $"Goals — {goalsDone}/{leaves.Count} ({Math.Round(Math.Clamp(project.Completion, 0, 1) * 100)}%)";
 
+            var (dueLabel, dueRelative, dueTone) = DueInfo(dueDay, statusLabel == "Ready to publish");
+
             cards.Add(new Card(
                 project,
                 project.Name,
-                Subtitle(lastWorked, script),
+                Subtitle(lastWorked),
                 statusLabel,
                 statusTone,
                 scriptLabel,
@@ -118,29 +126,41 @@ public static class ProjectBoardService
                 FormatHours(secondsThisWeek),
                 goalsText,
                 Math.Clamp(project.Completion, 0, 1),
-                project.NextIncompleteGoal() is Goal next ? $"Next: {next.Name}" : ""));
+                project.NextIncompleteGoal() is Goal next ? $"Next: {next.Name}" : "",
+                dueLabel,
+                dueRelative,
+                dueTone));
         }
 
         return Summarize(cards);
     }
 
-    private static string Subtitle(DateTime? lastWorked, Script? script)
-    {
-        var parts = new List<string>();
-        parts.Add(lastWorked is DateTime worked ? $"Worked on {Relative(worked)}" : "No time logged yet");
+    private static string Subtitle(DateTime? lastWorked) =>
+        lastWorked is DateTime worked ? $"Worked on {Relative(worked)}" : "No time logged yet";
 
-        if (script?.Due is DateTime due)
+    // The due strip on a card: the date ("Due Wed, Nov 10"), how far off it is ("in 5 days",
+    // "2 days overdue") and a tone for it: red when overdue or within a day, amber within a
+    // week, green once the project is ready to publish. All empty when there's no date.
+    private static (string Label, string Relative, string Tone) DueInfo(DateTime? day, bool ready)
+    {
+        if (day is not DateTime due) return ("", "", "");
+        var today = DateTime.Today;
+        var days = (due.Date - today).Days;
+
+        var format = due.Year == today.Year ? "ddd, MMM d" : "ddd, MMM d, yyyy";
+        var label = $"Due {due.ToString(format, CultureInfo.CurrentCulture)}";
+        var relative = days switch
         {
-            var days = (due.Date - DateTime.Today).Days;
-            parts.Add(days switch
-            {
-                < 0 => $"Overdue since {due:MMM d}",
-                0 => "Due today",
-                1 => "Due tomorrow",
-                _ => $"Due {due:MMM d}"
-            });
-        }
-        return string.Join("  ·  ", parts);
+            < -1 => $"{-days} days overdue",
+            -1 => "1 day overdue",
+            0 => "today",
+            1 => "tomorrow",
+            < 14 => $"in {days} days",
+            < 60 => $"in {days / 7} weeks",
+            _ => $"in {days / 30} months"
+        };
+        var tone = ready && days >= 0 ? "success" : days <= 1 ? "critical" : days <= 7 ? "warning" : "accent";
+        return (label, relative, tone);
     }
 
     private static string Relative(DateTime when)

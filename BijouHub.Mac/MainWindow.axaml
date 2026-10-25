@@ -202,7 +202,7 @@
         <Border Grid.Column="0" Margin="{DynamicResource PanelGap}" Background="{DynamicResource SidebarBrush}"
                 BorderBrush="{DynamicResource PanelEdgeBrush}" BorderThickness="{DynamicResource PanelEdge}"
                 CornerRadius="{DynamicResource PanelRadius}" BoxShadow="{DynamicResource PanelShadow}">
-            <Grid RowDefinitions="Auto,Auto,*,Auto,*,Auto,Auto" Margin="14,16,14,12">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto" Margin="14,16,14,12">
                 <StackPanel Grid.Row="0">
                 <StackPanel Orientation="Horizontal" Margin="4,0,0,14" Cursor="Hand" Background="Transparent" PointerPressed="Logo_PointerPressed">
                     <Polygon Points="6,0 18,0 24,8 18,16 6,16 0,8" Width="24" Height="16" Margin="0,0,10,0" VerticalAlignment="Center"
@@ -252,7 +252,7 @@
                     </Button>
                     <TextBlock Name="ModesLabel" Classes="label" Text="MODES" VerticalAlignment="Center"/>
                 </DockPanel>
-                <ListBox Name="ModesList" Grid.Row="2" Classes="nav" SelectionChanged="ModesList_SelectionChanged">
+                <ListBox Name="ModesList" Grid.Row="2" MaxHeight="260" Classes="nav" SelectionChanged="ModesList_SelectionChanged">
                     <ListBox.ContextMenu>
                         <ContextMenu Opening="SidebarMenu_Opening">
                             <MenuItem Header="Edit…" Click="EditMode_Click"/>
@@ -366,8 +366,8 @@
                             <TextBlock Name="HomeDateText" Classes="h1"/>
                             <TextBlock Name="HomeGreetingText" FontSize="15" Foreground="{DynamicResource AccentBrush}" Margin="0,4,0,24" TextWrapping="Wrap"/>
 
-                            <Grid ColumnDefinitions="*,20,260" Margin="0,0,0,28">
-                                <StackPanel Grid.Column="0" MaxWidth="720">
+                            <Grid Name="TodayGrid" ColumnDefinitions="*,20,260" RowDefinitions="Auto,Auto" Margin="0,0,0,28">
+                                <StackPanel Name="TodayGoalsColumn" Grid.Column="0" MaxWidth="720">
                                     <DockPanel Margin="0,0,0,8" LastChildFill="False">
                                         <!-- Today's goals, or tomorrow's plan. -->
                                         <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Bottom">
@@ -466,7 +466,7 @@
                                     </Border>
                                 </StackPanel>
 
-                                <StackPanel Grid.Column="2">
+                                <StackPanel Name="TodayStatsColumn" Grid.Column="2">
                                     <TextBlock Classes="label" Text="TODAY" Margin="0,0,0,8"/>
                                     <Border Classes="card" Padding="16,14">
                                         <StackPanel>

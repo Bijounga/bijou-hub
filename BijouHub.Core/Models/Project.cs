@@ -25,6 +25,10 @@ public class Project
     public ObservableCollection<Goal> Goals { get; set; } = new();
     public List<ProjectNote> Notes { get; set; } = new();
     public int? DefaultTargetMinutes { get; set; }
+
+    // When the project is due (yyyy-MM-dd; see DueText), shown on its board card. Without one the
+    // card uses the due date on the project's BijouDocs script, if it has one.
+    public string? DueDate { get; set; }
     public string? FreeformNotesXaml { get; set; }
 
     // Plain-text mirror of the freeform notes, kept in sync by both apps so notes carry over
@@ -84,6 +88,7 @@ public class Project
             ChannelName = ChannelName,
             ChannelColor = ChannelColor,
             DefaultTargetMinutes = DefaultTargetMinutes,
+            DueDate = DueDate,
             FreeformNotesXaml = FreeformNotesXaml,
             NotesPlainText = NotesPlainText,
             Notes = new List<ProjectNote>(Notes)
