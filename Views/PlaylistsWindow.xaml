@@ -1,7 +1,7 @@
 <Window x:Class="BijouHub.Views.PlaylistsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Playlists" Height="520" Width="520"
+        Title="Playlists" Height="560" Width="520"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BgBrush}">
     <Grid>
@@ -13,23 +13,37 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <TextBlock Style="{StaticResource HeadingText}" FontSize="18" Text="Playlists" Margin="0,0,0,4"/>
-            <TextBlock Grid.Row="1" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap" Margin="0,0,0,14"
-                       Text="Save a YouTube playlist link here, then pick it when you start a timer: one to work to, and a calmer one for Pomodoro breaks. Pause it with your keyboard's pause key."/>
+            <TextBlock Grid.Row="1" x:Name="HintText" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap" Margin="0,0,0,12"/>
 
-            <TextBlock Grid.Row="2" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="LINK"/></TextBlock>
-            <DockPanel Grid.Row="3" Margin="0,0,0,8">
-                <Button DockPanel.Dock="Right" Content="Add" Width="70" Margin="8,0,0,0" Click="Add_Click" AutomationProperties.Name="Add playlist"/>
+            <DockPanel Grid.Row="2" Margin="0,0,0,12">
+                <CheckBox DockPanel.Dock="Right" x:Name="ShuffleBox" Content="Shuffle" VerticalAlignment="Center"
+                          Checked="Shuffle_Changed" Unchecked="Shuffle_Changed"
+                          ToolTip="Play these in random order instead of the order below"/>
+                <StackPanel Orientation="Horizontal">
+                    <Button x:Name="WorkTab" Style="{DynamicResource GhostIconButton}" Padding="12,6" Click="WorkTab_Click" AutomationProperties.Name="Work playlists">
+                        <TextBlock x:Name="WorkTabText" Text="Work" FontSize="13"/>
+                    </Button>
+                    <Button x:Name="BreakTab" Style="{DynamicResource GhostIconButton}" Padding="12,6" Click="BreakTab_Click" AutomationProperties.Name="Break playlists">
+                        <TextBlock x:Name="BreakTabText" Text="Break" FontSize="13"/>
+                    </Button>
+                </StackPanel>
+            </DockPanel>
+
+            <TextBlock Grid.Row="3" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="LINK"/></TextBlock>
+            <DockPanel Grid.Row="4" Margin="0,0,0,8">
+                <Button DockPanel.Dock="Right" x:Name="AddButton" Content="Add" Width="70" Margin="8,0,0,0" Click="Add_Click" AutomationProperties.Name="Add playlist"/>
                 <TextBox x:Name="UrlBox" KeyDown="Box_KeyDown" AutomationProperties.Name="Playlist link"/>
             </DockPanel>
-            <TextBox Grid.Row="4" x:Name="NameBox" Margin="0,0,0,14" KeyDown="Box_KeyDown" AutomationProperties.Name="Playlist name"
-                     ToolTip="A name to pick it by (optional: it's named after the link otherwise)"/>
+            <TextBox Grid.Row="5" x:Name="NameBox" Margin="0,0,0,14" KeyDown="Box_KeyDown" AutomationProperties.Name="Playlist name"
+                     ToolTip="A name to pick it by (optional: a YouTube link is named after its video)"/>
 
-            <ListBox Grid.Row="5" x:Name="PlaylistList" HorizontalContentAlignment="Stretch">
+            <ListBox Grid.Row="6" x:Name="PlaylistList" HorizontalContentAlignment="Stretch">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <DockPanel Margin="0,2">
@@ -49,10 +63,10 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-            <TextBlock Grid.Row="5" x:Name="EmptyText" Text="No playlists yet." Foreground="{DynamicResource FaintTextBrush}"
+            <TextBlock Grid.Row="6" x:Name="EmptyText" Text="Nothing here yet." Foreground="{DynamicResource FaintTextBrush}"
                        HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
 
-            <Button Grid.Row="6" Content="Done" Width="90" HorizontalAlignment="Right" Margin="0,12,0,0" IsCancel="True" IsDefault="False" Click="Done_Click"/>
+            <Button Grid.Row="7" Content="Done" Width="90" HorizontalAlignment="Right" Margin="0,12,0,0" IsCancel="True" Click="Done_Click"/>
         </Grid>
     </Grid>
 </Window>

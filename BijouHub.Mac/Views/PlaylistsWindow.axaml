@@ -2,21 +2,33 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:BijouHub.Mac.Controls"
         x:Class="BijouHub.Mac.Views.PlaylistsWindow"
-        Title="Playlists" Width="520" Height="520" WindowStartupLocation="CenterOwner"
+        Title="Playlists" Width="520" Height="580" WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BgBrush}">
-    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto">
+    <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto">
         <TextBlock Classes="h2" Text="Playlists" Margin="0,0,0,4"/>
-        <TextBlock Grid.Row="1" Classes="muted" TextWrapping="Wrap" Margin="0,0,0,14"
-                   Text="Save a YouTube playlist link here, then pick it when you start a timer: one to work to, and a calmer one for Pomodoro breaks."/>
+        <TextBlock Name="HintText" Grid.Row="1" Classes="muted" TextWrapping="Wrap" Margin="0,0,0,12"/>
 
-        <TextBlock Grid.Row="2" Text="LINK" Classes="label"/>
-        <DockPanel Grid.Row="3" Margin="0,4,0,8">
-            <Button DockPanel.Dock="Right" Content="Add" Width="70" Margin="8,0,0,0" HorizontalContentAlignment="Center" Click="Add_Click"/>
+        <DockPanel Grid.Row="2" Margin="0,0,0,12">
+            <CheckBox DockPanel.Dock="Right" Name="ShuffleBox" Content="Shuffle" IsCheckedChanged="Shuffle_Changed"
+                      ToolTip.Tip="Play these in random order instead of the order below"/>
+            <StackPanel Orientation="Horizontal">
+                <Button Name="WorkTab" Classes="ghost" Padding="12,6" Click="WorkTab_Click" AutomationProperties.Name="Work playlists">
+                    <TextBlock Name="WorkTabText" Text="Work" FontSize="13"/>
+                </Button>
+                <Button Name="BreakTab" Classes="ghost" Padding="12,6" Click="BreakTab_Click" AutomationProperties.Name="Break playlists">
+                    <TextBlock Name="BreakTabText" Text="Break" FontSize="13"/>
+                </Button>
+            </StackPanel>
+        </DockPanel>
+
+        <TextBlock Grid.Row="3" Text="LINK" Classes="label"/>
+        <DockPanel Grid.Row="4" Margin="0,4,0,8">
+            <Button DockPanel.Dock="Right" Name="AddButton" Content="Add" Width="70" Margin="8,0,0,0" HorizontalContentAlignment="Center" Click="Add_Click"/>
             <TextBox Name="UrlBox" Watermark="Paste a playlist link" KeyDown="Box_KeyDown"/>
         </DockPanel>
 
-        <Grid Grid.Row="4" RowDefinitions="Auto,*">
-            <TextBox Name="NameBox" Watermark="Name (optional)" Margin="0,0,0,14" KeyDown="Box_KeyDown"/>
+        <Grid Grid.Row="5" RowDefinitions="Auto,*">
+            <TextBox Name="NameBox" Watermark="Name (optional: a YouTube link is named after its video)" Margin="0,0,0,14" KeyDown="Box_KeyDown"/>
             <ListBox Name="PlaylistList" Grid.Row="1" Classes="nav">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
@@ -35,11 +47,11 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-            <TextBlock Name="EmptyText" Grid.Row="1" Text="No playlists yet." Classes="faint"
+            <TextBlock Name="EmptyText" Grid.Row="1" Text="Nothing here yet." Classes="faint"
                        HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
         </Grid>
 
-        <Button Grid.Row="5" Content="Done" Classes="primary" Width="90" HorizontalAlignment="Right" HorizontalContentAlignment="Center"
+        <Button Grid.Row="6" Content="Done" Classes="primary" Width="90" HorizontalAlignment="Right" HorizontalContentAlignment="Center"
                 Margin="0,14,0,0" Click="Done_Click"/>
     </Grid>
 </Window>

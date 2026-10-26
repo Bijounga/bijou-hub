@@ -50,10 +50,9 @@ public partial class StartSessionWindow : Window
 
         if (project.DefaultTargetMinutes is int defaultMinutes) DurationBox.Text = DurationText.Format(defaultMinutes);
 
-        var playlists = new List<Playlist> { new() { Id = "", Name = "No music" } };
-        playlists.AddRange(new PlaylistStore().Load());
-        WorkMusicCombo.ItemsSource = playlists;
-        BreakMusicCombo.ItemsSource = playlists;
+        var playlists = new PlaylistStore().Load();
+        WorkMusicCombo.ItemsSource = MusicQueue.Choices(playlists, PlaylistKind.Work);
+        BreakMusicCombo.ItemsSource = MusicQueue.Choices(playlists, PlaylistKind.Break);
         ApplyModeMusic();
     }
 
@@ -62,10 +61,10 @@ public partial class StartSessionWindow : Window
     // The picked mode's own playlists are where the music choice starts.
     private void ApplyModeMusic()
     {
-        if (WorkMusicCombo?.ItemsSource is not List<Playlist> playlists) return;
+        if (WorkMusicCombo?.ItemsSource is not List<Playlist> work || BreakMusicCombo.ItemsSource is not List<Playlist> rest) return;
         var mode = (ModeCombo.SelectedItem as ModeOption)?.Mode;
-        WorkMusicCombo.SelectedItem = playlists.FirstOrDefault(p => p.Id == (mode?.WorkPlaylistId ?? "")) ?? playlists[0];
-        BreakMusicCombo.SelectedItem = playlists.FirstOrDefault(p => p.Id == (mode?.BreakPlaylistId ?? "")) ?? playlists[0];
+        WorkMusicCombo.SelectedItem = work.FirstOrDefault(p => p.Id == (mode?.WorkPlaylistId ?? "")) ?? work[0];
+        BreakMusicCombo.SelectedItem = rest.FirstOrDefault(p => p.Id == (mode?.BreakPlaylistId ?? "")) ?? rest[0];
     }
 
     private static void AddGoalOptions(Goal goal, int depth, List<GoalOption> options)

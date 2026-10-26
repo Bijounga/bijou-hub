@@ -74,13 +74,9 @@ public partial class StartSessionWindow : Window
             BudgetCombo.SelectedIndex = 0;
         }
 
-        var none = new Playlist { Id = "", Name = "No music" };
         var playlists = new PlaylistStore().Load();
-        foreach (var combo in new[] { WorkMusicCombo, BreakMusicCombo })
-        {
-            combo.Items.Add(none);
-            foreach (var playlist in playlists) combo.Items.Add(playlist);
-        }
+        foreach (var playlist in MusicQueue.Choices(playlists, PlaylistKind.Work)) WorkMusicCombo.Items.Add(playlist);
+        foreach (var playlist in MusicQueue.Choices(playlists, PlaylistKind.Break)) BreakMusicCombo.Items.Add(playlist);
         ApplyModeMusic();
 
         UpdateCountDownAvailability();

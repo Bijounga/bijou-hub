@@ -28,12 +28,13 @@ public partial class ModeEditorWindow : Window
         DoNotDisturbBox.IsChecked = mode.DoNotDisturb;
         KeyLightBox.IsChecked = mode.KeyLight;
         StudyBox.IsChecked = mode.IsStudy;
-        var playlists = new List<Playlist> { new() { Id = "", Name = "No music" } };
-        playlists.AddRange(new BijouHub.Services.PlaylistStore().Load());
-        WorkMusicCombo.ItemsSource = playlists;
-        BreakMusicCombo.ItemsSource = playlists;
-        WorkMusicCombo.SelectedItem = playlists.FirstOrDefault(p => p.Id == (mode.WorkPlaylistId ?? "")) ?? playlists[0];
-        BreakMusicCombo.SelectedItem = playlists.FirstOrDefault(p => p.Id == (mode.BreakPlaylistId ?? "")) ?? playlists[0];
+        var playlists = new BijouHub.Services.PlaylistStore().Load();
+        var work = BijouHub.Services.MusicQueue.Choices(playlists, PlaylistKind.Work);
+        var rest = BijouHub.Services.MusicQueue.Choices(playlists, PlaylistKind.Break);
+        WorkMusicCombo.ItemsSource = work;
+        BreakMusicCombo.ItemsSource = rest;
+        WorkMusicCombo.SelectedItem = work.FirstOrDefault(p => p.Id == (mode.WorkPlaylistId ?? "")) ?? work[0];
+        BreakMusicCombo.SelectedItem = rest.FirstOrDefault(p => p.Id == (mode.BreakPlaylistId ?? "")) ?? rest[0];
         _items = new ObservableCollection<LaunchItem>(mode.LaunchItems);
         ItemsList.ItemsSource = _items;
         Opened += (_, _) =>

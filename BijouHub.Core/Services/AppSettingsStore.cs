@@ -14,6 +14,10 @@ public class AppSettings
 
     public string ThemeName { get; set; } = "Dark";
 
+    // Session music plays the work (or break) playlists in random order instead of the list's.
+    public bool ShuffleWorkMusic { get; set; }
+    public bool ShuffleBreakMusic { get; set; }
+
     // The home goal list's selected tab (a Google Tasks list group, or "*" for all).
     public string GoalScope { get; set; } = "EDITING";
 

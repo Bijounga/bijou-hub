@@ -22,13 +22,12 @@ public partial class ModeEditorWindow : Window
         DoNotDisturbBox.IsChecked = mode.DoNotDisturb;
         KeyLightBox.IsChecked = mode.KeyLight;
         StudyBox.IsChecked = mode.IsStudy;
-        var none = new Playlist { Id = "", Name = "No music" };
         var playlists = new PlaylistStore().Load();
-        foreach (var (combo, picked) in new[] { (WorkMusicCombo, mode.WorkPlaylistId), (BreakMusicCombo, mode.BreakPlaylistId) })
+        foreach (var (combo, kind, picked) in new[] { (WorkMusicCombo, PlaylistKind.Work, mode.WorkPlaylistId), (BreakMusicCombo, PlaylistKind.Break, mode.BreakPlaylistId) })
         {
-            combo.Items.Add(none);
-            foreach (var playlist in playlists) combo.Items.Add(playlist);
-            combo.SelectedItem = combo.Items.Cast<Playlist>().FirstOrDefault(p => p.Id == (picked ?? "")) ?? none;
+            var choices = MusicQueue.Choices(playlists, kind);
+            foreach (var playlist in choices) combo.Items.Add(playlist);
+            combo.SelectedItem = choices.FirstOrDefault(p => p.Id == (picked ?? "")) ?? choices[0];
         }
         _launchItems = new ObservableCollection<LaunchItem>(mode.LaunchItems);
         _blockItems = new ObservableCollection<BlockItem>(mode.BlockItems);

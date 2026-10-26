@@ -6,37 +6,46 @@ using BijouHub.Services;
 
 namespace BijouHub.Mac;
 
-// Session music: a playlist for working and one for Pomodoro breaks, opened in the browser
-// when the timer starts and swapped as the Pomodoro changes phase. Pausing it is the
-// keyboard's play/pause key: macOS gives an app no way to pause another app's audio.
+// Session music: the work playlists while working and the break playlists on a Pomodoro break, opened
+// in the browser when the timer starts and swapped as the Pomodoro changes phase. Unlike on Windows
+// it can't tell when a video has ended (macOS gives an app no view of another app's playback), so
+// moving on to the next playlist is up to the user. Pausing it is the keyboard's play/pause key.
 public partial class MainWindow
 {
     private readonly PlaylistStore _playlistStore = new();
-    private Playlist? _workMusic;
-    private Playlist? _breakMusic;
-
-    private Playlist? FindPlaylist(string? id) =>
-        string.IsNullOrEmpty(id) ? null : _playlistStore.Load().FirstOrDefault(p => p.Id == id);
+    private MusicQueue? _workQueue;
+    private MusicQueue? _breakQueue;
+    private string? _workStart;
+    private string? _breakStart;
 
     // A playlist id from the start dialog wins ("" there means none); otherwise the mode's own.
+    // Either may be MusicQueue.AllId: every playlist on that tab, one after another.
     private void ChooseMusic(WorkMode? mode, string? workId, string? breakId)
     {
-        _workMusic = FindPlaylist(workId ?? mode?.WorkPlaylistId);
-        _breakMusic = FindPlaylist(breakId ?? mode?.BreakPlaylistId);
+        var settings = _settingsStore.Load();
+        var playlists = _playlistStore.Load();
+        _workStart = workId ?? mode?.WorkPlaylistId;
+        _breakStart = breakId ?? mode?.BreakPlaylistId;
+        _workQueue = QueueFor(playlists, PlaylistKind.Work, _workStart, settings.ShuffleWorkMusic);
+        _breakQueue = QueueFor(playlists, PlaylistKind.Break, _breakStart, settings.ShuffleBreakMusic);
     }
+
+    private static MusicQueue? QueueFor(List<Playlist> playlists, PlaylistKind kind, string? start, bool shuffle) =>
+        string.IsNullOrEmpty(start) ? null
+        : new MusicQueue(playlists.Where(p => p.Kind == kind || p.Id == start), shuffle);
 
     private void StartSessionMusic()
     {
-        if (_workMusic != null) MacMusic.Play(_workMusic);
+        if (_workQueue?.Begin(_workStart) is { } playlist) MacMusic.Play(playlist);
     }
 
-    // A Pomodoro changed phase: the break playlist for a break, the work one for focus.
+    // A Pomodoro changed phase: the break playlists for a break, the work ones for focus.
     private void PlayPhaseMusic()
     {
-        var next = _onBreak ? _breakMusic : _workMusic;
-        if (next != null) MacMusic.Play(next);
+        var queue = _onBreak ? _breakQueue : _workQueue;
+        if (queue?.Begin(_onBreak ? _breakStart : _workStart) is { } playlist) MacMusic.Play(playlist);
     }
 
     private async void Playlists_Click(object? sender, RoutedEventArgs e) =>
-        await new PlaylistsWindow(_playlistStore).ShowDialog(this);
+        await new PlaylistsWindow(_playlistStore, _settingsStore).ShowDialog(this);
 }
