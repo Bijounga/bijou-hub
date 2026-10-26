@@ -19,7 +19,7 @@
 
             <TextBlock Style="{StaticResource HeadingText}" FontSize="18" Text="Playlists" Margin="0,0,0,4"/>
             <TextBlock Grid.Row="1" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap" Margin="0,0,0,14"
-                       Text="Save a Spotify or YouTube playlist link here, then pick it when you start a timer: one to work to, and a calmer one for Pomodoro breaks. Pause it with your keyboard's pause key."/>
+                       Text="Save a YouTube playlist link here, then pick it when you start a timer: one to work to, and a calmer one for Pomodoro breaks. Pause it with your keyboard's pause key."/>
 
             <TextBlock Grid.Row="2" Foreground="{DynamicResource SectionLabelBrush}" Margin="0,0,0,4"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="LINK"/></TextBlock>
             <DockPanel Grid.Row="3" Margin="0,0,0,8">

@@ -247,7 +247,6 @@ public partial class MainWindow
     {
         if (!IsSessionActive) return;
         _tick!.Stop();
-        StopSessionMusic();
         _popout?.Close();
         _timeUpWindow?.Close();
         _timeUpWindow = null;

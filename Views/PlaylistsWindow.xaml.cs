@@ -37,7 +37,7 @@ public partial class PlaylistsWindow : Window
     {
         if (!MusicLinks.TryNormalize(UrlBox.Text, out var url))
         {
-            MessageBox.Show("Paste a playlist link, like one from Spotify or YouTube.", "Playlists", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("Paste a playlist link, like one from YouTube.", "Playlists", MessageBoxButton.OK, MessageBoxImage.Information);
             UrlBox.Focus();
             return;
         }

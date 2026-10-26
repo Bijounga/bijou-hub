@@ -38,7 +38,7 @@ public partial class PlaylistsWindow : Window
     {
         if (!MusicLinks.TryNormalize(UrlBox.Text, out var url))
         {
-            await PromptWindow.Notice(this, "Playlists", "Paste a playlist link, like one from Spotify or YouTube.");
+            await PromptWindow.Notice(this, "Playlists", "Paste a playlist link, like one from YouTube.");
             UrlBox.Focus();
             return;
         }
@@ -57,7 +57,7 @@ public partial class PlaylistsWindow : Window
 
     private void Play_Click(object? sender, RoutedEventArgs e)
     {
-        if (sender is Control { Tag: Playlist playlist }) _ = MacMusic.PlayAsync(playlist);
+        if (sender is Control { Tag: Playlist playlist }) MacMusic.Play(playlist);
     }
 
     private void Done_Click(object? sender, RoutedEventArgs e) => Close();

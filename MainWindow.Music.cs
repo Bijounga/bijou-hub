@@ -5,9 +5,9 @@ using BijouHub.Views;
 
 namespace BijouHub;
 
-// Session music: a playlist for working and one for Pomodoro breaks, opened in the user's own music
-// app when the timer starts and swapped as the Pomodoro changes phase. Pausing it is the keyboard's
-// play/pause key, as it's the music app that's playing; the session pauses it itself when it ends.
+// Session music: a playlist for working and one for Pomodoro breaks, opened in the browser
+// when the timer starts and swapped as the Pomodoro changes phase. Pausing it is the keyboard's
+// play/pause key, as it's the browser that's playing; the session pauses it itself when it ends.
 public partial class MainWindow
 {
     private readonly PlaylistStore _playlistStore = new();

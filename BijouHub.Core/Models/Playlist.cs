@@ -1,6 +1,6 @@
 namespace BijouHub.Models;
 
-// A saved link to a playlist (Spotify, YouTube, ...), played in whatever app opens that link.
+// A saved link to a playlist (YouTube, ...), played in the browser.
 public class Playlist
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();

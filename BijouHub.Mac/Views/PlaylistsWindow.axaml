@@ -7,7 +7,7 @@
     <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto">
         <TextBlock Classes="h2" Text="Playlists" Margin="0,0,0,4"/>
         <TextBlock Grid.Row="1" Classes="muted" TextWrapping="Wrap" Margin="0,0,0,14"
-                   Text="Save a Spotify or YouTube playlist link here, then pick it when you start a timer: one to work to, and a calmer one for Pomodoro breaks."/>
+                   Text="Save a YouTube playlist link here, then pick it when you start a timer: one to work to, and a calmer one for Pomodoro breaks."/>
 
         <TextBlock Grid.Row="2" Text="LINK" Classes="label"/>
         <DockPanel Grid.Row="3" Margin="0,4,0,8">
