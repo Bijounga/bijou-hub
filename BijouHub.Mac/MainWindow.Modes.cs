@@ -25,6 +25,7 @@ public partial class MainWindow
         RefreshModeTimers(mode);
         ModeTimerBox.Text = "";
         UpdateModeTimerInput();
+        LoadModeMusic(mode);
     }
 
     private void PersistModes()
@@ -66,7 +67,7 @@ public partial class MainWindow
 
     private async void Launch_Click(object? sender, RoutedEventArgs e)
     {
-        if (_shownMode is WorkMode mode) await BeginSession(mode, null, null, null);
+        if (_shownMode is WorkMode mode) await BeginSession(mode, null, null, null, workPlaylistId: ModeWorkMusicId, breakPlaylistId: ModeBreakMusicId);
     }
 
     // ---------- Timers ----------
@@ -102,7 +103,7 @@ public partial class MainWindow
         };
         ToolTip.SetTip(tile, $"Launch {mode.Name}: {plan.FocusMinutes} min focus, {plan.BreakMinutes} min break, " + (plan.Rounds is int n ? $"{n} rounds" : "repeating"));
         Avalonia.Automation.AutomationProperties.SetName(tile, $"Pomodoro {plan.FocusMinutes} {plan.BreakMinutes}" + (plan.Rounds is int count ? $" x{count}" : ""));
-        tile.Click += async (_, _) => await BeginSession(mode, null, null, plan.FocusMinutes, pomodoro: plan);
+        tile.Click += async (_, _) => await BeginSession(mode, null, null, plan.FocusMinutes, pomodoro: plan, workPlaylistId: ModeWorkMusicId, breakPlaylistId: ModeBreakMusicId);
 
         var remove = new MenuItem { Header = "Remove timer" };
         remove.Click += (_, _) =>
@@ -121,9 +122,9 @@ public partial class MainWindow
     {
         if (_shownMode is not WorkMode mode) return;
         if (DurationText.TryParsePomodoro(ModeTimerBox.Text) is PomodoroPlan plan)
-            await BeginSession(mode, null, null, plan.FocusMinutes, pomodoro: plan);
+            await BeginSession(mode, null, null, plan.FocusMinutes, pomodoro: plan, workPlaylistId: ModeWorkMusicId, breakPlaylistId: ModeBreakMusicId);
         else if (DurationText.TryParseMinutes(ModeTimerBox.Text) is int minutes)
-            await BeginSession(mode, null, null, minutes, countDown: true);
+            await BeginSession(mode, null, null, minutes, countDown: true, workPlaylistId: ModeWorkMusicId, breakPlaylistId: ModeBreakMusicId);
     }
 
     private Button BuildTimerTile(WorkMode mode, int minutes)
@@ -147,7 +148,7 @@ public partial class MainWindow
             }
         };
         ToolTip.SetTip(tile, $"Launch {mode.Name} and count down from {label}");
-        tile.Click += async (_, _) => await BeginSession(mode, null, null, minutes, countDown: true);
+        tile.Click += async (_, _) => await BeginSession(mode, null, null, minutes, countDown: true, workPlaylistId: ModeWorkMusicId, breakPlaylistId: ModeBreakMusicId);
 
         var remove = new MenuItem { Header = "Remove timer" };
         remove.Click += (_, _) =>

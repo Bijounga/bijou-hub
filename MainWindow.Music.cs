@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Threading;
 using BijouHub.Models;
 using BijouHub.Services;
@@ -93,6 +94,30 @@ public partial class MainWindow
         _ = MusicPlayer.PauseAsync();
     }
 
-    private void Playlists_Click(object sender, RoutedEventArgs e) =>
+    // ---------- The pickers on a mode page: music chosen by mood, each time a timer is started ----------
+
+    // Null until the pickers are filled; "" is "No music".
+    private string? ModeWorkMusicId => (ModeWorkMusicCombo.SelectedItem as Playlist)?.Id;
+    private string? ModeBreakMusicId => (ModeBreakMusicCombo.SelectedItem as Playlist)?.Id;
+
+    // Starts on the mode's own playlists; keepPicks holds what is chosen now (playlists were just edited).
+    private void LoadModeMusic(WorkMode mode, bool keepPicks = false)
+    {
+        var playlists = _playlistStore.Load();
+        FillMusicCombo(ModeWorkMusicCombo, MusicQueue.Choices(playlists, PlaylistKind.Work), keepPicks ? ModeWorkMusicId : mode.WorkPlaylistId);
+        FillMusicCombo(ModeBreakMusicCombo, MusicQueue.Choices(playlists, PlaylistKind.Break), keepPicks ? ModeBreakMusicId : mode.BreakPlaylistId);
+    }
+
+    private static void FillMusicCombo(ComboBox combo, List<Playlist> choices, string? pick)
+    {
+        combo.Items.Clear();
+        foreach (var choice in choices) combo.Items.Add(choice);
+        combo.SelectedItem = choices.FirstOrDefault(p => p.Id == (pick ?? "")) ?? choices[0];
+    }
+
+    private void Playlists_Click(object sender, RoutedEventArgs e)
+    {
         new PlaylistsWindow(_playlistStore, _settingsStore) { Owner = DialogOwner }.ShowDialog();
+        if (ModeDetailPanel.Visibility == Visibility.Visible && ModesList.SelectedItem is WorkMode mode) LoadModeMusic(mode, keepPicks: true);
+    }
 }

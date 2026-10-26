@@ -636,6 +636,7 @@ public partial class MainWindow : Window
         RefreshModeTimers(mode);
         ModeTimerBox.Text = "";
         UpdateModeTimerInput();
+        LoadModeMusic(mode);
 
         _detailProject = null;
         UpdateNotesPanelVisibility();
@@ -1191,7 +1192,7 @@ public partial class MainWindow : Window
     private async void Launch_Click(object sender, RoutedEventArgs e)
     {
         if (ModesList.SelectedItem is not WorkMode mode) return;
-        await BeginSession(mode, null, null, null);
+        await BeginSession(mode, null, null, null, workPlaylistId: ModeWorkMusicId, breakPlaylistId: ModeBreakMusicId);
     }
 
     // ---------- Start session from a Project ----------
@@ -2230,10 +2231,10 @@ public partial class MainWindow : Window
     }
 
     private Task StartModeTimer(WorkMode mode, int minutes) =>
-        BeginSession(mode, null, null, minutes, countDown: true);
+        BeginSession(mode, null, null, minutes, countDown: true, workPlaylistId: ModeWorkMusicId, breakPlaylistId: ModeBreakMusicId);
 
     private Task StartModePomodoro(WorkMode mode, PomodoroPlan plan) =>
-        BeginSession(mode, null, null, plan.FocusMinutes, pomodoro: plan);
+        BeginSession(mode, null, null, plan.FocusMinutes, pomodoro: plan, workPlaylistId: ModeWorkMusicId, breakPlaylistId: ModeBreakMusicId);
 
     // A saved "25/5": focus and break lengths on one tile.
     private Button BuildPomodoroTile(WorkMode mode, PomodoroPlan plan)
