@@ -29,7 +29,11 @@ public partial class MainWindow
         window.ExitRequested += () => window.Close();
         window.PauseRequested += TogglePause;
         window.FinishRequested += () => FinishSession_Click(this, new RoutedEventArgs());
-        window.ScreenChosen += PlaceBlackout;
+        window.ScreenChosen += index =>
+        {
+            PlaceBlackout(index);
+            RememberBlackoutScreen();
+        };
         window.TaskPicked += SessionTask_Picked;
         window.TaskAdded += SessionTask_Added;
         window.TaskDone += SessionTask_Done;
@@ -45,10 +49,12 @@ public partial class MainWindow
             BlackoutButton.ToolTip = "Black out the screen and show just the timer";
         };
 
-        // Another monitor than the one BijouHub is on, if there is one: that's the one to leave it on.
+        // The monitor it was last put on, if that's still connected; otherwise another monitor than the
+        // one BijouHub is on, if there is one: that's the one to leave it on.
         var screens = DisplayInfo.All();
         var mine = IsVisible ? DisplayInfo.Of(this) : null;
-        var start = screens.FindIndex(s => mine == null || s != mine);
+        var remembered = screens.FindIndex(s => ScreenKey(s) == _settingsStore.Load().FocusScreen);
+        var start = remembered >= 0 ? remembered : screens.FindIndex(s => mine == null || s != mine);
         _blackoutScreen = start < 0 ? 0 : start;
 
         _blackout = window;
@@ -58,6 +64,18 @@ public partial class MainWindow
         PlaceBlackout(_blackoutScreen);
         UpdateBlackout();
         window.SetTasks(OpenTasksToday(), _activeTask);
+    }
+
+    private static string ScreenKey(DisplayInfo.Screen s) => $"{s.X},{s.Y},{s.Width}x{s.Height}";
+
+    // The monitor picked with the buttons on the focus screen is the one it opens on next time.
+    private void RememberBlackoutScreen()
+    {
+        var screens = DisplayInfo.All();
+        if (_blackoutScreen < 0 || _blackoutScreen >= screens.Count) return;
+        var settings = _settingsStore.Load();
+        settings.FocusScreen = ScreenKey(screens[_blackoutScreen]);
+        _settingsStore.Save(settings);
     }
 
     private void PlaceBlackout(int index)

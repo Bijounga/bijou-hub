@@ -29,7 +29,11 @@ public partial class MainWindow
         window.ExitRequested += () => window.Close();
         window.PauseRequested += TogglePause;
         window.FinishRequested += () => _ = FinishSessionAsync(askForNote: true);
-        window.ScreenChosen += index => PlaceBlackout(index);
+        window.ScreenChosen += index =>
+        {
+            PlaceBlackout(index);
+            RememberBlackoutScreen();
+        };
         window.TaskPicked += SessionTask_Picked;
         window.TaskAdded += SessionTask_Added;
         window.TaskDone += SessionTask_Done;
@@ -45,10 +49,14 @@ public partial class MainWindow
             ToolTip.SetTip(BlackoutButton, "Black out the screen and show just the timer");
         };
 
-        // Another monitor than the one BijouHub is on, if there is one: that's the one to leave it on.
+        // The monitor it was last put on, if that's still connected; otherwise another monitor than the
+        // one BijouHub is on, if there is one: that's the one to leave it on.
         var screens = Screens.All;
         var mine = IsVisible ? Screens.ScreenFromWindow(this) : null;
+        var remembered = _settingsStore.Load().FocusScreen;
         var start = -1;
+        for (var i = 0; i < screens.Count && start < 0; i++)
+            if (ScreenKey(screens[i]) == remembered) start = i;
         for (var i = 0; i < screens.Count && start < 0; i++)
             if (mine == null || screens[i].Bounds != mine.Bounds) start = i;
         _blackoutScreen = Math.Max(0, start);
@@ -59,6 +67,18 @@ public partial class MainWindow
         PlaceBlackout(_blackoutScreen, show: true);
         UpdateBlackout();
         window.SetTasks(OpenTasksToday(), _activeTask);
+    }
+
+    private static string ScreenKey(Avalonia.Platform.Screen s) => $"{s.Bounds.X},{s.Bounds.Y},{s.Bounds.Width}x{s.Bounds.Height}";
+
+    // The monitor picked with the buttons on the focus screen is the one it opens on next time.
+    private void RememberBlackoutScreen()
+    {
+        var screens = Screens.All;
+        if (_blackoutScreen < 0 || _blackoutScreen >= screens.Count) return;
+        var settings = _settingsStore.Load();
+        settings.FocusScreen = ScreenKey(screens[_blackoutScreen]);
+        _settingsStore.Save(settings);
     }
 
     // Covers the chosen screen: moved onto it, then full screen there.

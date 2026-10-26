@@ -56,6 +56,9 @@ public class AppSettings
 
     // How the timer looks on the focus screen: size, font and color, kept between sessions.
     public FocusLook FocusLook { get; set; } = new();
+
+    // The monitor the focus screen was last put on ("x,y,WxH" of the monitor), so it comes back there.
+    public string? FocusScreen { get; set; }
 }
 
 // The focus screen's timer look. Font and Color are null for "whatever the theme says".

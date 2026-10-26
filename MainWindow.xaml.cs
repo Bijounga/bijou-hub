@@ -1640,6 +1640,10 @@ public partial class MainWindow : Window
     {
         if (_activeMode == null && _activeProject == null) return;
 
+        // The focus screen is topmost and covers a whole monitor: the note prompt below would open
+        // behind it with no way to reach it. The session is over, so it goes first.
+        _blackout?.Close();
+
         _tickTimer.Stop();
         _blockWatcher.Stop();
         _blockReminderTimer.Stop();
