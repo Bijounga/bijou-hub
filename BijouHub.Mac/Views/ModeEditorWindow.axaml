@@ -37,8 +37,8 @@
         </WrapPanel>
 
         <StackPanel Grid.Row="6" Margin="0,18,0,0" Spacing="16">
-            <CheckBox Name="StudyBox" Content="Study mode: leave it out of my daily target"
-                      ToolTip.Tip="Sessions in this mode are still logged, but don't count toward the daily target or the day and week totals"/>
+            <CheckBox Name="StudyBox" Content="Doesn't count toward my daily editing goal"
+                      ToolTip.Tip="Sessions in this mode are still logged, but stay out of the daily target ring and the day and week totals (good for studying)"/>
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <CheckBox Name="KeyLightBox" Content="Turn on my Elgato Key Light" ToolTip.Tip="Switches the light on when a session starts in this mode"/>
                 <Button Content="Set up…" Padding="8,2" Click="SetUpKeyLight_Click" AutomationProperties.Name="Set up Key Light"/>
