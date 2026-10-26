@@ -1203,11 +1203,12 @@ public partial class MainWindow : Window
         var dlg = new StartSessionWindow(project, _modes) { Owner = DialogOwner };
         if (dlg.ShowDialog() != true) return;
 
-        await BeginSession(dlg.SelectedMode, project, dlg.SelectedGoal, dlg.TargetMinutes, dlg.CountDown, pomodoro: dlg.Pomodoro);
+        await BeginSession(dlg.SelectedMode, project, dlg.SelectedGoal, dlg.TargetMinutes, dlg.CountDown, pomodoro: dlg.Pomodoro,
+            workPlaylistId: dlg.WorkPlaylistId, breakPlaylistId: dlg.BreakPlaylistId);
     }
 
     private async Task BeginSession(WorkMode? mode, Project? project, Goal? goal, int? targetMinutes, bool countDown = false,
-        string? deckKeyId = null, PomodoroPlan? pomodoro = null)
+        string? deckKeyId = null, PomodoroPlan? pomodoro = null, string? workPlaylistId = null, string? breakPlaylistId = null)
     {
         // Starting while another session runs replaces it — log the running one first instead of
         // silently dropping its time.
@@ -1266,6 +1267,8 @@ public partial class MainWindow : Window
             _blockWatcher.Start(mode);
         _tickTimer.Start();
         SoundFx.Play(SoundFx.Start);
+        ChooseMusic(mode, workPlaylistId, breakPlaylistId);
+        StartSessionMusic();
         UpdateTaskbarProgress();
         BroadcastDeckState();
     }
@@ -1648,6 +1651,7 @@ public partial class MainWindow : Window
         _blackout?.Close();
 
         _tickTimer.Stop();
+        StopSessionMusic();
         _blockWatcher.Stop();
         _blockReminderTimer.Stop();
         _pendingBlockRows.Clear();

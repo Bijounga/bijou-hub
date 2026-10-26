@@ -48,6 +48,7 @@ public partial class MainWindow
         _phaseLeft = _phaseLength = (_onBreak ? _pomodoro.BreakMinutes : _pomodoro.FocusMinutes) * 60;
         SoundFx.Play(_onBreak ? SoundFx.Break : SoundFx.Focus);
         UpdateSessionContextText();
+        PlayPhaseMusic();
     }
 
     private string PomodoroClock =>

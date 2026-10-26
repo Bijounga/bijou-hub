@@ -28,6 +28,12 @@ public partial class ModeEditorWindow : Window
         DoNotDisturbBox.IsChecked = mode.DoNotDisturb;
         KeyLightBox.IsChecked = mode.KeyLight;
         StudyBox.IsChecked = mode.IsStudy;
+        var playlists = new List<Playlist> { new() { Id = "", Name = "No music" } };
+        playlists.AddRange(new BijouHub.Services.PlaylistStore().Load());
+        WorkMusicCombo.ItemsSource = playlists;
+        BreakMusicCombo.ItemsSource = playlists;
+        WorkMusicCombo.SelectedItem = playlists.FirstOrDefault(p => p.Id == (mode.WorkPlaylistId ?? "")) ?? playlists[0];
+        BreakMusicCombo.SelectedItem = playlists.FirstOrDefault(p => p.Id == (mode.BreakPlaylistId ?? "")) ?? playlists[0];
         _items = new ObservableCollection<LaunchItem>(mode.LaunchItems);
         ItemsList.ItemsSource = _items;
         Opened += (_, _) =>
@@ -82,6 +88,8 @@ public partial class ModeEditorWindow : Window
         _mode.DoNotDisturb = DoNotDisturbBox.IsChecked == true;
         _mode.KeyLight = KeyLightBox.IsChecked == true;
         _mode.IsStudy = StudyBox.IsChecked == true;
+        _mode.WorkPlaylistId = WorkMusicCombo.SelectedItem is Playlist { Id.Length: > 0 } work ? work.Id : null;
+        _mode.BreakPlaylistId = BreakMusicCombo.SelectedItem is Playlist { Id.Length: > 0 } rest ? rest.Id : null;
         Close(true);
     }
 

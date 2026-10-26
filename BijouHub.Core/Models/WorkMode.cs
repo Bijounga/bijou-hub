@@ -19,6 +19,10 @@ public class WorkMode
     // Switches on the Elgato Key Light while a session in this mode runs.
     public bool KeyLight { get; set; }
 
+    // The playlists this mode starts with (null: none): one while working, one on a Pomodoro break.
+    public string? WorkPlaylistId { get; set; }
+    public string? BreakPlaylistId { get; set; }
+
     // Time in a study mode is logged like any other, but stays out of the daily target and the
     // day and week totals that sit beside it.
     public bool IsStudy { get; set; }

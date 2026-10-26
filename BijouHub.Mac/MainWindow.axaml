@@ -238,10 +238,16 @@
                         </StackPanel>
                     </DockPanel>
                 </Button>
-                <Button Name="NavCalendarButton" Classes="navrow" Click="NavCalendar_Click" AutomationProperties.Name="Calendar" Margin="0,0,0,12">
+                <Button Name="NavCalendarButton" Classes="navrow" Click="NavCalendar_Click" AutomationProperties.Name="Calendar">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <controls:LineIcon Kind="calendar" Width="15" Height="15" Foreground="{DynamicResource MutedTextBrush}"/>
                         <TextBlock Text="Calendar" FontSize="13"/>
+                    </StackPanel>
+                </Button>
+                <Button Name="NavPlaylistsButton" Classes="navrow" Click="Playlists_Click" AutomationProperties.Name="Playlists" Margin="0,0,0,12">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <controls:LineIcon Kind="music" Width="15" Height="15" Foreground="{DynamicResource MutedTextBrush}"/>
+                        <TextBlock Text="Playlists" FontSize="13"/>
                     </StackPanel>
                 </Button>
                 </StackPanel>

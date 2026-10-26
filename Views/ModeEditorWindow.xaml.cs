@@ -22,6 +22,14 @@ public partial class ModeEditorWindow : Window
         DoNotDisturbBox.IsChecked = mode.DoNotDisturb;
         KeyLightBox.IsChecked = mode.KeyLight;
         StudyBox.IsChecked = mode.IsStudy;
+        var none = new Playlist { Id = "", Name = "No music" };
+        var playlists = new PlaylistStore().Load();
+        foreach (var (combo, picked) in new[] { (WorkMusicCombo, mode.WorkPlaylistId), (BreakMusicCombo, mode.BreakPlaylistId) })
+        {
+            combo.Items.Add(none);
+            foreach (var playlist in playlists) combo.Items.Add(playlist);
+            combo.SelectedItem = combo.Items.Cast<Playlist>().FirstOrDefault(p => p.Id == (picked ?? "")) ?? none;
+        }
         _launchItems = new ObservableCollection<LaunchItem>(mode.LaunchItems);
         _blockItems = new ObservableCollection<BlockItem>(mode.BlockItems);
         LaunchItemsList.ItemsSource = _launchItems;
@@ -136,6 +144,8 @@ public partial class ModeEditorWindow : Window
         Mode.DoNotDisturb = DoNotDisturbBox.IsChecked == true;
         Mode.KeyLight = KeyLightBox.IsChecked == true;
         Mode.IsStudy = StudyBox.IsChecked == true;
+        Mode.WorkPlaylistId = (WorkMusicCombo.SelectedItem as Playlist) is { Id.Length: > 0 } work ? work.Id : null;
+        Mode.BreakPlaylistId = (BreakMusicCombo.SelectedItem as Playlist) is { Id.Length: > 0 } rest ? rest.Id : null;
 
         DialogResult = true;
         Close();

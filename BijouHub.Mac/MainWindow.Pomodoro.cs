@@ -47,6 +47,7 @@ public partial class MainWindow
         if (!_onBreak) _pomodoroRound++;
         _phaseLeft = _phaseLength = (_onBreak ? _pomodoro.BreakMinutes : _pomodoro.FocusMinutes) * 60;
         Mac.Services.SoundFx.Play(_onBreak ? Mac.Services.SoundFx.Break : Mac.Services.SoundFx.Focus);
+        PlayPhaseMusic();
         UpdateSessionContext();
     }
 

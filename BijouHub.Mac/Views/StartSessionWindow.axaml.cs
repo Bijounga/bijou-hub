@@ -27,6 +27,10 @@ public partial class StartSessionWindow : Window
     public bool CountDown { get; private set; }
     public PomodoroPlan? Pomodoro { get; private set; }
 
+    // The playlist ids picked ("" for none), to start the session with.
+    public string WorkPlaylistId { get; private set; } = "";
+    public string BreakPlaylistId { get; private set; } = "";
+
     public StartSessionWindow() : this(new Project(), new List<WorkMode>()) { }
 
     public StartSessionWindow(Project project, IReadOnlyList<WorkMode> modes)
@@ -45,6 +49,23 @@ public partial class StartSessionWindow : Window
         GoalCombo.SelectedIndex = 0;
 
         if (project.DefaultTargetMinutes is int defaultMinutes) DurationBox.Text = DurationText.Format(defaultMinutes);
+
+        var playlists = new List<Playlist> { new() { Id = "", Name = "No music" } };
+        playlists.AddRange(new PlaylistStore().Load());
+        WorkMusicCombo.ItemsSource = playlists;
+        BreakMusicCombo.ItemsSource = playlists;
+        ApplyModeMusic();
+    }
+
+    private void ModeCombo_SelectionChanged(object? sender, SelectionChangedEventArgs e) => ApplyModeMusic();
+
+    // The picked mode's own playlists are where the music choice starts.
+    private void ApplyModeMusic()
+    {
+        if (WorkMusicCombo?.ItemsSource is not List<Playlist> playlists) return;
+        var mode = (ModeCombo.SelectedItem as ModeOption)?.Mode;
+        WorkMusicCombo.SelectedItem = playlists.FirstOrDefault(p => p.Id == (mode?.WorkPlaylistId ?? "")) ?? playlists[0];
+        BreakMusicCombo.SelectedItem = playlists.FirstOrDefault(p => p.Id == (mode?.BreakPlaylistId ?? "")) ?? playlists[0];
     }
 
     private static void AddGoalOptions(Goal goal, int depth, List<GoalOption> options)
@@ -59,6 +80,7 @@ public partial class StartSessionWindow : Window
         var hasLength = DurationText.TryParseMinutes(DurationBox.Text) != null && DurationText.TryParsePomodoro(DurationBox.Text) == null;
         CountDownCheck.IsEnabled = hasLength;
         if (!hasLength) CountDownCheck.IsChecked = false;
+        BreakMusicPanel.IsVisible = DurationText.TryParsePomodoro(DurationBox.Text) != null;
     }
 
     private void Start_Click(object? sender, RoutedEventArgs e)
@@ -68,6 +90,8 @@ public partial class StartSessionWindow : Window
         Pomodoro = DurationText.TryParsePomodoro(DurationBox.Text);
         TargetMinutes = Pomodoro != null ? null : DurationText.TryParseMinutes(DurationBox.Text);
         CountDown = TargetMinutes != null && CountDownCheck.IsChecked == true;
+        WorkPlaylistId = (WorkMusicCombo.SelectedItem as Playlist)?.Id ?? "";
+        BreakPlaylistId = Pomodoro != null ? (BreakMusicCombo.SelectedItem as Playlist)?.Id ?? "" : "";
         Close(true);
     }
 

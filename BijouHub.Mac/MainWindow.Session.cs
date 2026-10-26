@@ -49,7 +49,7 @@ public partial class MainWindow
     }
 
     private async Task BeginSession(WorkMode? mode, Project? project, Goal? goal, int? targetMinutes, bool countDown = false, string? deckKeyId = null,
-        PomodoroPlan? pomodoro = null)
+        PomodoroPlan? pomodoro = null, string? workPlaylistId = null, string? breakPlaylistId = null)
     {
         // Starting while another session runs replaces it — the running one is logged first.
         if (IsSessionActive) await FinishSessionAsync(askForNote: false);
@@ -94,6 +94,8 @@ public partial class MainWindow
         ShowSession();
         _tick!.Start();
         Mac.Services.SoundFx.Play(Mac.Services.SoundFx.Start);
+        ChooseMusic(mode, workPlaylistId, breakPlaylistId);
+        StartSessionMusic();
         WriteCheckpoint();
         BroadcastDeckState();
     }
@@ -245,6 +247,7 @@ public partial class MainWindow
     {
         if (!IsSessionActive) return;
         _tick!.Stop();
+        StopSessionMusic();
         _popout?.Close();
         _timeUpWindow?.Close();
         _timeUpWindow = null;

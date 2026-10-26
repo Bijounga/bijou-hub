@@ -22,6 +22,10 @@ public partial class StartSessionWindow : Window
     public WorkMode? SelectedMode { get; private set; }
     public PomodoroPlan? Pomodoro { get; private set; }
 
+    // The playlist ids picked ("" for none), to start the session with.
+    public string WorkPlaylistId { get; private set; } = "";
+    public string BreakPlaylistId { get; private set; } = "";
+
     private const string CustomMinutes = "Custom...";
     private const string Pomodoro25 = "Pomodoro 25 / 5  ×4";
     private const string Pomodoro50 = "Pomodoro 50 / 10  ×3";
@@ -70,7 +74,27 @@ public partial class StartSessionWindow : Window
             BudgetCombo.SelectedIndex = 0;
         }
 
+        var none = new Playlist { Id = "", Name = "No music" };
+        var playlists = new PlaylistStore().Load();
+        foreach (var combo in new[] { WorkMusicCombo, BreakMusicCombo })
+        {
+            combo.Items.Add(none);
+            foreach (var playlist in playlists) combo.Items.Add(playlist);
+        }
+        ApplyModeMusic();
+
         UpdateCountDownAvailability();
+    }
+
+    private void ModeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e) => ApplyModeMusic();
+
+    // The picked mode's own playlists are where the music choice starts.
+    private void ApplyModeMusic()
+    {
+        if (WorkMusicCombo.Items.Count == 0) return;
+        var mode = ModeCombo.SelectedItem as WorkMode;
+        WorkMusicCombo.SelectedItem = WorkMusicCombo.Items.Cast<Playlist>().FirstOrDefault(p => p.Id == (mode?.WorkPlaylistId ?? "")) ?? WorkMusicCombo.Items[0];
+        BreakMusicCombo.SelectedItem = BreakMusicCombo.Items.Cast<Playlist>().FirstOrDefault(p => p.Id == (mode?.BreakPlaylistId ?? "")) ?? BreakMusicCombo.Items[0];
     }
 
     private void AddGoalOptions(Goal goal, int depth)
@@ -85,6 +109,7 @@ public partial class StartSessionWindow : Window
     {
         var choice = BudgetCombo.SelectedItem as string;
         CustomBudgetBox.Visibility = choice is CustomMinutes or PomodoroCustom ? Visibility.Visible : Visibility.Collapsed;
+        BreakMusicPanel.Visibility = choice?.StartsWith("Pomodoro") == true ? Visibility.Visible : Visibility.Collapsed;
         CustomBudgetBox.ToolTip = choice == PomodoroCustom ? "Focus/break, e.g. 25/5 or 25/5x4 (rounds)" : "Minutes";
         if (choice == PomodoroCustom && CustomBudgetBox.Text.Length == 0) CustomBudgetBox.Text = "25/5x4";
         UpdateCountDownAvailability();
@@ -127,6 +152,8 @@ public partial class StartSessionWindow : Window
             _ => null
         };
         CountDown = TargetMinutes != null && CountDownCheckBox.IsChecked == true;
+        WorkPlaylistId = (WorkMusicCombo.SelectedItem as Playlist)?.Id ?? "";
+        BreakPlaylistId = Pomodoro != null ? (BreakMusicCombo.SelectedItem as Playlist)?.Id ?? "" : "";
 
         DialogResult = true;
         Close();
