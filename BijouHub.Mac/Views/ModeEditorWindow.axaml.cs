@@ -27,6 +27,7 @@ public partial class ModeEditorWindow : Window
         NameBox.Text = mode.Name;
         DoNotDisturbBox.IsChecked = mode.DoNotDisturb;
         KeyLightBox.IsChecked = mode.KeyLight;
+        StudyBox.IsChecked = mode.IsStudy;
         _items = new ObservableCollection<LaunchItem>(mode.LaunchItems);
         ItemsList.ItemsSource = _items;
         Opened += (_, _) =>
@@ -80,6 +81,7 @@ public partial class ModeEditorWindow : Window
         _mode.LaunchItems = _items.ToList();
         _mode.DoNotDisturb = DoNotDisturbBox.IsChecked == true;
         _mode.KeyLight = KeyLightBox.IsChecked == true;
+        _mode.IsStudy = StudyBox.IsChecked == true;
         Close(true);
     }
 

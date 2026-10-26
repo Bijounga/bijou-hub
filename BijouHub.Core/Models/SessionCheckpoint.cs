@@ -7,6 +7,7 @@ public class SessionCheckpoint
 {
     public DateTime StartTime { get; set; }
     public string ModeName { get; set; } = "";
+    public bool IsStudy { get; set; }
     public string? ProjectId { get; set; }
     public string? ProjectName { get; set; }
     public string? GoalId { get; set; }

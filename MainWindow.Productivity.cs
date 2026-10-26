@@ -98,7 +98,8 @@ public partial class MainWindow
     private const double RingSize = 54;
     private const double RingThickness = 5;
 
-    private int TodayWorkedSeconds => TodayLoggedSeconds() + (IsSessionActive ? _activeSeconds : 0);
+    // A study session still ticks on the timer, but its time isn't part of the day's work.
+    private int TodayWorkedSeconds => TodayLoggedSeconds() + (IsSessionActive && _activeMode?.IsStudy != true ? _activeSeconds : 0);
 
     // Today's total on Home, with the ring filling toward the target. Cheap: runs every tick on Home.
     private void UpdateTodayCard()

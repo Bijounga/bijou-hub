@@ -8,6 +8,9 @@ public class SessionRecord
     public DateTime EndTime { get; set; }
     public int ActiveSeconds { get; set; }
     public int IdleSeconds { get; set; }
+
+    // Ran in a study mode: kept in the log, left out of the daily target and the day and week totals.
+    public bool IsStudy { get; set; }
     public string? ProjectId { get; set; }
     public string? ProjectName { get; set; }
     public string? GoalId { get; set; }

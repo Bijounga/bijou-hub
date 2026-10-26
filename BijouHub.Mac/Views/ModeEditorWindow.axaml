@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:BijouHub.Mac.Controls"
         x:Class="BijouHub.Mac.Views.ModeEditorWindow"
-        Title="Mode" Width="520" Height="560" WindowStartupLocation="CenterOwner"
+        Title="Mode" Width="520" Height="600" WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BgBrush}">
     <Grid Margin="20" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto">
         <TextBlock Text="NAME" Classes="label"/>
@@ -37,6 +37,8 @@
         </WrapPanel>
 
         <StackPanel Grid.Row="6" Margin="0,18,0,0" Spacing="16">
+            <CheckBox Name="StudyBox" Content="Study mode: leave it out of my daily target"
+                      ToolTip.Tip="Sessions in this mode are still logged, but don't count toward the daily target or the day and week totals"/>
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <CheckBox Name="KeyLightBox" Content="Turn on my Elgato Key Light" ToolTip.Tip="Switches the light on when a session starts in this mode"/>
                 <Button Content="Set up…" Padding="8,2" Click="SetUpKeyLight_Click" AutomationProperties.Name="Set up Key Light"/>

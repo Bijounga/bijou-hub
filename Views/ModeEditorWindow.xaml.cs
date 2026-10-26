@@ -21,6 +21,7 @@ public partial class ModeEditorWindow : Window
         NameBox.Text = mode.Name;
         DoNotDisturbBox.IsChecked = mode.DoNotDisturb;
         KeyLightBox.IsChecked = mode.KeyLight;
+        StudyBox.IsChecked = mode.IsStudy;
         _launchItems = new ObservableCollection<LaunchItem>(mode.LaunchItems);
         _blockItems = new ObservableCollection<BlockItem>(mode.BlockItems);
         LaunchItemsList.ItemsSource = _launchItems;
@@ -134,6 +135,7 @@ public partial class ModeEditorWindow : Window
         Mode.BlockItems = _blockItems.ToList();
         Mode.DoNotDisturb = DoNotDisturbBox.IsChecked == true;
         Mode.KeyLight = KeyLightBox.IsChecked == true;
+        Mode.IsStudy = StudyBox.IsChecked == true;
 
         DialogResult = true;
         Close();

@@ -255,6 +255,7 @@ public partial class MainWindow
         var record = new SessionRecord
         {
             ModeName = mode?.Name ?? "",
+            IsStudy = mode?.IsStudy == true,
             StartTime = _sessionStart,
             EndTime = DateTime.Now,
             ActiveSeconds = _activeSeconds,
@@ -353,6 +354,7 @@ public partial class MainWindow
         {
             StartTime = _sessionStart,
             ModeName = _activeMode?.Name ?? "",
+            IsStudy = _activeMode?.IsStudy == true,
             ProjectId = _activeProject?.Id,
             ProjectName = _activeProject?.Name,
             GoalId = _activeGoal?.Id,
@@ -389,6 +391,7 @@ public partial class MainWindow
             _logService.InsertSession(new SessionRecord
             {
                 ModeName = _activeMode?.Name ?? "",
+                IsStudy = _activeMode?.IsStudy == true,
                 StartTime = _sessionStart,
                 EndTime = DateTime.Now,
                 ActiveSeconds = _activeSeconds,
@@ -415,6 +418,7 @@ public partial class MainWindow
                 _logService.InsertSession(new SessionRecord
                 {
                     ModeName = checkpoint.ModeName,
+                    IsStudy = checkpoint.IsStudy,
                     StartTime = checkpoint.StartTime,
                     EndTime = checkpoint.StartTime.AddSeconds(checkpoint.ActiveSeconds + checkpoint.IdleSeconds),
                     ActiveSeconds = checkpoint.ActiveSeconds,

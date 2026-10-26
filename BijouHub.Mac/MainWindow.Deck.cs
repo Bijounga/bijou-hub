@@ -44,7 +44,7 @@ public partial class MainWindow
         ["activeSeconds"] = _activeSeconds,
         ["paused"] = _paused,
         ["idle"] = _isIdle && !_paused,
-        ["todaySeconds"] = TodayLoggedSeconds() + (IsSessionActive ? _activeSeconds : 0),
+        ["todaySeconds"] = TodayWorkedSeconds,
         ["poppedOut"] = _popout != null,
         ["pomodoro"] = DeckPomodoro(),
         ["dailyTargetSeconds"] = _dailyTargetMinutes * 60

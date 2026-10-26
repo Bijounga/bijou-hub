@@ -166,7 +166,7 @@ public class SessionLogService
         foreach (var record in LoadAll())
         {
             var day = record.StartTime.Date;
-            if (day >= since && result.ContainsKey(day))
+            if (!record.IsStudy && day >= since && result.ContainsKey(day))
                 result[day] += record.ActiveSeconds;
         }
 
@@ -175,6 +175,6 @@ public class SessionLogService
 
     private int GetTotalSecondsSince(DateTime since)
     {
-        return LoadAll().Where(r => r.StartTime >= since).Sum(r => r.ActiveSeconds);
+        return LoadAll().Where(r => !r.IsStudy && r.StartTime >= since).Sum(r => r.ActiveSeconds);
     }
 }

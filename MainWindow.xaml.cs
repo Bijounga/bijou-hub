@@ -1346,6 +1346,7 @@ public partial class MainWindow : Window
         {
             StartTime = _sessionStart,
             ModeName = _activeMode?.Name ?? "",
+            IsStudy = _activeMode?.IsStudy == true,
             ProjectId = _activeProject?.Id,
             ProjectName = _activeProject?.Name,
             GoalId = _activeGoal?.Id,
@@ -1387,6 +1388,7 @@ public partial class MainWindow : Window
             _logService.InsertSession(new SessionRecord
             {
                 ModeName = _activeMode?.Name ?? "",
+                IsStudy = _activeMode?.IsStudy == true,
                 StartTime = _sessionStart,
                 EndTime = DateTime.Now,
                 ActiveSeconds = _activeSeconds,
@@ -1419,6 +1421,7 @@ public partial class MainWindow : Window
                 _logService.InsertSession(new SessionRecord
                 {
                     ModeName = checkpoint.ModeName,
+                    IsStudy = checkpoint.IsStudy,
                     StartTime = checkpoint.StartTime,
                     EndTime = checkpoint.StartTime.AddSeconds(checkpoint.ActiveSeconds + checkpoint.IdleSeconds),
                     ActiveSeconds = checkpoint.ActiveSeconds,
@@ -1670,6 +1673,7 @@ public partial class MainWindow : Window
         _logService.InsertSession(new SessionRecord
         {
             ModeName = _activeMode?.Name ?? "",
+            IsStudy = _activeMode?.IsStudy == true,
             StartTime = _sessionStart,
             EndTime = DateTime.Now,
             ActiveSeconds = _activeSeconds,
@@ -2365,7 +2369,7 @@ public partial class MainWindow : Window
         ["activeSeconds"] = _activeSeconds,
         ["paused"] = _paused,
         ["idle"] = _isIdle && !_paused,
-        ["todaySeconds"] = TodayLoggedSeconds() + (IsSessionActive ? _activeSeconds : 0),
+        ["todaySeconds"] = TodayWorkedSeconds,
         ["poppedOut"] = _timerPopout != null,
         ["pomodoro"] = DeckPomodoro(),
         ["dailyTargetSeconds"] = _dailyTargetMinutes * 60
