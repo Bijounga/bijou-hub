@@ -681,7 +681,11 @@ public partial class MainWindow : Window
         };
         ProjectProgressFill.BeginAnimation(FrameworkElement.WidthProperty, anim);
 
-        ProjectProgressLabel.Text = $"{_detailProject.CompletionPercentText} complete — {_detailProject.NextGoalSummary}";
+        var next = _detailProject.NextIncompleteGoal();
+        ProjectNextCard.Visibility = _detailProject.Goals.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        ProjectNextText.Text = next?.Name ?? "All goals complete";
+        ProjectNextText.SetResourceReference(TextBlock.ForegroundProperty, next == null ? "SuccessBrush" : "TextBrush");
+        ProjectProgressLabel.Text = $"{_detailProject.CompletionPercentText} complete";
     }
 
     private void ShowProjectDetail(Project project)

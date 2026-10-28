@@ -81,6 +81,26 @@ public partial class MainWindow
     private bool PopoutInScope(DailyGoal goal) =>
         !GoogleMode || _popoutScope == AllScope || GoogleGoalsSync.GroupOf(goal) == _popoutScope;
 
+    private Button PopoutModeTab(string glyph, string tooltip, string automationName, bool selected, Action click)
+    {
+        var icon = new TextBlock
+        {
+            Style = (Style)FindResource("IconGlyph"), Text = glyph, FontSize = 14,
+            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center
+        };
+        Themed(icon, TextBlock.ForegroundProperty, selected ? "AccentBrush" : "MutedTextBrush");
+        var tab = new Border { Width = 36, Height = 26, CornerRadius = new CornerRadius(6), Child = icon };
+        Themed(tab, Border.BackgroundProperty, selected ? "CardHoverBrush" : "CardBrush");
+        var button = new Button
+        {
+            Content = tab, Cursor = System.Windows.Input.Cursors.Hand, Focusable = false, ToolTip = tooltip,
+            Template = new ControlTemplate(typeof(Button)) { VisualTree = new FrameworkElementFactory(typeof(ContentPresenter)) }
+        };
+        System.Windows.Automation.AutomationProperties.SetName(button, automationName);
+        button.Click += (_, _) => click();
+        return button;
+    }
+
     // Redraws the pop-out's tabs / day picker and its calendar agenda. The task list itself follows
     // the goals live; this keeps the counts on the tabs right.
     private void RefreshTasksPopout()
@@ -89,10 +109,15 @@ public partial class MainWindow
         var groups = ScopeGroups();
         if (_popoutScope != AllScope && !groups.Contains(_popoutScope)) _popoutScope = EditingGroup;
 
+        // Tasks / Calendar are a pair of icon tabs, so they read as a different thing from the pills below.
+        var tabs = new StackPanel { Orientation = Orientation.Horizontal };
+        tabs.Children.Add(PopoutModeTab("\uE73A", "Tasks", "Popout tasks view", !_popoutCalendar, () => SetPopoutMode(false)));
+        tabs.Children.Add(PopoutModeTab("\uE787", "Calendar", "Popout calendar view", _popoutCalendar, () => SetPopoutMode(true)));
+        var switcher = new Border { CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1), Padding = new Thickness(2), Child = tabs };
+        Themed(switcher, Border.BackgroundProperty, "CardBrush");
+        Themed(switcher, Border.BorderBrushProperty, "BorderBrush");
         window.HeaderPills.Children.Clear();
-        window.HeaderPills.Children.Add(CalPill("Tasks", !_popoutCalendar, () => SetPopoutMode(false), "Popout tasks view"));
-        window.HeaderPills.Children.Add(CalPill("Calendar", _popoutCalendar, () => SetPopoutMode(true), "Popout calendar view"));
-        window.HeaderPills.Children[0].SetValue(FrameworkElement.MarginProperty, new Thickness(0));
+        window.HeaderPills.Children.Add(switcher);
         window.ShowCalendarMode(_popoutCalendar);
 
         window.TopBar.Children.Clear();

@@ -72,6 +72,21 @@ public partial class MainWindow
     private bool PopoutInScope(DailyGoal goal) =>
         !GoogleMode || _popoutScope == AllScope || GoogleGoalsSync.GroupOf(goal) == _popoutScope;
 
+    private Button PopoutModeTab(string icon, string tooltip, string automationName, bool selected, Action click)
+    {
+        var button = new Button
+        {
+            Content = new BijouHub.Mac.Controls.LineIcon { Kind = icon, Width = 15, Height = 15, Foreground = Brush(selected ? "AccentBrush" : "MutedTextBrush") },
+            Width = 36, Height = 26, Padding = new Thickness(0), CornerRadius = new CornerRadius(6),
+            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center, VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            Background = Brush(selected ? "CardHoverBrush" : "CardBrush"), BorderThickness = new Thickness(0)
+        };
+        ToolTip.SetTip(button, tooltip);
+        Avalonia.Automation.AutomationProperties.SetName(button, automationName);
+        button.Click += (_, _) => click();
+        return button;
+    }
+
     // Redraws the pop-out: header switch, tabs / day picker, and the task rows or the day agenda.
     private void RefreshTasksPopout()
     {
@@ -79,11 +94,16 @@ public partial class MainWindow
         var groups = ScopeGroups();
         if (_popoutScope != AllScope && !groups.Contains(_popoutScope)) _popoutScope = EditingGroup;
 
+        // Tasks / Calendar are a pair of icon tabs, so they read as a different thing from the pills below.
+        var tabs = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal };
+        tabs.Children.Add(PopoutModeTab("tasks", "Tasks", "Popout tasks view", !_popoutCalendar, () => SetPopoutMode(false)));
+        tabs.Children.Add(PopoutModeTab("calendar", "Calendar", "Popout calendar view", _popoutCalendar, () => SetPopoutMode(true)));
         window.HeaderPills.Children.Clear();
-        var tasksPill = CalPill("Tasks", !_popoutCalendar, () => SetPopoutMode(false), "Popout tasks view");
-        tasksPill.Margin = new Thickness(0);
-        window.HeaderPills.Children.Add(tasksPill);
-        window.HeaderPills.Children.Add(CalPill("Calendar", _popoutCalendar, () => SetPopoutMode(true), "Popout calendar view"));
+        window.HeaderPills.Children.Add(new Border
+        {
+            CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1), Padding = new Thickness(2), Child = tabs,
+            Background = Brush("CardBrush"), BorderBrush = Brush("BorderBrush")
+        });
         window.ShowCalendarMode(_popoutCalendar);
 
         window.TopBar.Children.Clear();

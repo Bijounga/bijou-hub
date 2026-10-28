@@ -28,7 +28,10 @@ public partial class MainWindow
     {
         ProjectProgressBar.Value = Math.Clamp(project.Completion, 0, 1);
         var next = project.NextIncompleteGoal();
-        ProjectProgressText.Text = $"{project.CompletionPercentText} complete" + (next != null ? $" — Next: {next.Name}" : "");
+        ProjectNextCard.IsVisible = project.Goals.Count > 0;
+        ProjectNextText.Text = next?.Name ?? "All goals complete";
+        ProjectNextText.Foreground = Brush(next == null ? "SuccessBrush" : "TextBrush");
+        ProjectProgressText.Text = $"{project.CompletionPercentText} complete";
     }
 
     private void ProjectGoal_Click(object? sender, RoutedEventArgs e)

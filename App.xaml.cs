@@ -63,7 +63,13 @@ public partial class App : Application
         // startup: straight to the tray, with just the widgets showing.
         var widgetsAtStartup = settings.TaskWidget.ShowAtStartup || settings.TimerWidget.ShowAtStartup;
         if (e.Args.Contains(StartupService.TrayArgument) && (settings.KeepRunningWhenClosed || widgetsAtStartup)) window.StartInTray();
-        else window.Show();
+        else
+        {
+            window.Show();
+            // Started by something other than the user's own click (a Stream Deck key): Windows would
+            // leave the new window behind whatever is in front, with only the always-on-top widgets showing.
+            if (!e.Args.Contains(StartupService.TrayArgument)) ForegroundWindow.Raise(window);
+        }
         _instance?.Listen(() => Dispatcher.Invoke(window.ShowFromAnotherStart));
         window.OpenStartupWidgets();
     }

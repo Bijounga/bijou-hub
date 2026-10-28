@@ -474,22 +474,32 @@
                             Margin="{DynamicResource TimerScreenBorderThickness}" IsHitTestVisible="False"/>
                 </Grid>
                 <!-- What you're working on: pick an open task, or add one. -->
-                <views:SessionTaskPicker x:Name="SessionTaskPicker" HorizontalAlignment="Left" Width="340" Margin="0,-12,0,24"/>
+                <views:SessionTaskPicker x:Name="SessionTaskPicker" HorizontalAlignment="Stretch" MaxWidth="340" Margin="0,-12,0,24"/>
                 <StackPanel x:Name="BlockNotifications" Margin="0,0,0,28"/>
 
-                <StackPanel Orientation="Horizontal">
-                    <Button Padding="16,8" Click="FinishSession_Click" AutomationProperties.Name="Finish session" ToolTip="Finish and log this session"><StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE71A;" FontSize="13" Margin="0,0,8,0"/><TextBlock Text="Finish" VerticalAlignment="Center"/></StackPanel></Button>
-                    <Button x:Name="PauseToggleButton" Margin="8,0,0,0" Padding="12,8" Click="PauseToggle_Click" ToolTip="Pause" AutomationProperties.Name="Pause"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE769;" FontSize="14"/></Button>
-                    <Button x:Name="NotesToggleButton" Margin="8,0,0,0" Padding="12,8" Click="NotesToggle_Click" ToolTip="Notes" AutomationProperties.Name="Notes"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE70B;" FontSize="14"/></Button>
-                    <Button x:Name="PopoutToggleButton" Margin="8,0,0,0" Padding="12,8" Click="PopoutToggle_Click" ToolTip="Pop out the timer" AutomationProperties.Name="Pop out"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8A7;" FontSize="14"/></Button>
-                    <Button x:Name="BlackoutButton" Margin="8,0,0,0" Padding="12,8" Click="Blackout_Click" ToolTip="Black out the screen and show just the timer" AutomationProperties.Name="Focus screen"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE7F4;" FontSize="14"/></Button>
-                </StackPanel>
+                <WrapPanel>
+                    <Button Margin="0,0,8,8" Padding="16,8" Click="FinishSession_Click" AutomationProperties.Name="Finish session" ToolTip="Finish and log this session"><StackPanel Orientation="Horizontal"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE71A;" FontSize="13" Margin="0,0,8,0"/><TextBlock Text="Finish" VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button x:Name="PauseToggleButton" Margin="0,0,8,8" Padding="12,8" Click="PauseToggle_Click" ToolTip="Pause" AutomationProperties.Name="Pause"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE769;" FontSize="14"/></Button>
+                    <Button x:Name="NotesToggleButton" Margin="0,0,8,8" Padding="12,8" Click="NotesToggle_Click" ToolTip="Notes" AutomationProperties.Name="Notes"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE70B;" FontSize="14"/></Button>
+                    <Button x:Name="PopoutToggleButton" Margin="0,0,8,8" Padding="12,8" Click="PopoutToggle_Click" ToolTip="Pop out the timer" AutomationProperties.Name="Pop out"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8A7;" FontSize="14"/></Button>
+                    <Button x:Name="BlackoutButton" Margin="0,0,8,8" Padding="12,8" Click="Blackout_Click" ToolTip="Black out the screen and show just the timer" AutomationProperties.Name="Focus screen"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE7F4;" FontSize="14"/></Button>
+                </WrapPanel>
             </StackPanel>
 
             <!-- Project detail -->
             <ScrollViewer x:Name="ProjectDetailPanel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
                     <StackPanel MaxWidth="380" HorizontalAlignment="Left">
                         <TextBlock x:Name="ProjectDetailName" Style="{StaticResource HeadingText}" FontSize="26" Margin="0,0,0,12"/>
+
+                        <!-- The next goal still to do, where the eye lands first. -->
+                        <Border x:Name="ProjectNextCard" Margin="0,0,0,18" Padding="14,10,14,12" Visibility="Collapsed"
+                                CornerRadius="{DynamicResource CornerRadiusBase}" Background="{DynamicResource CardBrush}"
+                                BorderBrush="{DynamicResource AccentBrush}" BorderThickness="3,0,0,0">
+                            <StackPanel>
+                                <TextBlock FontSize="11" Foreground="{DynamicResource AccentBrush}"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="UP NEXT"/></TextBlock>
+                                <TextBlock x:Name="ProjectNextText" FontSize="19" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
 
                         <Border Width="320" Height="14" CornerRadius="7" Background="{DynamicResource CardBrush}"
                                 HorizontalAlignment="Left" Margin="0,0,0,4">
