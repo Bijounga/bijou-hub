@@ -580,8 +580,16 @@
                             <Border Name="ProjectNextCard" Classes="card" Padding="14,10,14,12" Margin="0,0,0,18" IsVisible="False"
                                     BorderBrush="{DynamicResource AccentBrush}" BorderThickness="3,0,0,0">
                                 <StackPanel>
-                                    <TextBlock Classes="label" Text="UP NEXT" Foreground="{DynamicResource AccentBrush}"/>
-                                    <TextBlock Name="ProjectNextText" FontSize="19" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                    <StackPanel Name="ProjectNextGoalPart">
+                                        <TextBlock Classes="label" Text="UP NEXT" Foreground="{DynamicResource AccentBrush}"/>
+                                        <TextBlock Name="ProjectNextText" FontSize="19" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <!-- What you wrote to yourself when you last finished a session. -->
+                                    <StackPanel Name="ProjectNoteNextPart" IsVisible="False">
+                                        <TextBlock Name="ProjectNoteNextLabel" Classes="label"/>
+                                        <TextBlock Name="ProjectNoteNextText" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,3,0,0"
+                                                   Foreground="{DynamicResource AccentBrush}"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
 

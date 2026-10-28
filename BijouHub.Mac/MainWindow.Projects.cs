@@ -28,7 +28,17 @@ public partial class MainWindow
     {
         ProjectProgressBar.Value = Math.Clamp(project.Completion, 0, 1);
         var next = project.NextIncompleteGoal();
-        ProjectNextCard.IsVisible = project.Goals.Count > 0;
+        var hasGoals = project.Goals.Count > 0;
+        var noteNext = project.NoteNext();
+        ProjectNextCard.IsVisible = hasGoals || noteNext != null;
+        ProjectNextGoalPart.IsVisible = hasGoals;
+        ProjectNoteNextPart.IsVisible = noteNext != null;
+        ProjectNoteNextPart.Margin = new Avalonia.Thickness(0, hasGoals ? 14 : 0, 0, 0);
+        if (noteNext is { } found)
+        {
+            ProjectNoteNextLabel.Text = $"// YOUR NOTE · {found.When.ToString("MMM d", System.Globalization.CultureInfo.CurrentCulture)}";
+            ProjectNoteNextText.Text = found.Text;
+        }
         ProjectNextText.Text = next?.Name ?? "All goals complete";
         ProjectNextText.Foreground = Brush(next == null ? "SuccessBrush" : "TextBrush");
         ProjectProgressText.Text = $"{project.CompletionPercentText} complete";

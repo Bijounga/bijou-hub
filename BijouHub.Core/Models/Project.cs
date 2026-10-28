@@ -53,6 +53,23 @@ public class Project
         ? $"Next: {g.Name}"
         : (Goals.Count == 0 ? "No goals yet" : "All goals complete");
 
+    // What the newest session note said to do next (the "Next:" from the finish prompt), with the
+    // note's time. Null when the newest note has none: an older one would be stale by now.
+    public (string Text, DateTime When)? NoteNext()
+    {
+        var latest = Notes.OrderByDescending(n => n.Timestamp).FirstOrDefault();
+        if (latest == null) return null;
+
+        const string marker = "Next: ";
+        var at = latest.Text.IndexOf(marker, StringComparison.Ordinal);
+        if (at < 0) return null;
+
+        var rest = latest.Text[(at + marker.Length)..];
+        var end = rest.IndexOf("  |  ", StringComparison.Ordinal);
+        var text = (end >= 0 ? rest[..end] : rest).Trim();
+        return text.Length > 0 ? (text, latest.Timestamp) : null;
+    }
+
     public Goal? NextIncompleteGoal()
     {
         foreach (var goal in Goals)

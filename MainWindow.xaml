@@ -496,8 +496,16 @@
                                 CornerRadius="{DynamicResource CornerRadiusBase}" Background="{DynamicResource CardBrush}"
                                 BorderBrush="{DynamicResource AccentBrush}" BorderThickness="3,0,0,0">
                             <StackPanel>
-                                <TextBlock FontSize="11" Foreground="{DynamicResource AccentBrush}"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="UP NEXT"/></TextBlock>
-                                <TextBlock x:Name="ProjectNextText" FontSize="19" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                <StackPanel x:Name="ProjectNextGoalPart">
+                                    <TextBlock FontSize="11" Foreground="{DynamicResource AccentBrush}"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="UP NEXT"/></TextBlock>
+                                    <TextBlock x:Name="ProjectNextText" FontSize="19" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <!-- What you wrote to yourself when you last finished a session. -->
+                                <StackPanel x:Name="ProjectNoteNextPart" Visibility="Collapsed">
+                                    <TextBlock x:Name="ProjectNoteNextLabel" FontSize="11" Foreground="{DynamicResource MutedTextBrush}"/>
+                                    <TextBlock x:Name="ProjectNoteNextText" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,3,0,0"
+                                               Foreground="{DynamicResource AccentBrush}"/>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
 

@@ -682,7 +682,17 @@ public partial class MainWindow : Window
         ProjectProgressFill.BeginAnimation(FrameworkElement.WidthProperty, anim);
 
         var next = _detailProject.NextIncompleteGoal();
-        ProjectNextCard.Visibility = _detailProject.Goals.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        var hasGoals = _detailProject.Goals.Count > 0;
+        var noteNext = _detailProject.NoteNext();
+        ProjectNextCard.Visibility = hasGoals || noteNext != null ? Visibility.Visible : Visibility.Collapsed;
+        ProjectNextGoalPart.Visibility = hasGoals ? Visibility.Visible : Visibility.Collapsed;
+        ProjectNoteNextPart.Visibility = noteNext != null ? Visibility.Visible : Visibility.Collapsed;
+        ProjectNoteNextPart.Margin = new Thickness(0, hasGoals ? 14 : 0, 0, 0);
+        if (noteNext is { } found)
+        {
+            ProjectNoteNextLabel.Text = $"// YOUR NOTE · {found.When:MMM d}";
+            ProjectNoteNextText.Text = found.Text;
+        }
         ProjectNextText.Text = next?.Name ?? "All goals complete";
         ProjectNextText.SetResourceReference(TextBlock.ForegroundProperty, next == null ? "SuccessBrush" : "TextBrush");
         ProjectProgressLabel.Text = $"{_detailProject.CompletionPercentText} complete";
