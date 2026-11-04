@@ -55,6 +55,10 @@
                 <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center">
                     <Button Content="Finish" Padding="10,4" Click="Finish_Click"/>
                     <Button Content="Dock" Margin="8,0,0,0" Padding="10,4" Click="Dock_Click"/>
+                    <Button Margin="8,0,0,0" Padding="8,4" Click="FocusScreen_Click" ToolTip="Black out the screen and show just the timer"
+                            AutomationProperties.Name="Focus screen">
+                        <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE7F4;" FontSize="13"/>
+                    </Button>
                 </StackPanel>
             </Grid>
             </Viewbox>

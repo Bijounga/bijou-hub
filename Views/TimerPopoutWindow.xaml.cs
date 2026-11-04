@@ -9,6 +9,7 @@ public partial class TimerPopoutWindow : Window
 {
     public event Action? DockRequested;
     public event Action? FinishRequested;
+    public event Action? FocusScreenRequested;
     public event Action<BijouHub.Models.DailyGoal?>? TaskPicked;
     public event Action<string>? TaskAdded;
     public event Action? TaskDone;
@@ -61,4 +62,6 @@ public partial class TimerPopoutWindow : Window
     private void Dock_Click(object sender, RoutedEventArgs e) => DockRequested?.Invoke();
 
     private void Finish_Click(object sender, RoutedEventArgs e) => FinishRequested?.Invoke();
+
+    private void FocusScreen_Click(object sender, RoutedEventArgs e) => FocusScreenRequested?.Invoke();
 }

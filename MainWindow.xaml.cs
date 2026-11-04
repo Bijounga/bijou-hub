@@ -550,6 +550,10 @@ public partial class MainWindow : Window
             popout.Close();
             FinishSession_Click(this, new RoutedEventArgs());
         };
+        popout.FocusScreenRequested += () =>
+        {
+            if (_blackout == null) ToggleBlackout();
+        };
         popout.Closing += (_, _) => _lastPopoutSpot = WidgetPlacement.Position(popout);
         popout.Closed += (_, _) =>
         {

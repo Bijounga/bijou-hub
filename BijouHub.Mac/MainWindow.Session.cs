@@ -331,6 +331,10 @@ public partial class MainWindow
         _popout.Update(SessionTitleText.Text ?? "", TimerDisplay, SessionStatusText.Text ?? "");
         _popout.PauseRequested += TogglePause;
         _popout.FinishRequested += () => _ = FinishSessionAsync(askForNote: true);
+        _popout.FocusScreenRequested += () =>
+        {
+            if (_blackout == null) ToggleBlackout();
+        };
         _popout.Closing += (_, _) => _lastPopoutSpot = popoutWindow.Position;
         _popout.Closed += (_, _) =>
         {
