@@ -154,6 +154,7 @@ public partial class MainWindow
             _projectStore.Save(_projects.ToList());
         }
         InvalidateTodayLogged();
+        BroadcastDeckState(); // the deck's total moves with it
         ShowProject(project);
     }
 

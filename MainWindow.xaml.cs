@@ -133,6 +133,7 @@ public partial class MainWindow : Window
         InitNotesToolbar();
         InitDailyGoals();
         InitDue();
+        InitLogWatch();
         InitHomeLayout();
         InitSessionTask();
         InitTasksPage();
@@ -431,6 +432,7 @@ public partial class MainWindow : Window
             Note = dlg.Note
         });
         InvalidateTodayLogged();
+        BroadcastDeckState(); // the deck's total moves with it
 
         if (!string.IsNullOrEmpty(dlg.Note))
         {
