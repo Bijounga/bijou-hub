@@ -113,6 +113,7 @@ public partial class MainWindow : Window
 
         _blockWatcher.NewBlockedProcessDetected += OnNewBlockedProcessDetected;
         _blockWatcher.HardBlockedProcessClosed += OnHardBlockedProcessClosed;
+        StartSearchWatch();
 
         _tickTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _tickTimer.Tick += TickTimer_Tick;

@@ -22,6 +22,14 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // The elevated copy started to move shortcuts in the shared Start menu: do that and leave.
+        if (e.Args.Length == 2 && e.Args[0] == SearchHiding.PlanArgument)
+        {
+            SearchHiding.RunPlan(e.Args[1]);
+            Shutdown();
+            return;
+        }
+
         // Already running (maybe hidden in the tray)? Ask it to show its window and stop here, so the
         // app icon or a Stream Deck "open app" button brings the window up instead of starting a copy.
         // (A start at sign-in, with --tray, just leaves the running one alone.)

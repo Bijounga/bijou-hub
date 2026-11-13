@@ -317,6 +317,10 @@
                             AutomationProperties.Name="Widgets">
                         <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE7C4;" FontSize="16"/>
                     </Button>
+                    <Button Padding="2,8" x:Name="SearchHideButton" Style="{DynamicResource GhostIconButton}" Click="OpenSearchHide_Click" ToolTip="Hide apps from Windows search"
+                            AutomationProperties.Name="Hide apps from search">
+                        <TextBlock Style="{StaticResource IconGlyph}" Text="&#xED1A;" FontSize="16"/>
+                    </Button>
                     <Button Padding="2,8" x:Name="StreamDeckButton" Style="{DynamicResource GhostIconButton}" Click="OpenStreamDeck_Click" ToolTip="Stream Deck"
                             AutomationProperties.Name="Stream Deck">
                         <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8A9;" FontSize="16"/>
