@@ -1263,6 +1263,7 @@ public partial class MainWindow : Window
         _countDownMode = countDown && _targetMinutes != null;
         _budgetAlertShown = false;
         _sessionStart = DateTime.Now;
+        _sessionNotes.Clear();
         _activeSeconds = 0;
         _idleSeconds = 0;
         _isIdle = false;
@@ -1731,6 +1732,14 @@ public partial class MainWindow : Window
         UpdateBlackout();
         UpdateTaskbarProgress();
         BroadcastDeckState();
+
+        // Notes jotted on the focus screen are waiting in today's notes: land where they are.
+        if (_sessionNotes.Count > 0)
+        {
+            if (finishedProject != null) PersistAndRefreshProjectList();
+            NavHome_Click(this, new RoutedEventArgs());
+            return;
+        }
 
         if (finishedProject != null)
         {

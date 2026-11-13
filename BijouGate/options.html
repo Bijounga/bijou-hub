@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BijouGate settings</title>
+<link rel="icon" href="icons/icon32.png">
+<link rel="stylesheet" href="gate.css">
+<style>
+  body { place-items: start center; }
+  .stage { width: min(760px, 100% - 32px); }
+  /* settings read as one page split by hairlines, not a stack of boxes */
+  .card { padding: 26px 0; margin: 0; background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; box-shadow: none; }
+  .card:first-of-type { border-top: 0; padding-top: 6px; }
+  h2 { font: 500 19px/1.2 var(--sans); margin: 0 0 6px; letter-spacing: -.005em; }
+  .card > p.muted { margin: 0 0 12px; }
+  textarea { font: 13px/1.55 Consolas, monospace; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 4px 16px; }
+  .add { display: flex; gap: 8px; margin: 0 0 14px; } .add input { margin: 0; } .add button { margin: 0; white-space: nowrap; }
+  .check { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+  .check input { width: auto; margin: 0; accent-color: var(--cyan); }
+  .savebar { position: sticky; bottom: 0; display: flex; align-items: center; gap: 14px; padding: 14px 0; background: var(--bg); border-top: 1px solid var(--line); }
+  .savebar button { margin: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; } td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td:first-child { color: var(--mute); white-space: nowrap; width: 1%; }
+  code { background: rgba(255,255,255,.07); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="brand">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><defs><clipPath id="bgt"><rect width="64" height="64" rx="14"/></clipPath></defs><g clip-path="url(#bgt)"><rect width="64" height="64" fill="#ee3753"/><circle cx="31" cy="29" r="23" fill="#316cc8"/><circle cx="33" cy="27" r="21" fill="#00d8ff"/><path d="M35.56 6.78 A18.4 18.4 0 0 1 50.50 19.31" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><polygon fill="#fff" points="30.30,27.00 26.90,32.89 20.10,32.89 16.70,27.00 20.10,21.11 26.90,21.11"/><polygon fill="#fff" points="47.30,25.50 43.90,31.39 37.10,31.39 33.70,25.50 37.10,19.61 43.90,19.61"/><polygon fill="#241b4b" points="0,64 0,49.05 2,49.37 4,49.63 6,49.81 8,49.89 10,49.89 12,49.79 14,49.60 16,49.34 18,49.00 20,48.60 22,48.17 24,47.70 26,47.23 28,46.77 30,46.34 32,45.95 34,45.63 36,45.37 38,45.19 40,45.11 42,45.11 44,45.21 46,45.40 48,45.66 50,46.00 52,46.40 54,46.83 56,47.30 58,47.77 60,48.23 62,48.66 64,49.05 64,64"/><polyline fill="none" stroke="#f9fbe7" stroke-width="1.9" points="0,48.10 2,48.42 4,48.68 6,48.86 8,48.94 10,48.94 12,48.84 14,48.65 16,48.39 18,48.05 20,47.65 22,47.22 24,46.75 26,46.28 28,45.82 30,45.39 32,45.00 34,44.68 36,44.42 38,44.24 40,44.16 42,44.16 44,44.26 46,44.45 48,44.71 50,45.05 52,45.45 54,45.88 56,46.35 58,46.82 60,47.28 62,47.71 64,48.10"/></g></svg>
+    BijouGate
+  </div>
+
+  <div class="card">
+    <h2>Sites</h2>
+    <p class="muted small">One rule per line. <code>x.com</code> blocks the whole site, <code>youtube.com/shorts</code> blocks that path, <code>=youtube.com/</code> blocks only that exact page. <code>#</code> starts a comment. Delete a line to unblock it.</p>
+    <div class="add">
+      <input id="newsite" type="text" placeholder="Add a site, e.g. reddit.com" autocomplete="off">
+      <button id="addsite">Add</button>
+    </div>
+    <textarea id="rules" rows="10" spellcheck="false"></textarea>
+  </div>
+
+  <div class="card">
+    <h2>How hard it is</h2>
+    <div class="grid">
+      <label>Wait before choosing a time (seconds)<input id="wait" type="number" min="0"></label>
+      <label>Cooldown after a session (minutes)<input id="cool" type="number" min="0"></label>
+      <label>Hold-to-open length (seconds)<input id="hold" type="number" min="1"></label>
+      <label>Time choices (minutes)<input id="mins" type="text"></label>
+      <label>Hold-to-open choices (minutes)<input id="omins" type="text"></label>
+      <label>Unlocks per site per day (0 = no limit)<input id="perday" type="number" min="0"></label>
+    </div>
+    <label class="check"><input id="nohold" type="checkbox">YouTube: turn off hold-for-2x (holding Space or the mouse on the video)</label>
+  </div>
+
+  <div class="card">
+    <h2>Your goals and reminders</h2>
+    <p class="muted small">Shown while you wait and in the toolbar popup. Where a line says <code>{goal}</code>, one of your goals goes in. One per line.</p>
+    <label>Goals<textarea id="goals" rows="4" spellcheck="false"></textarea></label>
+    <label>Affirmations<textarea id="affirm" rows="9" spellcheck="false"></textarea></label>
+    <button id="preview" type="button">Show me one</button>
+    <blockquote class="affirm" id="sample"></blockquote>
+  </div>
+
+  <div class="card">
+    <h2>Today's unlocks</h2>
+    <table id="log"></table>
+  </div>
+
+  <div class="savebar"><button id="save" class="big" style="width:auto;padding:12px 30px">Save</button><span id="saved" class="muted"></span></div>
+</div>
+<script src="shared.js"></script>
+<script src="options.js"></script>
+</body>
+</html>

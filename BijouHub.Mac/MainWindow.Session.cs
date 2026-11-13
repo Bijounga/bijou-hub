@@ -77,6 +77,7 @@ public partial class MainWindow
         _targetMinutes = pomodoro == null ? targetMinutes : null;
         _countDownMode = countDown && _targetMinutes != null;
         _sessionStart = DateTime.Now;
+        _sessionNotes.Clear();
         _activeSeconds = 0;
         _idleSeconds = 0;
         _isIdle = false;
@@ -299,6 +300,13 @@ public partial class MainWindow
         _logService.InsertSession(record);
         InvalidateTodayLogged();
         ClearCheckpoint();
+
+        // Notes jotted on the focus screen are waiting in today's notes: land where they are.
+        if (_sessionNotes.Count > 0)
+        {
+            NavHome_Click(this, new RoutedEventArgs());
+            return;
+        }
 
         if (project != null) SelectProject(project);
         else if (mode != null && ModesList.SelectedItem == mode) ShowMode(mode);

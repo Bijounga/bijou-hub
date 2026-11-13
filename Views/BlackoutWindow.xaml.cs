@@ -22,6 +22,7 @@ public partial class BlackoutWindow : Window
     public event Action<string>? TaskAdded;
     public event Action? TaskDone;
     public event Action<FocusLook>? LookChanged;
+    public event Action<string>? NoteAdded;
 
     // The fonts on offer: what's shown, and the font family that goes with it. The first is the theme's own.
     private static readonly (string Label, string? Family)[] Fonts =
@@ -36,6 +37,7 @@ public partial class BlackoutWindow : Window
     private bool _applying;
 
     private readonly DispatcherTimer _idle = new() { Interval = TimeSpan.FromSeconds(3) };
+    private readonly DispatcherTimer _savedFlash = new() { Interval = TimeSpan.FromSeconds(1.6) };
     private Point _lastMouse;
 
     public BlackoutWindow()
@@ -48,6 +50,7 @@ public partial class BlackoutWindow : Window
         AddSwatch("Theme color", null);
         foreach (var (name, hex) in FocusLook.Colors) AddSwatch(name, hex);
         _idle.Tick += (_, _) => HideControls();
+        _savedFlash.Tick += (_, _) => { _savedFlash.Stop(); NoteSaved.Opacity = 0; };
         Loaded += (_, _) => HideControls();
     }
 
@@ -191,10 +194,84 @@ public partial class BlackoutWindow : Window
         ShowControls();
     }
 
-    private void Window_MouseDown(object sender, MouseButtonEventArgs e) => ShowControls();
+    private void Window_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        ShowControls();
+        // A tap on the plain black (not the controls, the note box or the notes corner) opens the note box.
+        if (e.ChangedButton == MouseButton.Left && !Inside(e.OriginalSource, Controls) && !Inside(e.OriginalSource, NoteEntry) && !Inside(e.OriginalSource, NotesZone))
+            OpenNote();
+    }
+
+    private static bool Inside(object? source, DependencyObject container)
+    {
+        var node = source as DependencyObject;
+        while (node != null)
+        {
+            if (node == container) return true;
+            node = node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node);
+        }
+        return false;
+    }
+
+    // ---------- Notes for after ----------
+
+    private void OpenNote()
+    {
+        NoteEntry.Visibility = Visibility.Visible;
+        NoteInput.Focus();
+    }
+
+    private void CloseNote()
+    {
+        NoteInput.Clear();
+        NoteEntry.Visibility = Visibility.Collapsed;
+        Keyboard.ClearFocus();
+        Focus();
+    }
+
+    private void NoteInput_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            var text = NoteInput.Text.Trim();
+            if (text.Length > 0)
+            {
+                NoteAdded?.Invoke(text);
+                NoteSaved.Opacity = 1; // a moment's confirmation, not the text
+                _savedFlash.Stop();
+                _savedFlash.Start();
+            }
+            CloseNote();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            CloseNote();
+            e.Handled = true;
+        }
+    }
+
+    // What's been noted this session, shown only while the pointer is over the corner.
+    public void SetNotes(IReadOnlyList<string> notes)
+    {
+        NotesList.Children.Clear();
+        if (notes.Count == 0) return;
+
+        NotesList.Children.Add(new TextBlock { Text = $"FOR AFTER · {notes.Count}", FontSize = 11, Foreground = new SolidColorBrush(Color.FromRgb(0x6B, 0x76, 0x84)), Margin = new Thickness(0, 0, 0, 8) });
+        foreach (var note in notes)
+            NotesList.Children.Add(new TextBlock
+            {
+                Text = "\u2022 " + note, FontSize = 15, TextWrapping = TextWrapping.Wrap, MaxWidth = 320, Margin = new Thickness(0, 0, 0, 6),
+                Foreground = new SolidColorBrush(Color.FromRgb(0x8C, 0x96, 0xA3))
+            });
+    }
+
+    private void NotesZone_Enter(object sender, MouseEventArgs e) => NotesList.Opacity = 1;
+    private void NotesZone_Leave(object sender, MouseEventArgs e) => NotesList.Opacity = 0;
 
     private void Window_KeyDown(object sender, KeyEventArgs e)
     {
+        if (NoteEntry.IsKeyboardFocusWithin) return; // typing a note: + and - are just characters
         if (e.Key == Key.Escape && !Controls.IsKeyboardFocusWithin) { ExitRequested?.Invoke(); e.Handled = true; }
         else if (e.Key == Key.Escape) { Keyboard.ClearFocus(); e.Handled = true; }
         else if (!Controls.IsKeyboardFocusWithin && e.Key is Key.OemPlus or Key.Add) { Bigger_Click(this, new RoutedEventArgs()); ShowControls(); e.Handled = true; }

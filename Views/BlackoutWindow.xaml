@@ -25,6 +25,23 @@
             <TextBlock x:Name="StatusText" FontSize="14" TextAlignment="Center" Margin="0,10,0,0" Foreground="#4C5560"/>
         </StackPanel>
 
+        <!-- Tap the plain black and type something to do after: it goes into today's notes. -->
+        <Border x:Name="NoteEntry" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="560" Margin="0,0,0,220" Padding="14,10"
+                CornerRadius="10" Background="#14181D" BorderBrush="#232A33" BorderThickness="1" Visibility="Collapsed">
+            <StackPanel>
+                <TextBlock Text="For after this. Enter saves, Esc cancels." FontSize="12" Foreground="#6B7684" Margin="0,0,0,6"/>
+                <TextBox x:Name="NoteInput" FontSize="18" Padding="8,6" KeyDown="NoteInput_KeyDown" AutomationProperties.Name="Quick note"/>
+            </StackPanel>
+        </Border>
+        <TextBlock x:Name="NoteSaved" Text="Noted for after" FontSize="14" Foreground="#4C5560" Opacity="0" IsHitTestVisible="False"
+                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,250"/>
+
+        <!-- The notes so far: not there at all until the pointer is over this corner. -->
+        <Border x:Name="NotesZone" HorizontalAlignment="Left" VerticalAlignment="Top" Width="380" Height="320" Background="Transparent"
+                MouseEnter="NotesZone_Enter" MouseLeave="NotesZone_Leave">
+            <StackPanel x:Name="NotesList" Margin="28,24,0,0" Opacity="0" IsHitTestVisible="False"/>
+        </Border>
+
         <!-- Appear when the mouse moves, and go again after a few seconds. -->
         <Border x:Name="Controls" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,40" Padding="14,10" CornerRadius="10"
                 Background="#14181D" BorderBrush="#232A33" BorderThickness="1" Opacity="0" IsHitTestVisible="False">

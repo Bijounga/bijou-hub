@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using BijouHub.Mac.Controls;
 using BijouHub.Models;
 using BijouHub.Services;
@@ -23,6 +24,7 @@ public class BlackoutWindow : Window
     public event Action<string>? TaskAdded;
     public event Action? TaskDone;
     public event Action<FocusLook>? LookChanged;
+    public event Action<string>? NoteAdded;
 
     // The fonts on offer: what's shown, and the font family that goes with it. The first is the theme's own.
     private static readonly (string Label, string? Family)[] Fonts =
@@ -47,6 +49,14 @@ public class BlackoutWindow : Window
     private readonly Button _pause = new() { Content = "Pause", Padding = new Thickness(12, 6) };
     private readonly SessionTaskPicker _picker = new() { Width = 320, Margin = new Thickness(0, 0, 14, 0) };
     private readonly Border _controls = new();
+
+    // Tap the plain black and type something to do after; the notes so far show only over the corner.
+    private readonly TextBox _noteInput = new() { FontSize = 18, Padding = new Thickness(8, 6) };
+    private readonly Border _noteEntry = new() { IsVisible = false };
+    private readonly TextBlock _noteSaved = new() { Text = "Noted for after", FontSize = 14, Opacity = 0, IsHitTestVisible = false, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 0, 250), Foreground = new SolidColorBrush(Color.Parse("#4C5560")) };
+    private readonly Border _notesZone = new() { HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, Width = 380, Height = 320, Background = Brushes.Transparent };
+    private readonly StackPanel _notesList = new() { Margin = new Thickness(28, 24, 0, 0), Opacity = 0, IsHitTestVisible = false };
+    private readonly DispatcherTimer _savedFlash = new() { Interval = TimeSpan.FromSeconds(1.6) };
     private readonly DispatcherTimer _idle = new() { Interval = TimeSpan.FromSeconds(3) };
     private Point _lastMouse;
 
@@ -142,7 +152,51 @@ public class BlackoutWindow : Window
             }
         };
 
-        Content = new Grid { Background = Brushes.Black, Children = { center, _controls } };
+        _noteEntry.Width = 560;
+        _noteEntry.Padding = new Thickness(14, 10);
+        _noteEntry.CornerRadius = new CornerRadius(10);
+        _noteEntry.Background = new SolidColorBrush(Color.Parse("#14181D"));
+        _noteEntry.BorderBrush = new SolidColorBrush(Color.Parse("#232A33"));
+        _noteEntry.BorderThickness = new Thickness(1);
+        _noteEntry.VerticalAlignment = VerticalAlignment.Bottom;
+        _noteEntry.HorizontalAlignment = HorizontalAlignment.Center;
+        _noteEntry.Margin = new Thickness(0, 0, 0, 220);
+        Avalonia.Automation.AutomationProperties.SetName(_noteInput, "Quick note");
+        _noteEntry.Child = new StackPanel
+        {
+            Children =
+            {
+                new TextBlock { Text = "For after this. Enter saves, Esc cancels.", FontSize = 12, Foreground = new SolidColorBrush(Color.Parse("#6B7684")), Margin = new Thickness(0, 0, 0, 6) },
+                _noteInput
+            }
+        };
+        _noteInput.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter)
+            {
+                var text = (_noteInput.Text ?? "").Trim();
+                if (text.Length > 0)
+                {
+                    NoteAdded?.Invoke(text);
+                    _noteSaved.Opacity = 1; // a moment's confirmation, not the text
+                    _savedFlash.Stop();
+                    _savedFlash.Start();
+                }
+                CloseNote();
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Escape)
+            {
+                CloseNote();
+                e.Handled = true;
+            }
+        };
+        _savedFlash.Tick += (_, _) => { _savedFlash.Stop(); _noteSaved.Opacity = 0; };
+        _notesZone.Child = _notesList;
+        _notesZone.PointerEntered += (_, _) => _notesList.Opacity = 1;
+        _notesZone.PointerExited += (_, _) => _notesList.Opacity = 0;
+
+        Content = new Grid { Background = Brushes.Black, Children = { center, _notesZone, _noteEntry, _noteSaved, _controls } };
 
         _idle.Tick += (_, _) => HideControls();
         Opened += (_, _) => HideControls();
@@ -153,7 +207,13 @@ public class BlackoutWindow : Window
             _lastMouse = at;
             ShowControls();
         };
-        PointerPressed += (_, _) => ShowControls();
+        PointerPressed += (_, e) =>
+        {
+            ShowControls();
+            // A tap on the plain black (not the controls, the note box or the notes corner) opens the note box.
+            if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed && !Inside(e.Source, _controls) && !Inside(e.Source, _noteEntry) && !Inside(e.Source, _notesZone))
+                OpenNote();
+        };
         PointerWheelChanged += (_, e) =>
         {
             if (e.Delta.Y == 0) return;
@@ -162,6 +222,7 @@ public class BlackoutWindow : Window
         };
         KeyDown += (_, e) =>
         {
+            if (_noteEntry.IsKeyboardFocusWithin) return; // typing a note: + and - are just characters
             if (e.Key == Key.Escape)
             {
                 if (_controls.IsKeyboardFocusWithin) FocusManager?.ClearFocus();
@@ -172,6 +233,41 @@ public class BlackoutWindow : Window
             else if (!_controls.IsKeyboardFocusWithin && e.Key is Key.OemMinus or Key.Subtract) { Change(l => l.Scale = FocusLook.Step(l.Scale, -1)); ShowControls(); e.Handled = true; }
             else ShowControls();
         };
+    }
+
+    private static bool Inside(object? source, Visual container)
+    {
+        for (var node = source as Visual; node != null; node = node.GetVisualParent())
+            if (node == container) return true;
+        return false;
+    }
+
+    private void OpenNote()
+    {
+        _noteEntry.IsVisible = true;
+        _noteInput.Focus();
+    }
+
+    private void CloseNote()
+    {
+        _noteInput.Text = "";
+        _noteEntry.IsVisible = false;
+        Focus();
+    }
+
+    // What's been noted this session, shown only while the pointer is over the corner.
+    public void SetNotes(IReadOnlyList<string> notes)
+    {
+        _notesList.Children.Clear();
+        if (notes.Count == 0) return;
+
+        _notesList.Children.Add(new TextBlock { Text = $"FOR AFTER · {notes.Count}", FontSize = 11, Foreground = new SolidColorBrush(Color.Parse("#6B7684")), Margin = new Thickness(0, 0, 0, 8) });
+        foreach (var note in notes)
+            _notesList.Children.Add(new TextBlock
+            {
+                Text = "\u2022 " + note, FontSize = 15, TextWrapping = TextWrapping.Wrap, MaxWidth = 320, Margin = new Thickness(0, 0, 0, 6),
+                Foreground = new SolidColorBrush(Color.Parse("#8C96A3"))
+            });
     }
 
     // The monitors to move to, left to right (what each is, for its tooltip), and which one this is on.

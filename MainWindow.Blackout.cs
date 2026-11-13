@@ -34,6 +34,7 @@ public partial class MainWindow
             PlaceBlackout(index);
             RememberBlackoutScreen();
         };
+        window.NoteAdded += AddQuickNote;
         window.TaskPicked += SessionTask_Picked;
         window.TaskAdded += SessionTask_Added;
         window.TaskDone += SessionTask_Done;
@@ -64,6 +65,26 @@ public partial class MainWindow
         PlaceBlackout(_blackoutScreen);
         UpdateBlackout();
         window.SetTasks(OpenTasksToday(), _activeTask);
+        window.SetNotes(_sessionNotes);
+    }
+
+    // ---------- Notes for after, jotted on the focus screen ----------
+
+    private readonly List<string> _sessionNotes = new();
+
+    // They go into today's notes (Home, "Notes for today"), whatever the session is on.
+    private void AddQuickNote(string text)
+    {
+        text = text.Trim();
+        if (text.Length == 0) return;
+
+        LoadDailyPlan(); // past midnight, it belongs to the new day
+        DailyNotesBox.Text = QuickNotes.Append(DailyNotesBox.Text, text);
+        _notesSaveTimer?.Stop();
+        SaveDailyPlan();
+
+        _sessionNotes.Add(text);
+        _blackout?.SetNotes(_sessionNotes);
     }
 
     private static string ScreenKey(DisplayInfo.Screen s) => $"{s.X},{s.Y},{s.Width}x{s.Height}";

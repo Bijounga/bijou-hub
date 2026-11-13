@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hold on · BijouGate</title>
+<link rel="icon" href="icons/icon32.png">
+<link rel="stylesheet" href="gate.css">
+</head>
+<body>
+<div class="stage">
+  <div class="brand">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><defs><clipPath id="bgt"><rect width="64" height="64" rx="14"/></clipPath></defs><g clip-path="url(#bgt)"><rect width="64" height="64" fill="#ee3753"/><circle cx="31" cy="29" r="23" fill="#316cc8"/><circle cx="33" cy="27" r="21" fill="#00d8ff"/><path d="M35.56 6.78 A18.4 18.4 0 0 1 50.50 19.31" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><polygon fill="#fff" points="30.30,27.00 26.90,32.89 20.10,32.89 16.70,27.00 20.10,21.11 26.90,21.11"/><polygon fill="#fff" points="47.30,25.50 43.90,31.39 37.10,31.39 33.70,25.50 37.10,19.61 43.90,19.61"/><polygon fill="#241b4b" points="0,64 0,49.05 2,49.37 4,49.63 6,49.81 8,49.89 10,49.89 12,49.79 14,49.60 16,49.34 18,49.00 20,48.60 22,48.17 24,47.70 26,47.23 28,46.77 30,46.34 32,45.95 34,45.63 36,45.37 38,45.19 40,45.11 42,45.11 44,45.21 46,45.40 48,45.66 50,46.00 52,46.40 54,46.83 56,47.30 58,47.77 60,48.23 62,48.66 64,49.05 64,64"/><polyline fill="none" stroke="#f9fbe7" stroke-width="1.9" points="0,48.10 2,48.42 4,48.68 6,48.86 8,48.94 10,48.94 12,48.84 14,48.65 16,48.39 18,48.05 20,47.65 22,47.22 24,46.75 26,46.28 28,45.82 30,45.39 32,45.00 34,44.68 36,44.42 38,44.24 40,44.16 42,44.16 44,44.26 46,44.45 48,44.71 50,45.05 52,45.45 54,45.88 56,46.35 58,46.82 60,47.28 62,47.71 64,48.10"/></g></svg>
+    BijouGate
+  </div>
+
+  <main class="card">
+    <h1 id="title"></h1>
+    <p id="sub" class="muted"></p>
+    <a id="from" class="from" hidden>
+      <span class="fromtext"><span id="fromtitle"></span><span id="fromby" class="muted small"></span></span>
+    </a>
+
+    <!-- Step 1: the easy way out is the big button. -->
+    <section id="s1">
+      <blockquote class="affirm" id="a1"></blockquote>
+      <button id="leave" class="big" style="margin-top:24px">Take me back to work</button>
+      <button id="go" class="link">I really need this</button>
+    </section>
+
+    <!-- Step 2: say why, and what you'll do when it's over. -->
+    <section id="s2" hidden>
+      <label>What do you need it for?
+        <input id="why" type="text" autocomplete="off" placeholder="e.g. find a thumbnail reference for the Minecraft video">
+      </label>
+      <label>What will you do when you're done?
+        <input id="after" type="text" autocomplete="off" placeholder="e.g. close the tab and go back to Premiere">
+      </label>
+      <p class="muted small">A few words each is enough.</p>
+      <button id="next2" disabled>Continue</button>
+    </section>
+
+    <!-- Step 3: wait. The clock only runs while you're looking at this tab. -->
+    <section id="s3" hidden>
+      <div class="ring" aria-live="off">
+        <svg viewBox="0 0 190 190"><circle class="track" cx="95" cy="95" r="88"/><circle class="bar" id="bar" cx="95" cy="95" r="88"/></svg>
+        <div class="count" id="count">0</div>
+      </div>
+      <blockquote class="affirm" id="a3"></blockquote>
+      <p class="muted small center">Leave this tab and the clock starts over.</p>
+    </section>
+
+    <!-- Step 4: choose how long, and not very long. -->
+    <section id="s5" hidden>
+      <p id="choosemsg" style="margin-top:20px">How long do you actually need?</p>
+      <div id="choices"></div>
+      <p class="muted small" id="choosenote" style="margin-top:18px">When it runs out the site shuts again for a while.</p>
+    </section>
+
+    <!-- A session just ended: the site is shut for a while. -->
+    <section id="cool" hidden>
+      <div id="coolclock" class="count clock">00:00</div>
+      <p class="muted small center" style="margin:0">until you can ask again</p>
+      <blockquote class="affirm" id="a4"></blockquote>
+      <button id="leave3" class="big" style="margin-top:24px">Take me back to work</button>
+      <p class="muted small center" style="margin-top:26px">If you really, truly need it:</p>
+      <button id="hold" class="hold"><span id="holdfill"></span><span id="holdtext">Hold to open anyway</span></button>
+    </section>
+
+    <section id="shut" hidden>
+      <p class="big-text">That's enough for today.</p>
+      <blockquote class="affirm" id="a5"></blockquote>
+      <button id="leave2" class="big" style="margin-top:24px">Take me back to work</button>
+    </section>
+  </main>
+</div>
+<script src="shared.js"></script>
+<script src="gate.js"></script>
+</body>
+</html>
