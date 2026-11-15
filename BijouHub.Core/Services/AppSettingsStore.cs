@@ -49,6 +49,7 @@ public class AppSettings
 
     public WidgetSettings TaskWidget { get; set; } = new();
     public WidgetSettings TimerWidget { get; set; } = new();
+    public WidgetSettings NotesWidget { get; set; } = new();
 
     // What the start-timer widget last had picked (project id, mode id, minutes; 0 for open-ended).
     public string? WidgetProjectId { get; set; }

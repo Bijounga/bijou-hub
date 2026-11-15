@@ -69,7 +69,7 @@ public partial class App : Application
         var window = new MainWindow();
         // Started at sign-in with "keep running in the background" on, or with widgets set to open at
         // startup: straight to the tray, with just the widgets showing.
-        var widgetsAtStartup = settings.TaskWidget.ShowAtStartup || settings.TimerWidget.ShowAtStartup;
+        var widgetsAtStartup = settings.TaskWidget.ShowAtStartup || settings.TimerWidget.ShowAtStartup || settings.NotesWidget.ShowAtStartup;
         if (e.Args.Contains(StartupService.TrayArgument) && (settings.KeepRunningWhenClosed || widgetsAtStartup)) window.StartInTray();
         else
         {

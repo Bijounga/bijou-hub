@@ -1,0 +1,48 @@
+<Window x:Class="BijouHub.Views.NotesWidgetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="BijouHub Notes"
+        WindowStyle="None"
+        ResizeMode="CanResizeWithGrip"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Width="320" Height="360" MinWidth="220" MinHeight="140"
+        WindowStartupLocation="Manual"
+        Background="{DynamicResource BgBrush}">
+    <Border BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5">
+        <Grid Margin="14,10,14,14">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Drag here. -->
+            <DockPanel Background="Transparent" MouseLeftButtonDown="Header_MouseLeftButtonDown" Margin="0,0,0,8">
+                <Button DockPanel.Dock="Right" Click="Close_Click" Focusable="False" Cursor="Hand" ToolTip="Hide this widget"
+                        AutomationProperties.Name="Close notes widget">
+                    <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent" Padding="6,2"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                    <TextBlock Text="✕" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"/>
+                </Button>
+                <TextBlock x:Name="SavedText" DockPanel.Dock="Right" FontSize="10" VerticalAlignment="Center" Margin="0,0,6,0"
+                           Foreground="{DynamicResource MutedTextBrush}"/>
+                <TextBlock Text="NOTES" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}"/>
+            </DockPanel>
+
+            <TextBox x:Name="NotesBox" Grid.Row="1" AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap" VerticalContentAlignment="Top"
+                     VerticalScrollBarVisibility="Auto" SpellCheck.IsEnabled="True" FontSize="14" Padding="10,8"
+                     Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextBrush}"
+                     CaretBrush="{DynamicResource TextBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                     TextChanged="NotesBox_TextChanged" AutomationProperties.Name="Notes">
+                <!-- The theme's text box centers its text vertically, which suits one line, not a page. -->
+                <TextBox.Template>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{DynamicResource CornerRadiusBase}">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Stretch"/>
+                        </Border>
+                    </ControlTemplate>
+                </TextBox.Template>
+            </TextBox>
+        </Grid>
+    </Border>
+</Window>

@@ -12,6 +12,7 @@ namespace BijouHub;
 public partial class MainWindow
 {
     private TimerWidgetWindow? _timerWidget;
+    private NotesWidgetWindow? _notesWidget;
     private bool _timerWidgetWanted;      // the widget is on (it's hidden while the pop-out timer stands in for it)
     private (int X, int Y)? _lastPopoutSpot;
     private bool _shuttingDown;
@@ -31,9 +32,10 @@ public partial class MainWindow
         _settingsStore.Save(settings);
         WidgetPlacement.Reapply(_tasksPopout);
         WidgetPlacement.Reapply(_timerWidget);
+        WidgetPlacement.Reapply(_notesWidget);
     }
 
-    private bool AnyWidgetOpen => _tasksPopout != null || _timerWidgetWanted;
+    private bool AnyWidgetOpen => _tasksPopout != null || _timerWidgetWanted || _notesWidget != null;
 
     // At launch: whichever widgets were set to come back.
     public void OpenStartupWidgets()
@@ -44,6 +46,7 @@ public partial class MainWindow
         {
             if (settings.TaskWidget.ShowAtStartup) SetTaskWidget(true);
             if (settings.TimerWidget.ShowAtStartup) SetTimerWidget(true);
+            if (settings.NotesWidget.ShowAtStartup) SetNotesWidget(true);
         }
         finally
         {
@@ -54,6 +57,28 @@ public partial class MainWindow
     private void SetTaskWidget(bool on)
     {
         if (on != (_tasksPopout != null)) ToggleTasksPopout();
+    }
+
+    private void SetNotesWidget(bool on)
+    {
+        if (!on)
+        {
+            _notesWidget?.Close();
+            return;
+        }
+        if (_notesWidget != null) return;
+
+        var widget = new NotesWidgetWindow(new NotesStore()) { ShowActivated = !_openingAtStartup };
+        WidgetPlacement.Layer(widget, () => _widgetsOnTop);
+        WidgetPlacement.Attach(widget, _settingsStore.Load().NotesWidget, true, place =>
+        {
+            var settings = _settingsStore.Load();
+            settings.NotesWidget = place;
+            _settingsStore.Save(settings);
+        });
+        widget.Closed += (_, _) => _notesWidget = null;
+        _notesWidget = widget;
+        widget.Show();
     }
 
     private void SetTimerWidget(bool on)
@@ -144,7 +169,7 @@ public partial class MainWindow
     private void RecenterWidgets()
     {
         var reference = IsVisible ? this : null;
-        foreach (var widget in new Window?[] { _tasksPopout, _timerWidget })
+        foreach (var widget in new Window?[] { _tasksPopout, _timerWidget, _notesWidget })
         {
             if (widget is not { IsVisible: true }) continue;
             if (widget is TimerWidgetWindow) widget.Width = 250; // a squashed one gets its width back
@@ -160,6 +185,6 @@ public partial class MainWindow
     private void OpenWidgets_Click(object sender, RoutedEventArgs e)
     {
         BringToFront();
-        new WidgetsWindow(_tasksPopout != null, _timerWidgetWanted, SetTaskWidget, SetTimerWidget, _widgetsOnTop, SetWidgetsOnTop, RecenterWidgets) { Owner = DialogOwner }.ShowDialog();
+        new WidgetsWindow(_tasksPopout != null, _timerWidgetWanted, _notesWidget != null, SetTaskWidget, SetTimerWidget, SetNotesWidget, _widgetsOnTop, SetWidgetsOnTop, RecenterWidgets) { Owner = DialogOwner }.ShowDialog();
     }
 }
