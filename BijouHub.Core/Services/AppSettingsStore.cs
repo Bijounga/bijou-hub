@@ -61,6 +61,15 @@ public class AppSettings
     // How the timer looks on the focus screen: size, font and color, kept between sessions.
     public FocusLook FocusLook { get; set; } = new();
 
+    // After a session ends, a short summary of what got done (the Wins screen).
+    public bool ShowWins { get; set; } = true;
+
+    // During a session, ask "still on it?" after a few minutes in a distracting app or site.
+    public bool DriftNudge { get; set; } = true;
+
+    // Things the nudge was told aren't distractions (an app name or a word in a window title).
+    public List<string> DriftIgnored { get; set; } = new();
+
     // The monitor the focus screen was last put on ("x,y,WxH" of the monitor), so it comes back there.
     public string? FocusScreen { get; set; }
 }

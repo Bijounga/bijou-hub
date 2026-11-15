@@ -1289,6 +1289,7 @@ public partial class MainWindow : Window
         if (mode != null)
             _blockWatcher.Start(mode);
         _tickTimer.Start();
+        StartDriftWatch();
         SoundFx.Play(SoundFx.Start);
         ChooseMusic(mode, workPlaylistId, breakPlaylistId);
         StartSessionMusic();
@@ -1317,6 +1318,7 @@ public partial class MainWindow : Window
         else
         {
             _activeSeconds++;
+            DriftTick();
             if (_isIdle)
             {
                 _isIdle = false;
@@ -1697,7 +1699,7 @@ public partial class MainWindow : Window
             }
         }
 
-        _logService.InsertSession(new SessionRecord
+        var logged = new SessionRecord
         {
             ModeName = _activeMode?.Name ?? "",
             IsStudy = _activeMode?.IsStudy == true,
@@ -1712,7 +1714,9 @@ public partial class MainWindow : Window
             TaskId = _activeTask?.Id,
             TaskName = _activeTask?.Text,
             Note = note
-        });
+        };
+        _logService.InsertSession(logged);
+        StopDriftWatch();
         InvalidateTodayLogged();
         ClearSessionCheckpoint();
 
@@ -1732,6 +1736,7 @@ public partial class MainWindow : Window
         UpdateBlackout();
         UpdateTaskbarProgress();
         BroadcastDeckState();
+        if (askForNote) Dispatcher.BeginInvoke(DispatcherPriority.Background, () => ShowWins(logged));
 
         // Notes jotted on the focus screen are waiting in today's notes: land where they are.
         if (_sessionNotes.Count > 0)

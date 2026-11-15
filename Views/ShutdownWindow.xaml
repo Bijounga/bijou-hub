@@ -1,0 +1,34 @@
+<Window x:Class="BijouHub.Views.ShutdownWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Wrap up the day" Width="420" SizeToContent="Height" MaxHeight="760"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{DynamicResource BgBrush}">
+    <Grid>
+        <Rectangle Fill="{DynamicResource DotGridBrush}" Visibility="{DynamicResource ClassicChromeVisibility}" IsHitTestVisible="False"/>
+        <StackPanel Margin="24,22,24,20">
+            <TextBlock x:Name="Headline" Style="{StaticResource HeadingText}" FontSize="20" TextWrapping="Wrap" Margin="0,0,0,4"/>
+            <StackPanel x:Name="LinesPanel" Margin="0,6,0,12"/>
+
+            <TextBlock Text="What went well today?" Margin="0,4,0,6"/>
+            <TextBox x:Name="DidBox" Padding="8,6" AcceptsReturn="False" AutomationProperties.Name="What went well today"/>
+
+            <TextBlock Text="First thing tomorrow?" Margin="0,14,0,6"/>
+            <TextBox x:Name="NextBox" Padding="8,6" AcceptsReturn="False" AutomationProperties.Name="First thing tomorrow"/>
+            <TextBlock x:Name="NextHint" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"/>
+
+            <StackPanel x:Name="AppsSection" Margin="0,16,0,0" Visibility="Collapsed">
+                <TextBlock Text="Close these work apps" Margin="0,0,0,6"/>
+                <StackPanel x:Name="AppsPanel"/>
+                <TextBlock Text="They ask before closing if something isn't saved." FontSize="11" Margin="0,6,0,0"
+                           Foreground="{DynamicResource MutedTextBrush}"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                <Button Content="Not now" Width="90" Margin="0,0,8,0" IsCancel="True" Click="Cancel_Click"/>
+                <Button Content="Wrap up" Width="110" Style="{DynamicResource AccentButton}" IsDefault="True" Click="WrapUp_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>
