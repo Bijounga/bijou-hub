@@ -111,6 +111,14 @@ def popout_icon():
 </svg>"""
 
 
+def ontop_icon():
+    # Two windows: one tucked behind, one in front.
+    return """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<path d="M300 76 H122 a46 46 0 0 0 -46 46 V250" fill="none" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="170" y="170" width="266" height="266" rx="46" fill="none" stroke="#FFFFFF" stroke-width="44"/>
+</svg>"""
+
+
 def pomodoro_icon():
     # A ring split into a long focus arc and a short break arc.
     focus, _ = arc(256, 256, 200, 0.78)
@@ -173,6 +181,15 @@ def popout_key():
                      + text("timer", 106, 14, opacity=0.72))
 
 
+def ontop_key():
+    line = 'stroke-width="5" stroke-linecap="round" stroke-linejoin="round"'
+    return key_frame(f'<circle cx="72" cy="72" r="60" fill="none" stroke="{CYAN}" stroke-width="7"/>'
+                     + text("ON TOP", 42, 12, CYAN, 700)
+                     + f'<rect x="50" y="48" width="30" height="26" rx="5" fill="#0B0D12" stroke="#F4F6FA" stroke-opacity="0.55" {line}/>'
+                     + f'<rect x="64" y="60" width="30" height="26" rx="5" fill="#0B0D12" stroke="{CYAN}" {line}/>'
+                     + text("widgets", 106, 14, opacity=0.72))
+
+
 def pomodoro_key():
     path, end = arc(72, 72, 60, 0.7)
     return key_frame(f'<circle cx="72" cy="72" r="60" fill="none" stroke="{CYAN}" stroke-opacity="0.2" stroke-width="7"/>'
@@ -219,6 +236,7 @@ def main():
         ("pomodoro", pomodoro_icon(), 20),
         ("target", target_icon(), 20),
         ("capture", capture_icon(), 20),
+        ("ontop", ontop_icon(), 20),
         ("session-key", session_key(), 72),
         ("goal-key", goal_key(), 72),
         ("extend-key", extend_key(), 72),
@@ -226,6 +244,7 @@ def main():
         ("pomodoro-key", pomodoro_key(), 72),
         ("target-key", target_key(), 72),
         ("capture-key", capture_key(), 72),
+        ("ontop-key", ontop_key(), 72),
     ]
     with tempfile.TemporaryDirectory() as work:
         for name, svg, size in targets:

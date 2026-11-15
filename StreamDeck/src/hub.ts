@@ -17,6 +17,8 @@ export type HubState = {
 	todaySeconds: number;
 	/** The always-on-top mini timer is open. */
 	poppedOut: boolean;
+	/** The widgets sit above other windows (the "Keep widgets on top" setting). */
+	widgetsOnTop: boolean;
 	/** A Pomodoro session's current focus or break. */
 	pomodoro: Pomodoro | null;
 	/** How long the user wants to work each day, if they set a target. */
@@ -202,6 +204,7 @@ export class HubClient {
 			idle: message.idle === true,
 			todaySeconds: typeof message.todaySeconds === "number" ? message.todaySeconds : 0,
 			poppedOut: message.poppedOut === true,
+			widgetsOnTop: message.widgetsOnTop === true,
 			pomodoro: parsePomodoro(message.pomodoro),
 			dailyTargetSeconds: typeof message.dailyTargetSeconds === "number" && message.dailyTargetSeconds > 0 ? message.dailyTargetSeconds : null
 		};

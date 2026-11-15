@@ -33,6 +33,7 @@ public partial class MainWindow
         WidgetPlacement.Reapply(_tasksPopout);
         WidgetPlacement.Reapply(_timerWidget);
         WidgetPlacement.Reapply(_notesWidget);
+        BroadcastDeckState(); // the Stream Deck key shows which way it is
     }
 
     private bool AnyWidgetOpen => _tasksPopout != null || _timerWidgetWanted || _notesWidget != null;

@@ -27,8 +27,8 @@ export type KeyArt = {
 	play?: boolean;
 	/** Draws a check mark in place of the readout (something just got done). */
 	check?: boolean;
-	/** Draws a window icon in place of the readout: an arrow out of it, or back into it. */
-	glyph?: "popout" | "dock";
+	/** Draws a window icon in place of the readout: an arrow out of it or back into it, or two windows stacked one way or the other. */
+	glyph?: "popout" | "dock" | "ontop" | "behind";
 };
 
 /** A key that's mostly words: a small label on top and up to four wrapped lines. */
@@ -138,7 +138,8 @@ function wrap(value: string, perLine: number, maxLines: number): string[] {
 }
 
 /** A window with an arrow leaving it (pop out) or coming back into it (dock). */
-function windowGlyph(kind: "popout" | "dock", color: string): string {
+function windowGlyph(kind: "popout" | "dock" | "ontop" | "behind", color: string): string {
+	if (kind === "ontop" || kind === "behind") return stackGlyph(kind === "ontop", color);
 	const line = `fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"`;
 	const frame = `<path d="M74 54 H60 a6 6 0 0 0 -6 6 V82 a6 6 0 0 0 6 6 H82 a6 6 0 0 0 6 -6 V68" stroke="${INK}" ${line}/>`;
 	const arrow =
@@ -146,6 +147,16 @@ function windowGlyph(kind: "popout" | "dock", color: string): string {
 			? `<path d="M70 72 L92 50 M79 50 H92 V63" stroke="${color}" ${line}/>`
 			: `<path d="M92 50 L71 71 M71 58 V71 H84" stroke="${color}" ${line}/>`;
 	return frame + arrow;
+}
+
+/** Two windows overlapping: the widget (lower right) in front and lit, or tucked behind the other one. */
+function stackGlyph(onTop: boolean, color: string): string {
+	const line = `stroke-width="5" stroke-linecap="round" stroke-linejoin="round"`;
+	const widget = (stroke: string, opacity: number) =>
+		`<rect x="64" y="60" width="30" height="26" rx="5" fill="#0B0D12" stroke="${stroke}" stroke-opacity="${opacity}" ${line}/>`;
+	const other = (stroke: string, opacity: number) =>
+		`<rect x="50" y="48" width="30" height="26" rx="5" fill="#0B0D12" stroke="${stroke}" stroke-opacity="${opacity}" ${line}/>`;
+	return onTop ? other(INK, 0.55) + widget(color, 1) : widget(INK, 0.55) + other(INK, 1);
 }
 
 export function toDataUrl(svg: string): string {

@@ -30,6 +30,7 @@ public partial class MainWindow
         _settingsStore.Save(settings);
         WidgetPlacement.Reapply(_tasksPopout);
         WidgetPlacement.Reapply(_timerWidget);
+        BroadcastDeckState(); // the Stream Deck key shows which way it is
     }
 
     private bool AnyWidgetOpen => _tasksPopout != null || _timerWidgetWanted;

@@ -2411,6 +2411,7 @@ public partial class MainWindow : Window
         ["idle"] = _isIdle && !_paused,
         ["todaySeconds"] = TodayWorkedSeconds,
         ["poppedOut"] = _timerPopout != null,
+        ["widgetsOnTop"] = _widgetsOnTop,
         ["pomodoro"] = DeckPomodoro(),
         ["dailyTargetSeconds"] = _dailyTargetMinutes * 60
     };
@@ -2520,6 +2521,11 @@ public partial class MainWindow : Window
                     PromptDailyTarget();
                 });
                 return new JsonObject { ["ok"] = true };
+
+            case "widgetsOnTop":
+                // "on" picks a side; without it the key toggles.
+                SetWidgetsOnTop(request["on"] is JsonValue ov && ov.TryGetValue<bool>(out var on) ? on : !_widgetsOnTop);
+                return DeckState();
 
             case "popout":
                 if (!IsSessionActive) return new JsonObject { ["error"] = "No session is running" };

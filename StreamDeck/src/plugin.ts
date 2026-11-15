@@ -7,6 +7,7 @@ import { SessionAction } from "./actions/session.js";
 import { TargetAction } from "./actions/target.js";
 import { PomodoroAction, TimerAction } from "./actions/timer.js";
 import { HubClient } from "./hub.js";
+import { OnTopAction } from "./actions/ontop.js";
 
 const hub = new HubClient();
 streamDeck.actions.registerAction(new TimerAction(hub));
@@ -17,6 +18,7 @@ streamDeck.actions.registerAction(new PopoutAction(hub));
 streamDeck.actions.registerAction(new PomodoroAction(hub));
 streamDeck.actions.registerAction(new TargetAction(hub));
 streamDeck.actions.registerAction(new CaptureAction(hub));
+streamDeck.actions.registerAction(new OnTopAction(hub));
 
 hub.start();
 streamDeck.connect();

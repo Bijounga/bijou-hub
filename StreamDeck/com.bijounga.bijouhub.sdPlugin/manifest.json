@@ -2,7 +2,7 @@
 	"$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
 	"UUID": "com.bijounga.bijouhub",
 	"Name": "BijouHub",
-	"Version": "1.5.0.0",
+	"Version": "1.6.0.0",
 	"Author": "Bijou",
 	"Description": "BijouHub on your Stream Deck: start timers, watch the running session, work through today's goals and add time.",
 	"Icon": "imgs/plugin",
@@ -163,6 +163,23 @@
 			"States": [
 				{
 					"Image": "imgs/capture-key",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
+			"UUID": "com.bijounga.bijouhub.widgetsontop",
+			"Name": "Widgets On Top",
+			"Icon": "imgs/ontop",
+			"Tooltip": "Keeps BijouHub's widgets above your other windows, or lets them sit behind. Tap to switch.",
+			"Controllers": [
+				"Keypad"
+			],
+			"UserTitleEnabled": false,
+			"SupportedInMultiActions": true,
+			"States": [
+				{
+					"Image": "imgs/ontop-key",
 					"ShowTitle": false
 				}
 			]
