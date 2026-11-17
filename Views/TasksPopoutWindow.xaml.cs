@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using BijouHub.Models;
 using BijouHub.Services;
 
 namespace BijouHub.Views;
@@ -12,6 +13,7 @@ public partial class TasksPopoutWindow : Window
 {
     public event Action<string>? AddRequested;
     public event Action? OpenCalendarRequested;
+    public event Action<DailyGoal>? StartPaceRequested;
 
     public TasksPopoutWindow()
     {
@@ -28,6 +30,11 @@ public partial class TasksPopoutWindow : Window
         AgendaScroll.Visibility = calendar ? Visibility.Visible : Visibility.Collapsed;
         AddRow.Visibility = calendar ? Visibility.Collapsed : Visibility.Visible;
         OpenCalendarButton.Visibility = calendar ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void StartPace_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: DailyGoal goal }) StartPaceRequested?.Invoke(goal);
     }
 
     public void SetEmpty(bool empty) => EmptyText.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;

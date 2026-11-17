@@ -89,6 +89,7 @@ public partial class MainWindow
         var groups = ScopeGroups();
         if (_goalScope != AllScope && !groups.Contains(_goalScope)) _goalScope = EditingGroup;
 
+        UpdatePaces();
         RefreshGoalViews();
         foreach (var goal in _dailyGoals)
         {

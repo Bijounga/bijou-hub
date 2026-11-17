@@ -17,7 +17,8 @@ public partial class MainWindow
 {
     private TasksPopoutWindow? _tasksPopout;
     private ListCollectionView? _popoutView;
-    private string _popoutScope = EditingGroup;
+    private ListCollectionView? _popoutPacedView;
+    private string _popoutScope = AllScope;
     private bool _popoutCalendar;
     private DateTime _popoutDay = DateTime.Today;
 
@@ -31,6 +32,7 @@ public partial class MainWindow
             return;
         }
 
+        _popoutScope = AllScope; // it opens on All
         var window = new TasksPopoutWindow { ShowActivated = !_openingAtStartup };
         WidgetPlacement.Layer(window, () => _widgetsOnTop);
         WidgetPlacement.Attach(window, _settingsStore.Load().TaskWidget, true, place =>
@@ -42,14 +44,28 @@ public partial class MainWindow
             settings.TaskWidget.Height = place.Height;
             _settingsStore.Save(settings);
         });
+        // Tasks with a pace sit in their own list at the top, whichever tab is open; the tabbed list is the rest.
         _popoutView = new ListCollectionView(_dailyGoals)
         {
-            Filter = item => item is DailyGoal g && !g.Done && !g.IsPlannedAfter(TodayKey) && PopoutInScope(g),
+            Filter = item => item is DailyGoal g && !g.Done && !g.IsPlannedAfter(TodayKey) && !g.HasPace && PopoutInScope(g),
             IsLiveFiltering = true
         };
-        foreach (var property in new[] { nameof(DailyGoal.Done), nameof(DailyGoal.Group), nameof(DailyGoal.ProjectName), nameof(DailyGoal.Due) })
+        _popoutPacedView = new ListCollectionView(_dailyGoals)
+        {
+            Filter = item => item is DailyGoal g && !g.Done && !g.IsPlannedAfter(TodayKey) && g.HasPace,
+            IsLiveFiltering = true
+        };
+        foreach (var property in new[] { nameof(DailyGoal.Done), nameof(DailyGoal.Group), nameof(DailyGoal.ProjectName), nameof(DailyGoal.Due), nameof(DailyGoal.HasPace) })
+        {
             _popoutView.LiveFilteringProperties.Add(property);
+            _popoutPacedView.LiveFilteringProperties.Add(property);
+        }
         window.TasksList.ItemsSource = _popoutView;
+        window.PacedList.ItemsSource = _popoutPacedView;
+        window.StartPaceRequested += goal =>
+        {
+            if (_paces.FirstOrDefault(p => p.Key == goal.StableKey) is { } pace) _ = StartPace(pace);
+        };
 
         window.AddRequested += text =>
         {
@@ -68,6 +84,7 @@ public partial class MainWindow
         {
             _tasksPopout = null;
             _popoutView = null;
+            _popoutPacedView = null;
             SetIconButton(TasksPopoutButton, "", "Pop out the task list");
         };
 
@@ -124,7 +141,9 @@ public partial class MainWindow
         if (_popoutCalendar) BuildPopoutCalendar(window);
         else BuildPopoutTabs(window, groups);
         _popoutView?.Refresh();
-        window.SetEmpty(!_popoutCalendar && (_popoutView?.Count ?? 0) == 0);
+        _popoutPacedView?.Refresh();
+        window.SetEmpty(!_popoutCalendar && (_popoutView?.Count ?? 0) + (_popoutPacedView?.Count ?? 0) == 0);
+        window.PacedSection.Visibility = (_popoutPacedView?.Count ?? 0) > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void SetPopoutMode(bool calendar)

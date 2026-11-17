@@ -32,6 +32,7 @@ public partial class MainWindow
         _boardBuiltAt = DateTime.MinValue;
         _todayLoggedDay = DateTime.Today;
         _todayLoggedSeconds = _logService.GetTodayTotalSeconds();
+        UpdatePaces();
     }
 
     private JsonObject DeckState() => new()

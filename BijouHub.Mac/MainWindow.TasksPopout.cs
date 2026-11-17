@@ -18,7 +18,7 @@ namespace BijouHub.Mac;
 public partial class MainWindow
 {
     private TasksPopoutWindow? _tasksPopout;
-    private string _popoutScope = EditingGroup;
+    private string _popoutScope = AllScope;
     private bool _popoutCalendar;
     private DateTime _popoutDay = DateTime.Today;
 
@@ -32,6 +32,7 @@ public partial class MainWindow
             return;
         }
 
+        _popoutScope = AllScope; // it opens on All
         var window = new TasksPopoutWindow { ShowActivated = !_openingAtStartup };
         BijouHub.Mac.Services.WidgetPlacement.Layer(window, () => _widgetsOnTop);
         window.Positioned = BijouHub.Mac.Services.WidgetPlacement.Attach(window, _settingsStore.Load().TaskWidget, true, () => Screens, place =>
@@ -115,9 +116,17 @@ public partial class MainWindow
 
         BuildPopoutTabs(window, groups);
         window.TasksHost.Children.Clear();
-        var rows = _dailyGoals.Where(g => !g.Done && !g.IsPlannedAfter(TodayKey) && PopoutInScope(g)).ToList();
+        // Tasks with a pace sit at the top, whichever tab is open, so they don't get lost; the tabbed list is the rest.
+        var paced = _dailyGoals.Where(g => !g.Done && !g.IsPlannedAfter(TodayKey) && g.HasPace).ToList();
+        var rows = _dailyGoals.Where(g => !g.Done && !g.IsPlannedAfter(TodayKey) && !g.HasPace && PopoutInScope(g)).ToList();
+        if (paced.Count > 0)
+        {
+            window.TasksHost.Children.Add(new TextBlock { Text = "PACE", FontSize = 10, Margin = new Thickness(0, 0, 0, 4), Foreground = Brush("MutedTextBrush") });
+            foreach (var goal in paced) window.TasksHost.Children.Add(PopoutTaskRow(goal));
+            window.TasksHost.Children.Add(new Border { Height = 1, Margin = new Thickness(0, 4, 0, 8), Background = Brush("BorderBrush") });
+        }
         foreach (var goal in rows) window.TasksHost.Children.Add(PopoutTaskRow(goal));
-        window.SetEmpty(rows.Count == 0);
+        window.SetEmpty(rows.Count + paced.Count == 0);
     }
 
     private Control PopoutTaskRow(DailyGoal goal)
@@ -130,7 +139,7 @@ public partial class MainWindow
         if (!string.IsNullOrEmpty(goal.DueChip))
             text.Children.Add(new TextBlock { Text = goal.DueChip, FontSize = 11, Foreground = Brush("MutedTextBrush") });
 
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Margin = new Thickness(0, 0, 0, 4) };
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto"), Margin = new Thickness(0, 0, 0, 4) };
         Grid.SetColumn(text, 1);
         row.Children.Add(box);
         row.Children.Add(text);
@@ -139,6 +148,24 @@ public partial class MainWindow
             var chip = new TextBlock { Text = goal.ChipText, FontSize = 11, MaxWidth = 90, Margin = new Thickness(8, 2, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis, Foreground = Brush("AccentBrush") };
             Grid.SetColumn(chip, 2);
             row.Children.Add(chip);
+        }
+        if (goal.HasPace)
+        {
+            // A task with a pace: how far along today's (or this week's) share is.
+            var ring = new BijouHub.Mac.Controls.PaceRing { Width = 20, Height = 20, Margin = new Thickness(10, 0, 0, 0), VerticalAlignment = VerticalAlignment.Top, Fraction = goal.PaceFraction };
+            ToolTip.SetTip(ring, goal.PaceText);
+            Grid.SetColumn(ring, 3);
+            row.Children.Add(ring);
+
+            var start = new Button { Classes = { "ghost" }, Padding = new Thickness(5, 3), Margin = new Thickness(6, -2, 0, 0), VerticalAlignment = VerticalAlignment.Top, Content = new BijouHub.Mac.Controls.LineIcon { Kind = "play", Width = 12, Height = 12 } };
+            ToolTip.SetTip(start, "Start working on it");
+            Avalonia.Automation.AutomationProperties.SetName(start, "Start pace");
+            start.Click += (_, _) =>
+            {
+                if (_paces.FirstOrDefault(p => p.Key == goal.StableKey) is { } pace) _ = StartPace(pace);
+            };
+            Grid.SetColumn(start, 4);
+            row.Children.Add(start);
         }
         return row;
     }

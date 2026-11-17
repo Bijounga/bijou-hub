@@ -119,6 +119,11 @@ public partial class MainWindow
             SetTimerPopout(true); // the timer takes the widget's place
         };
         widget.ShowTimerRequested += () => SetTimerPopout(true);
+        widget.PaceStartRequested += async pace =>
+        {
+            await StartPace(pace);
+            if (IsSessionActive) SetTimerPopout(true); // the timer takes the widget's place
+        };
         widget.FinishRequested += () => FinishSession_Click(this, new RoutedEventArgs());
         widget.Closed += (_, _) =>
         {
@@ -135,6 +140,7 @@ public partial class MainWindow
         var settings = _settingsStore.Load();
         var current = widget.HasOptions ? widget.Choices : (settings.WidgetProjectId, settings.WidgetModeId, settings.WidgetMinutes);
         widget.SetOptions(_projects, _modes, current.Item1, current.Item2, current.Item3);
+        widget.SetPaces(_paceItems);
     }
 
     // Shows the running session's time on the widget (and back to the start form when none is).

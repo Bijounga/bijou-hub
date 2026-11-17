@@ -49,7 +49,7 @@ public partial class MainWindow
     }
 
     private async Task BeginSession(WorkMode? mode, Project? project, Goal? goal, int? targetMinutes, bool countDown = false, string? deckKeyId = null,
-        PomodoroPlan? pomodoro = null, string? workPlaylistId = null, string? breakPlaylistId = null)
+        PomodoroPlan? pomodoro = null, string? workPlaylistId = null, string? breakPlaylistId = null, DailyGoal? task = null)
     {
         // Starting while another session runs replaces it — the running one is logged first.
         if (IsSessionActive) await FinishSessionAsync(askForNote: false);
@@ -70,7 +70,7 @@ public partial class MainWindow
         _activeMode = mode;
         _activeProject = project;
         _activeGoal = goal;
-        _activeTask = null;
+        _activeTask = task;
         RefreshSessionTaskPickers();
         UpdateTimerWidget();
         StartPomodoro(pomodoro);
@@ -165,7 +165,11 @@ public partial class MainWindow
         UpdateTrayToolTip();
 
         if (_targetMinutes is int target && !_timeUpShown && _activeSeconds >= target * 60) ShowTimeUp(target);
-        if ((_activeSeconds + _idleSeconds) % 10 == 0) WriteCheckpoint();
+        if ((_activeSeconds + _idleSeconds) % 10 == 0)
+        {
+            WriteCheckpoint();
+            UpdatePaces();
+        }
         BroadcastDeckState();
     }
 
@@ -268,7 +272,8 @@ public partial class MainWindow
             GoalId = _activeGoal?.Id,
             GoalName = _activeGoal?.Name,
             TaskId = _activeTask?.Id,
-            TaskName = _activeTask?.Text
+            TaskName = _activeTask?.Text,
+            TaskKey = _activeTask?.StableKey
         };
         _activeMode = null;
         _activeProject = null;
@@ -375,6 +380,7 @@ public partial class MainWindow
             GoalName = _activeGoal?.Name,
             TaskId = _activeTask?.Id,
             TaskName = _activeTask?.Text,
+            TaskKey = _activeTask?.StableKey,
             ActiveSeconds = _activeSeconds,
             IdleSeconds = _idleSeconds
         };
@@ -415,7 +421,8 @@ public partial class MainWindow
                 GoalId = _activeGoal?.Id,
                 GoalName = _activeGoal?.Name,
                 TaskId = _activeTask?.Id,
-                TaskName = _activeTask?.Text
+                TaskName = _activeTask?.Text,
+                TaskKey = _activeTask?.StableKey
             });
         }
         ClearCheckpoint();
@@ -443,6 +450,7 @@ public partial class MainWindow
                     GoalName = checkpoint.GoalName,
                     TaskId = checkpoint.TaskId,
                     TaskName = checkpoint.TaskName,
+                    TaskKey = checkpoint.TaskKey,
                     Note = "Recovered after BijouHub closed unexpectedly"
                 });
                 var minutes = Math.Max(1, checkpoint.ActiveSeconds / 60);

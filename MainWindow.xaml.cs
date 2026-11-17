@@ -135,6 +135,7 @@ public partial class MainWindow : Window
         InitDailyGoals();
         InitDue();
         InitLogWatch();
+        InitPaces();
         InitHomeLayout();
         InitSessionTask();
         InitTasksPage();
@@ -1230,7 +1231,7 @@ public partial class MainWindow : Window
     }
 
     private async Task BeginSession(WorkMode? mode, Project? project, Goal? goal, int? targetMinutes, bool countDown = false,
-        string? deckKeyId = null, PomodoroPlan? pomodoro = null, string? workPlaylistId = null, string? breakPlaylistId = null)
+        string? deckKeyId = null, PomodoroPlan? pomodoro = null, string? workPlaylistId = null, string? breakPlaylistId = null, DailyGoal? task = null)
     {
         // Starting while another session runs replaces it — log the running one first instead of
         // silently dropping its time.
@@ -1255,7 +1256,7 @@ public partial class MainWindow : Window
         _activeMode = mode;
         _activeProject = project;
         _activeGoal = goal;
-        _activeTask = null;
+        _activeTask = task;
         RefreshSessionTaskPickers();
         UpdateTimerWidget();
         StartPomodoro(pomodoro);
@@ -1358,7 +1359,10 @@ public partial class MainWindow : Window
         // Checkpoint every 10s so a crash or force-kill loses at most a few seconds of
         // tracked time instead of the whole session — recovered on the next launch.
         if ((_activeSeconds + _idleSeconds) % 10 == 0)
+        {
             WriteSessionCheckpoint();
+            UpdatePaces();
+        }
 
         if (HomePanel.Visibility == Visibility.Visible) UpdateTodayCard();
         UpdateTrayToolTip();
@@ -1381,6 +1385,7 @@ public partial class MainWindow : Window
             GoalName = _activeGoal?.Name,
             TaskId = _activeTask?.Id,
             TaskName = _activeTask?.Text,
+            TaskKey = _activeTask?.StableKey,
             ActiveSeconds = _activeSeconds,
             IdleSeconds = _idleSeconds
         };
@@ -1427,6 +1432,7 @@ public partial class MainWindow : Window
                 GoalName = _activeGoal?.Name,
                 TaskId = _activeTask?.Id,
                 TaskName = _activeTask?.Text,
+                TaskKey = _activeTask?.StableKey,
                 Note = null
             });
         }
@@ -1460,6 +1466,7 @@ public partial class MainWindow : Window
                     GoalName = checkpoint.GoalName,
                     TaskId = checkpoint.TaskId,
                     TaskName = checkpoint.TaskName,
+                    TaskKey = checkpoint.TaskKey,
                     Note = "Recovered after BijouHub closed unexpectedly"
                 });
 
@@ -1713,6 +1720,7 @@ public partial class MainWindow : Window
             GoalName = _activeGoal?.Name,
             TaskId = _activeTask?.Id,
             TaskName = _activeTask?.Text,
+            TaskKey = _activeTask?.StableKey,
             Note = note
         };
         _logService.InsertSession(logged);
@@ -1874,7 +1882,8 @@ public partial class MainWindow : Window
     {
         if (_applyingRemote || _relinking) return;
         if (e.PropertyName is nameof(DailyGoal.IsEditing) or nameof(DailyGoal.HasProject) or nameof(DailyGoal.ChipText)
-            or nameof(DailyGoal.DueChip) or nameof(DailyGoal.DueOverdue) or nameof(DailyGoal.ChannelColor)) return;
+            or nameof(DailyGoal.DueChip) or nameof(DailyGoal.DueOverdue) or nameof(DailyGoal.ChannelColor)
+            or nameof(DailyGoal.PaceFraction) or nameof(DailyGoal.HasPace) or nameof(DailyGoal.PaceText)) return;
         if (e.PropertyName == nameof(DailyGoal.Starred)) PinStarredGoals();
         SaveDailyPlan();
         if (e.PropertyName is nameof(DailyGoal.Done) or nameof(DailyGoal.Text) or nameof(DailyGoal.Due) or nameof(DailyGoal.Group))
@@ -2134,6 +2143,10 @@ public partial class MainWindow : Window
         var edit = new MenuItem { Header = "Edit" };
         edit.Click += (_, _) => goal.IsEditing = true;
         menu.Items.Add(edit);
+
+        var pace = new MenuItem { Header = goal.HasPace ? "Pace… (change or remove)" : "Set a pace…" };
+        pace.Click += (_, _) => SetPace(goal);
+        menu.Items.Add(pace);
 
         var star = new MenuItem { Header = goal.Starred ? "Unstar" : "Star (pin to top)" };
         star.Click += (_, _) => goal.Starred = !goal.Starred;
@@ -2433,6 +2446,7 @@ public partial class MainWindow : Window
         _boardBuiltAt = DateTime.MinValue; // time per project changed too
         _todayLoggedDay = DateTime.Today;
         _todayLoggedSeconds = _logService.GetTodayTotalSeconds();
+        UpdatePaces();
     }
 
     // Open goals for the deck's Next Goal key: every tab, starred first, in the user's order.

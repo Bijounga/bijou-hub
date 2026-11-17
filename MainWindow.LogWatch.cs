@@ -19,6 +19,7 @@ public partial class MainWindow
 
     private void RefreshLoggedTime()
     {
+        UpdatePaces(); // time on a task from the other computer, or from the start of a new week
         if (_todayLoggedDay == DateTime.Today && _logService.GetTodayTotalSeconds() == _todayLoggedSeconds) return;
 
         InvalidateTodayLogged();

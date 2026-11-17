@@ -135,7 +135,8 @@ public partial class MainWindow
     {
         if (_applyingRemote || _relinking) return;
         if (e.PropertyName is nameof(DailyGoal.IsEditing) or nameof(DailyGoal.HasProject) or nameof(DailyGoal.ChipText)
-            or nameof(DailyGoal.DueChip) or nameof(DailyGoal.DueOverdue) or nameof(DailyGoal.ChannelColor)) return;
+            or nameof(DailyGoal.DueChip) or nameof(DailyGoal.DueOverdue) or nameof(DailyGoal.ChannelColor)
+            or nameof(DailyGoal.PaceFraction) or nameof(DailyGoal.HasPace) or nameof(DailyGoal.PaceText)) return;
         if (e.PropertyName == nameof(DailyGoal.Starred)) PinStarredGoals();
         // Ticking a goal moves it between the open list and Completed (after the click finishes).
         if (e.PropertyName == nameof(DailyGoal.Done)) Dispatcher.UIThread.Post(SyncVisibleGoals);
@@ -385,6 +386,10 @@ public partial class MainWindow
         edit.Click += (_, _) => goal.IsEditing = true;
         menu.Items.Add(edit);
 
+        var pace = new MenuItem { Header = goal.HasPace ? "Pace… (change or remove)" : "Set a pace…" };
+        pace.Click += (_, _) => SetPace(goal);
+        menu.Items.Add(pace);
+
         var star = new MenuItem { Header = goal.Starred ? "Unstar" : "Star (pin to top)" };
         star.Click += (_, _) => goal.Starred = !goal.Starred;
         menu.Items.Add(star);
@@ -516,6 +521,7 @@ public partial class MainWindow
     {
         var groups = ScopeGroups();
         if (_goalScope != AllScope && !groups.Contains(_goalScope)) _goalScope = EditingGroup;
+        UpdatePaces();
         SyncVisibleGoals();
         RefreshSessionTaskPickers();
         RefreshTasksPopout();

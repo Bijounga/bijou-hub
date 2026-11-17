@@ -19,5 +19,8 @@ public class SessionRecord
     // The task (from the task list) being worked on when the session ended, if one was picked.
     public string? TaskId { get; set; }
     public string? TaskName { get; set; }
+
+    // DailyGoal.StableKey of that task: what a task's pace is counted against.
+    public string? TaskKey { get; set; }
     public string? Note { get; set; }
 }

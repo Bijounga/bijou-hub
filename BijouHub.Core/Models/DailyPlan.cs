@@ -37,6 +37,19 @@ public class DailyGoal : INotifyPropertyChanged
     public string? TaskId { get; set; }
     public string? ListId { get; set; }
 
+    // What identifies this task from one day to the next: its Google Tasks id, or its own id when it
+    // isn't on Google. (Goals fetched from Google get a fresh Id each day.)
+    [JsonIgnore] public string StableKey => TaskId ?? Id;
+
+    private double _paceFraction;
+    private bool _hasPace;
+    private string? _paceText;
+
+    // UI-only: how far along the task's pace is (0-1), whether it has one, and the words for it.
+    [JsonIgnore] public double PaceFraction { get => _paceFraction; set => Set(ref _paceFraction, value); }
+    [JsonIgnore] public bool HasPace { get => _hasPace; set => Set(ref _hasPace, value); }
+    [JsonIgnore] public string? PaceText { get => _paceText; set => Set(ref _paceText, value); }
+
     private string? _group;
     private string? _chipText;
 

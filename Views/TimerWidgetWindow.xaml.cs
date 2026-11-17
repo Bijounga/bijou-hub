@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 using BijouHub.Models;
+using BijouHub.Services;
 
 namespace BijouHub.Views;
 
@@ -20,6 +21,7 @@ public partial class TimerWidgetWindow : Window
     };
 
     public event Action<Project?, WorkMode?, int?>? StartRequested;
+    public event Action<TaskPace>? PaceStartRequested;
     public event Action? ShowTimerRequested;
     public event Action? FinishRequested;
 
@@ -49,6 +51,33 @@ public partial class TimerWidgetWindow : Window
     }
 
     public bool HasOptions => ProjectBox.ItemsSource != null;
+
+    // The tasks with a pace, each a button that starts working on it.
+    public void SetPaces(IReadOnlyList<PaceItem> items)
+    {
+        PaceList.Children.Clear();
+        PaceSection.Visibility = items.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        foreach (var item in items)
+        {
+            var ring = new PaceRing { Width = 18, Height = 18, Fraction = item.Progress.Fraction, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
+            var rest = new System.Windows.Controls.TextBlock { Text = item.Progress.Short, FontSize = 11, Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+            rest.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, "MutedTextBrush");
+            var name = new System.Windows.Controls.TextBlock { Text = item.Pace.Text, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
+            System.Windows.Controls.DockPanel.SetDock(ring, System.Windows.Controls.Dock.Left);
+            System.Windows.Controls.DockPanel.SetDock(rest, System.Windows.Controls.Dock.Right);
+            var pace = item.Pace;
+            var button = new System.Windows.Controls.Button
+            {
+                Content = new System.Windows.Controls.DockPanel { Children = { ring, rest, name } },
+                HorizontalContentAlignment = HorizontalAlignment.Stretch, Padding = new Thickness(8, 5, 8, 5), Margin = new Thickness(0, 0, 0, 4),
+                Opacity = item.Progress.Done || !item.Progress.Active ? 0.6 : 1,
+                ToolTip = $"{item.Pace.Text}\n{item.Progress.Summary}\nClick to start working on it"
+            };
+            System.Windows.Automation.AutomationProperties.SetName(button, $"Pace: {item.Pace.Text}");
+            button.Click += (_, _) => PaceStartRequested?.Invoke(pace);
+            PaceList.Children.Add(button);
+        }
+    }
 
     public (string? ProjectId, string? ModeId, int Minutes) Choices =>
         ((ProjectBox.SelectedItem as Project)?.Id is { } p && p != NoProject.Id ? p : null,

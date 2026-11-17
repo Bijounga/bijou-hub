@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using BijouHub.Models;
+using BijouHub.Services;
 
 namespace BijouHub.Mac.Views;
 
@@ -23,6 +24,7 @@ public class TimerWidgetWindow : Window
     };
 
     public event Action<Project?, WorkMode?, int?>? StartRequested;
+    public event Action<TaskPace>? PaceStartRequested;
     public event Action? ShowTimerRequested;
     public event Action? FinishRequested;
 
@@ -31,6 +33,8 @@ public class TimerWidgetWindow : Window
     private readonly ComboBox _lengthBox = new() { HorizontalAlignment = HorizontalAlignment.Stretch, ItemsSource = Lengths };
     private readonly Button _start = new() { Content = "▶  Start", Classes = { "primary" }, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Center, Padding = new Thickness(12, 8) };
     private readonly StackPanel _startView = new();
+    private readonly StackPanel _paceSection = new() { IsVisible = false, Margin = new Thickness(0, 0, 0, 10) };
+    private readonly StackPanel _paceList = new();
     private readonly StackPanel _runningView = new() { IsVisible = false };
     private readonly TextBlock _header = new() { Text = "START WORKING", FontSize = 11, VerticalAlignment = VerticalAlignment.Center, Opacity = 0.6 };
     private readonly TextBlock _runningName = new() { FontSize = 13, TextTrimming = TextTrimming.CharacterEllipsis };
@@ -65,6 +69,9 @@ public class TimerWidgetWindow : Window
         };
 
         TextBlock Label(string text) => new() { Text = text, FontSize = 10, Margin = new Thickness(0, 0, 0, 3), Opacity = 0.6 };
+        _paceSection.Children.Add(Label("PACE"));
+        _paceSection.Children.Add(_paceList);
+        _startView.Children.Add(_paceSection);
         _startView.Children.Add(Label("PROJECT"));
         _startView.Children.Add(_projectBox);
         _projectBox.Margin = new Thickness(0, 0, 0, 8);
@@ -111,6 +118,33 @@ public class TimerWidgetWindow : Window
     }
 
     public bool Positioned { get; set; }
+
+    // The tasks with a pace, each a button that starts working on it.
+    public void SetPaces(IReadOnlyList<PaceItem> items)
+    {
+        _paceList.Children.Clear();
+        _paceSection.IsVisible = items.Count > 0;
+        foreach (var item in items)
+        {
+            var ring = new BijouHub.Mac.Controls.PaceRing { Width = 18, Height = 18, Fraction = item.Progress.Fraction, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
+            var rest = new TextBlock { Text = item.Progress.Short, FontSize = 11, Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, Opacity = 0.6 };
+            var name = new TextBlock { Text = item.Pace.Text, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
+            DockPanel.SetDock(ring, Dock.Left);
+            DockPanel.SetDock(rest, Dock.Right);
+            var pace = item.Pace;
+            var button = new Button
+            {
+                Content = new DockPanel { Children = { ring, rest, name } },
+                HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                Padding = new Thickness(8, 5), Margin = new Thickness(0, 0, 0, 4),
+                Opacity = item.Progress.Done || !item.Progress.Active ? 0.6 : 1
+            };
+            ToolTip.SetTip(button, $"{item.Pace.Text}\n{item.Progress.Summary}\nClick to start working on it");
+            Avalonia.Automation.AutomationProperties.SetName(button, $"Pace: {item.Pace.Text}");
+            button.Click += (_, _) => PaceStartRequested?.Invoke(pace);
+            _paceList.Children.Add(button);
+        }
+    }
     public bool HasOptions => _projectBox.ItemsSource != null;
 
     public void SetOptions(IEnumerable<Project> projects, IEnumerable<WorkMode> modes, string? projectId, string? modeId, int minutes)

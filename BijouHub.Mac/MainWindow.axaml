@@ -250,6 +250,12 @@
                         <TextBlock Text="Playlists" FontSize="13"/>
                     </StackPanel>
                 </Button>
+
+                <!-- Tasks with a daily or weekly pace: click one to start working on it. -->
+                <StackPanel Name="PaceSection" IsVisible="False" Margin="0,0,0,12">
+                    <TextBlock Classes="label" Text="PACE" Margin="4,0,0,4"/>
+                    <StackPanel Name="PacePanel"/>
+                </StackPanel>
                 </StackPanel>
 
                 <DockPanel Grid.Row="1" Margin="4,0,0,6">

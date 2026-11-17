@@ -24,6 +24,11 @@
 
             <!-- Pick a project and go. -->
             <StackPanel x:Name="StartView">
+                <!-- Tasks with a pace: one click starts working on one. -->
+                <StackPanel x:Name="PaceSection" Visibility="Collapsed" Margin="0,0,0,10">
+                    <TextBlock Text="PACE" FontSize="10" Margin="0,0,0,4" Foreground="{DynamicResource MutedTextBrush}"/>
+                    <StackPanel x:Name="PaceList"/>
+                </StackPanel>
                 <TextBlock Text="PROJECT" FontSize="10" Margin="0,0,0,3" Foreground="{DynamicResource MutedTextBrush}"/>
                 <ComboBox x:Name="ProjectBox" DisplayMemberPath="Name" Margin="0,0,0,8" AutomationProperties.Name="Widget project"/>
                 <TextBlock Text="MODE" FontSize="10" Margin="0,0,0,3" Foreground="{DynamicResource MutedTextBrush}"/>
