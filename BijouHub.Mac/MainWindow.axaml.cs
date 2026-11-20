@@ -48,6 +48,7 @@ public partial class MainWindow : Window
         InitDue();
         InitLogWatch();
         InitPaces();
+        ApplyQuickLaunchFold();
         InitHomeLayout();
         InitSessionTask();
         InitGoals();

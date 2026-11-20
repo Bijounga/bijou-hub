@@ -14,6 +14,12 @@ public class AppSettings
 
     public string ThemeName { get; set; } = "Dark";
 
+    // Quick Launch on Home is folded shut (for this computer: the app tiles matter on one machine, not on another).
+    public bool QuickLaunchHidden { get; set; }
+
+    // The project's goals on the timer page are folded shut.
+    public bool SessionGoalsHidden { get; set; }
+
     // Session music plays the work (or break) playlists in random order instead of the list's.
     public bool ShuffleWorkMusic { get; set; }
     public bool ShuffleBreakMusic { get; set; }

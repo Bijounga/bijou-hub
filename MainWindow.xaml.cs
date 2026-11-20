@@ -136,6 +136,7 @@ public partial class MainWindow : Window
         InitDue();
         InitLogWatch();
         InitPaces();
+        ApplyQuickLaunchFold();
         InitHomeLayout();
         InitSessionTask();
         InitTasksPage();
@@ -586,6 +587,7 @@ public partial class MainWindow : Window
             LoadFreeformNotes(_activeProject);
         UpdateNotesPanelVisibility();
         RefreshSessionTaskPickers();
+        RefreshSessionGoals();
     }
 
     private static void FadeIn(UIElement element)

@@ -106,6 +106,7 @@ public partial class MainWindow
         _detailProject = _activeProject;
         ShowOnly(SessionPanel);
         RefreshSessionTaskPickers();
+        RefreshSessionGoals();
     }
 
     private void UpdateSessionContext()

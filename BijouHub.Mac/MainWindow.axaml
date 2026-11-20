@@ -523,7 +523,13 @@
                             </ItemsControl>
                             <TextBlock Name="BoardEmptyText" Classes="muted" IsVisible="False" Text="No projects yet — add one with the + next to Projects."/>
 
-                            <TextBlock Classes="label" Text="QUICK LAUNCH" Margin="0,24,0,8"/>
+                            <Button Name="QuickLaunchToggle" Classes="ghost" Click="QuickLaunchToggle_Click" HorizontalAlignment="Left" Padding="0,4" Margin="0,24,0,8"
+                                    ToolTip.Tip="Show or hide Quick Launch" AutomationProperties.Name="Quick Launch">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Classes="label" Text="QUICK LAUNCH"/>
+                                    <TextBlock Name="QuickLaunchChevron" Classes="label"/>
+                                </StackPanel>
+                            </Button>
                             <WrapPanel Name="QuickLaunchPanel" Margin="0,0,0,12"/>
                         </StackPanel>
                     </ScrollViewer>
@@ -856,6 +862,44 @@
                                 <Button Name="PopoutButton" Classes="icon" Margin="0,0,8,8" Click="Popout_Click" ToolTip.Tip="Pop out the timer"><controls:LineIcon Name="PopoutIcon" Kind="popout"/></Button>
                                 <Button Name="BlackoutButton" Classes="icon" Margin="0,0,8,8" Click="Blackout_Click" ToolTip.Tip="Black out the screen and show just the timer" AutomationProperties.Name="Focus screen"><controls:LineIcon Kind="screen"/></Button>
                             </WrapPanel>
+
+                            <!-- The goals of the project being worked on, so they're here without leaving the timer. -->
+                            <StackPanel Name="SessionGoalsSection" IsVisible="False" Margin="0,20,0,0" MaxWidth="460" HorizontalAlignment="Left">
+                                <Button Name="SessionGoalsToggle" Classes="ghost" Click="SessionGoalsToggle_Click" HorizontalAlignment="Left" Padding="0,4" Margin="0,0,0,8"
+                                        ToolTip.Tip="Show or hide the goals" AutomationProperties.Name="Goals">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Classes="label" Text="GOALS"/>
+                                        <TextBlock Name="SessionGoalsChevron" Classes="label"/>
+                                    </StackPanel>
+                                </Button>
+                                <ItemsControl Name="SessionGoals">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,0,0,10">
+                                                <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsComplete}" MinWidth="0" Click="SessionGoal_Click"
+                                                              IsVisible="{Binding !SubGoals.Count}"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap" Margin="6,0,0,0"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding Completion, StringFormat={}{0:P0}}" Foreground="{DynamicResource HazardBrush}"
+                                                               Margin="8,0,10,0" VerticalAlignment="Center" IsVisible="{Binding !!SubGoals.Count}"/>
+                                                    <TextBlock Grid.Column="3" Text="{Binding Weight, StringFormat={}{0}%}" Classes="muted" VerticalAlignment="Center"/>
+                                                </Grid>
+                                                <ItemsControl ItemsSource="{Binding SubGoals}" Margin="22,6,0,0" IsVisible="{Binding !!SubGoals.Count}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,4">
+                                                                <CheckBox IsChecked="{Binding IsComplete}" MinWidth="0" Click="SessionGoal_Click"/>
+                                                                <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="6,0,0,0"/>
+                                                                <TextBlock Grid.Column="2" Text="{Binding Weight, StringFormat={}{0}%}" Classes="muted" VerticalAlignment="Center"/>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
                 </Panel>

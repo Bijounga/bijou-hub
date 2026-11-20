@@ -494,6 +494,65 @@
                     <Button x:Name="PopoutToggleButton" Margin="0,0,8,8" Padding="12,8" Click="PopoutToggle_Click" ToolTip="Pop out the timer" AutomationProperties.Name="Pop out"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE8A7;" FontSize="14"/></Button>
                     <Button x:Name="BlackoutButton" Margin="0,0,8,8" Padding="12,8" Click="Blackout_Click" ToolTip="Black out the screen and show just the timer" AutomationProperties.Name="Focus screen"><TextBlock Style="{StaticResource IconGlyph}" Text="&#xE7F4;" FontSize="14"/></Button>
                 </WrapPanel>
+
+                <!-- The goals of the project being worked on, so they're here without leaving the timer. -->
+                <StackPanel x:Name="SessionGoalsSection" Visibility="Collapsed" Margin="0,20,0,0" MaxWidth="460" HorizontalAlignment="Left">
+                    <Button x:Name="SessionGoalsToggle" Click="SessionGoalsToggle_Click" HorizontalAlignment="Left" Cursor="Hand" Focusable="False" Margin="0,0,0,8"
+                            ToolTip="Show or hide the goals" AutomationProperties.Name="Goals">
+                        <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent" Padding="0,2"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="GOALS"/></TextBlock>
+                            <TextBlock x:Name="SessionGoalsChevron" Style="{StaticResource IconGlyph}" FontSize="9" Margin="8,0,0,0" Foreground="{DynamicResource MutedTextBrush}"/>
+                        </StackPanel>
+                    </Button>
+                    <ScrollViewer x:Name="SessionGoalsScroll" VerticalScrollBarVisibility="Auto" MaxHeight="380">
+                        <ItemsControl x:Name="SessionGoalsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,0,0,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox Grid.Column="0" IsChecked="{Binding IsComplete, Mode=OneWay}"
+                                                      Margin="0,0,8,0" Tag="{Binding}"
+                                                      Visibility="{Binding SubGoals.Count, Converter={StaticResource CountToVisibilityConverter}}"
+                                                      Checked="SessionGoal_Changed" Unchecked="SessionGoal_Changed"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" FontWeight="Bold" TextWrapping="Wrap"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding Completion, StringFormat={}{0:P0}}"
+                                                       Foreground="{DynamicResource HazardBrush}" Margin="8,0,8,0" VerticalAlignment="Center"
+                                                       Visibility="{Binding SubGoals.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=NonZero}"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding Weight, StringFormat={}{0}%}"
+                                                       Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <ItemsControl ItemsSource="{Binding SubGoals}" Margin="22,6,0,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Margin="0,0,0,4">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsComplete, Mode=OneWay}"
+                                                                  Margin="0,0,8,0" Tag="{Binding}"
+                                                                  Checked="SessionGoal_Changed" Unchecked="SessionGoal_Changed"/>
+                                                        <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                                        <TextBlock Grid.Column="2" Text="{Binding Weight, StringFormat={}{0}%}"
+                                                                   Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </StackPanel>
             </StackPanel>
 
             <!-- Project detail -->
@@ -1127,7 +1186,14 @@
                                Text="No projects yet — add one with the + next to Projects."/>
                     <Border Height="14"/>
 
-                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,8"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="QUICK LAUNCH"/></TextBlock>
+                    <Button x:Name="QuickLaunchToggle" Click="QuickLaunchToggle_Click" HorizontalAlignment="Left" Cursor="Hand" Focusable="False" Margin="0,0,0,8"
+                            ToolTip="Show or hide Quick Launch" AutomationProperties.Name="Quick Launch">
+                        <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent" Padding="0,2"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11"><Run Text="{DynamicResource SectionPrefix}"/><Run Text="QUICK LAUNCH"/></TextBlock>
+                            <TextBlock x:Name="QuickLaunchChevron" Style="{StaticResource IconGlyph}" FontSize="9" Margin="8,0,0,0" Foreground="{DynamicResource MutedTextBrush}"/>
+                        </StackPanel>
+                    </Button>
                     <WrapPanel x:Name="QuickLaunchPanel" Margin="0,0,0,24"/>
                 </StackPanel>
             </ScrollViewer>
