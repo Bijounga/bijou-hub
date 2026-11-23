@@ -19,6 +19,11 @@
                     <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent" Padding="6,2"><ContentPresenter/></Border></ControlTemplate></Button.Template>
                     <TextBlock Text="✕" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"/>
                 </Button>
+                <Button DockPanel.Dock="Right" x:Name="TaskbarButton" Click="Taskbar_Click" Focusable="False" Cursor="Hand" AutomationProperties.Name="Hide taskbar">
+                    <Button.Template><ControlTemplate TargetType="Button"><Border Background="Transparent" Padding="6,2"><ContentPresenter/></Border></ControlTemplate></Button.Template>
+                    <Path x:Name="TaskbarIcon" Width="14" Height="14" Stretch="Uniform" Data="M2,2.5 H14 V10.5 H2 Z M2,13.5 H14"
+                              StrokeThickness="1.6" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                </Button>
                 <TextBlock x:Name="HeaderText" Text="START WORKING" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}"/>
             </DockPanel>
 

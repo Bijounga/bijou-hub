@@ -1,4 +1,5 @@
 using System.Windows;
+using BijouHub.Services;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -17,6 +18,7 @@ public partial class TimerPopoutWindow : Window
     public TimerPopoutWindow()
     {
         InitializeComponent();
+        ShowTaskbarState();
         TaskPicker.TaskPicked += goal => TaskPicked?.Invoke(goal);
         TaskPicker.TaskAdded += text => TaskAdded?.Invoke(text);
         TaskPicker.DoneClicked += () => TaskDone?.Invoke();
@@ -62,6 +64,22 @@ public partial class TimerPopoutWindow : Window
     private void Dock_Click(object sender, RoutedEventArgs e) => DockRequested?.Invoke();
 
     private void Finish_Click(object sender, RoutedEventArgs e) => FinishRequested?.Invoke();
+
+    // The Windows taskbar: hidden until the pointer goes to the screen edge, or always showing.
+    private void Taskbar_Click(object sender, RoutedEventArgs e)
+    {
+        TaskbarState.AutoHide = !TaskbarState.AutoHide;
+        ShowTaskbarState();
+    }
+
+    private void ShowTaskbarState()
+    {
+        var hidden = TaskbarState.AutoHide;
+        TaskbarIcon.SetResourceReference(System.Windows.Shapes.Shape.StrokeProperty, hidden ? "AccentBrush" : "TextBrush");
+        TaskbarButton.ToolTip = hidden
+            ? "The taskbar is hidden until you point at the screen edge. Click to show it again"
+            : "Hide the taskbar (point at the screen edge to bring it back)";
+    }
 
     private void FocusScreen_Click(object sender, RoutedEventArgs e) => FocusScreenRequested?.Invoke();
 }

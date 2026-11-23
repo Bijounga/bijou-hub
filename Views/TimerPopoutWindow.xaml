@@ -59,6 +59,10 @@
                             AutomationProperties.Name="Focus screen">
                         <TextBlock Style="{StaticResource IconGlyph}" Text="&#xE7F4;" FontSize="13"/>
                     </Button>
+                    <Button x:Name="TaskbarButton" Margin="8,0,0,0" Padding="8,4" Click="Taskbar_Click" AutomationProperties.Name="Hide taskbar">
+                        <Path x:Name="TaskbarIcon" Width="14" Height="14" Stretch="Uniform" Data="M2,2.5 H14 V10.5 H2 Z M2,13.5 H14"
+                              StrokeThickness="1.6" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    </Button>
                 </StackPanel>
             </Grid>
             </Viewbox>

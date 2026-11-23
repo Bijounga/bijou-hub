@@ -28,6 +28,7 @@ public partial class TimerWidgetWindow : Window
     public TimerWidgetWindow()
     {
         InitializeComponent();
+        ShowTaskbarState();
         LengthBox.ItemsSource = Lengths;
         LengthBox.SelectedIndex = 0;
         ProjectBox.SelectionChanged += (_, _) => UpdateStartEnabled();
@@ -107,6 +108,22 @@ public partial class TimerWidgetWindow : Window
     }
 
     private void ShowTimer_Click(object sender, RoutedEventArgs e) => ShowTimerRequested?.Invoke();
+
+    // The Windows taskbar: hidden until the pointer goes to the screen edge, or always showing.
+    private void Taskbar_Click(object sender, RoutedEventArgs e)
+    {
+        TaskbarState.AutoHide = !TaskbarState.AutoHide;
+        ShowTaskbarState();
+    }
+
+    private void ShowTaskbarState()
+    {
+        var hidden = TaskbarState.AutoHide;
+        TaskbarIcon.SetResourceReference(System.Windows.Shapes.Shape.StrokeProperty, hidden ? "AccentBrush" : "MutedTextBrush");
+        TaskbarButton.ToolTip = hidden
+            ? "The taskbar is hidden until you point at the screen edge. Click to show it again"
+            : "Hide the taskbar (point at the screen edge to bring it back)";
+    }
     private void Finish_Click(object sender, RoutedEventArgs e) => FinishRequested?.Invoke();
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 
